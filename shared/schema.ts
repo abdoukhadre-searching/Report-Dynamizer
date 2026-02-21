@@ -22,6 +22,9 @@ export const projects = pgTable("projects", {
   preReportData: jsonb("pre_report_data"),
   postReportData: jsonb("post_report_data"),
   comparisonData: jsonb("comparison_data"),
+  annexClimateZoneImage: text("annex_climate_zone_image"),
+  annexThermopompesImage: text("annex_thermopompes_image"),
+  annexRobineterieImage: text("annex_robineterie_image"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

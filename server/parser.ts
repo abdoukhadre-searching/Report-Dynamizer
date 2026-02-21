@@ -56,6 +56,13 @@ export function parseHot2000Report(content: string): ReportData {
   const monthlyEnergy = parseMonthlyEnergy(lines);
   const annualEnergy = parseAnnualEnergy(lines);
   const airLeakage = parseAirLeakage(fullText);
+  const airTightness = parseAirTightness(fullText);
+  if (airTightness.preCAH50 !== undefined) {
+    if (!airLeakage) {
+    } else {
+      airLeakage.cah50 = airTightness.preCAH50;
+    }
+  }
   const heating = parseHeating(fullText);
   const cooling = parseCooling(fullText);
   const hotWater = parseHotWater(fullText);
@@ -453,6 +460,7 @@ function parseAirLeakage(text: string): ReportData["airLeakage"] {
 
 function parseHeating(text: string): ReportData["heating"] {
   const result: NonNullable<ReportData["heating"]> = {};
+  const lines = text.split("\n");
 
   const grossMatch = text.match(/Perte de chaleur brute:\s*\n?\s*([\d,. ]+)\s*MJ/);
   if (grossMatch) result.grossHeatLoss = parseFloat(grossMatch[1].replace(/\s/g, "").replace(",", "."));
@@ -466,7 +474,78 @@ function parseHeating(text: string): ReportData["heating"] {
   const effMatch = text.match(/Efficacité saisonnière[^:]*:\s*\n?\s*([\d.,]+)\s*%/);
   if (effMatch) result.primaryEfficiency = effMatch[1].replace(",", ".") + "%";
 
+  const installIdx = lines.findIndex(l => l.trim() === "INSTALLATION DE CHAUFFAGE");
+  if (installIdx >= 0) {
+    const labelLines: string[] = [];
+    const valueLines: string[] = [];
+    let phase = "labels";
+
+    for (let i = installIdx + 1; i < Math.min(installIdx + 20, lines.length); i++) {
+      const l = lines[i].trim();
+      if (!l) continue;
+
+      if (l === "Efficacité:" || l.startsWith("Mode de la ventil") || l.startsWith("Puissance à")) break;
+
+      const isLabel = l.endsWith(":") || l.includes("PRIMAIRE") || l.includes("SECONDAIRE");
+      if (phase === "labels" && isLabel) {
+        labelLines.push(l);
+      } else if (phase === "labels" && !isLabel) {
+        phase = "values";
+        valueLines.push(l);
+      } else if (phase === "values" && !isLabel) {
+        valueLines.push(l);
+      } else {
+        break;
+      }
+    }
+
+    const energyLabelIdx = labelLines.findIndex(l =>
+      l.includes("nergie") && l.includes("chauffage")
+    );
+    const equipLabelIdx = labelLines.findIndex(l =>
+      l === "Equipment:" || l === "Chauffage des espaces:"
+    );
+
+    if (energyLabelIdx >= 0 && energyLabelIdx < valueLines.length) {
+      result.primaryType = valueLines[energyLabelIdx];
+    }
+    if (equipLabelIdx >= 0 && equipLabelIdx < valueLines.length) {
+      result.primaryEquipment = valueLines[equipLabelIdx];
+    }
+
+    if (!result.primaryEquipment) {
+      for (let i = installIdx; i < Math.min(installIdx + 20, lines.length); i++) {
+        const l = lines[i].trim();
+        if (l.includes("Thermopompe") && !l.includes("Temp") && !l.includes("COP") && !l.includes("arrêt") && !l.includes("annuel")) {
+          result.primaryEquipment = l;
+          break;
+        }
+        if (l.includes("Plinthes") || l.includes("hydronique") || l.includes("plénum")) {
+          result.primaryEquipment = l;
+          break;
+        }
+      }
+    }
+  }
+
   return result;
+}
+
+function parseAirTightness(text: string): { preCAH50?: number; } {
+  const lines = text.split("\n");
+  let cah50: number | undefined;
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim();
+    if (l.includes("essai de fuite") && l.includes("CAH")) {
+      const match = l.match(/([\d.,]+)\s*CAH/);
+      if (match) {
+        cah50 = parseFloat(match[1].replace(",", "."));
+      }
+    }
+  }
+
+  return { preCAH50: cah50 };
 }
 
 function parseCooling(text: string): ReportData["cooling"] {

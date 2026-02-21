@@ -186,5 +186,54 @@ export async function registerRoutes(
     }
   });
 
+  const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+
+  app.use("/uploads", (req, res, next) => {
+    const filePath = path.join(UPLOADS_DIR, req.path);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ message: "File not found" });
+    }
+  });
+
+  app.post("/api/projects/:id/upload-annex-image", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Image file is required" });
+      }
+      const annexType = req.body.annexType;
+      const validTypes = ["climateZone", "thermopompes", "robineterie"];
+      if (!validTypes.includes(annexType)) {
+        return res.status(400).json({ message: "Invalid annex type" });
+      }
+
+      const project = await storage.getProject(req.params.id);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      const ext = path.extname(req.file.originalname) || ".png";
+      const fileName = `${req.params.id}_${annexType}_${Date.now()}${ext}`;
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      fs.writeFileSync(filePath, req.file.buffer);
+
+      const imageUrl = `/uploads/${fileName}`;
+      const updateData: any = {};
+      if (annexType === "climateZone") updateData.annexClimateZoneImage = imageUrl;
+      else if (annexType === "thermopompes") updateData.annexThermopompesImage = imageUrl;
+      else if (annexType === "robineterie") updateData.annexRobineterieImage = imageUrl;
+
+      const updated = await storage.updateProject(req.params.id, updateData);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error uploading annex image:", error);
+      res.status(500).json({ message: error.message || "Failed to upload image" });
+    }
+  });
+
   return httpServer;
 }

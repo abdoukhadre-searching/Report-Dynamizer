@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import type { Project, ReportData, ComparisonData } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +13,134 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Printer } from "lucide-react";
+import { FileText, Printer, Upload, CheckCircle2, Loader2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface ReportTabProps {
   project: Project;
+}
+
+function AnnexImageUpload({
+  projectId,
+  annexType,
+  label,
+  currentImage,
+}: {
+  projectId: string;
+  annexType: string;
+  label: string;
+  currentImage: string | null;
+}) {
+  const { toast } = useToast();
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("annexType", annexType);
+      const res = await fetch(`/api/projects/${projectId}/upload-annex-image`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Erreur");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
+      toast({ title: "Image ajoutee avec succes" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="mt-3">
+      {currentImage ? (
+        <div className="space-y-2">
+          <img
+            src={currentImage}
+            alt={label}
+            className="max-w-full rounded-md border"
+            style={{ maxHeight: "400px" }}
+            data-testid={`img-annex-${annexType}`}
+          />
+          <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
+            <Upload className="w-3 h-3" />
+            Remplacer l'image
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadMutation.mutate(file);
+              }}
+            />
+          </label>
+        </div>
+      ) : (
+        <label
+          className="flex items-center justify-center gap-2 px-4 py-6 border border-dashed rounded-md cursor-pointer text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden"
+          data-testid={`upload-annex-${annexType}`}
+        >
+          {uploadMutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <ImageIcon className="w-4 h-4" />
+          )}
+          Importer une image pour {label}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadMutation.mutate(file);
+            }}
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
+function getOccupantCount(occupants?: string): number {
+  if (!occupants) return 0;
+  const match = occupants.match(/(\d+)\s*adultes?/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+function getThermopompeCount(occupants?: string): number {
+  const count = getOccupantCount(occupants);
+  return count > 0 ? Math.ceil(count / 2) : 0;
+}
+
+function hasHeatingChanged(pre: ReportData, post: ReportData): boolean {
+  const preEquip = pre.heating?.primaryEquipment || "";
+  const postEquip = post.heating?.primaryEquipment || "";
+  return preEquip !== postEquip && preEquip.length > 0 && postEquip.length > 0;
+}
+
+function isThermopompeAdded(post: ReportData): boolean {
+  const equip = post.heating?.primaryEquipment || "";
+  return equip.toLowerCase().includes("thermopompe") || equip.toLowerCase().includes("source d'air");
+}
+
+function hasAirTightnessChanged(pre: ReportData, post: ReportData): boolean {
+  const preCah = pre.airLeakage?.cah50;
+  const postCah = post.airLeakage?.cah50;
+  return preCah !== undefined && postCah !== undefined && preCah !== postCah;
+}
+
+function hasHotWaterChanged(pre: ReportData, post: ReportData): boolean {
+  const preDailyHW = pre.hotWater?.dailyConsumption;
+  const postDailyHW = post.hotWater?.dailyConsumption;
+  return preDailyHW !== undefined && postDailyHW !== undefined && preDailyHW !== postDailyHW;
 }
 
 export default function ReportTab({ project }: ReportTabProps) {
@@ -27,6 +153,12 @@ export default function ReportTab({ project }: ReportTabProps) {
   const handlePrint = () => {
     window.print();
   };
+
+  const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
+  const showHeatingStrategy = hasHeatingChanged(pre, post) && isThermopompeAdded(post);
+  const showHotWaterStrategy = hasHotWaterChanged(pre, post);
+  const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
+  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy;
 
   return (
     <div className="space-y-4">
@@ -244,8 +376,54 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <Separator />
 
+            {hasAnyStrategy && (
+              <>
+                <section>
+                  <h2 className="text-base font-semibold mb-4" data-testid="text-strategies-title">
+                    4. Strategies utilisees pour ameliorer l'efficacite du batiment
+                  </h2>
+
+                  <div className="space-y-4">
+                    {showAirTightnessStrategy && (
+                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-air-tightness">
+                        <h3 className="text-sm font-medium mb-2">Etancheite</h3>
+                        <p className="text-sm">
+                          Ameliorer l'etancheite du batiment a CAH maximum de{" "}
+                          <span className="font-semibold">{post.airLeakage?.cah50}</span> @ 50 Pa.
+                        </p>
+                      </div>
+                    )}
+
+                    {showHeatingStrategy && (
+                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-thermopompe">
+                        <h3 className="text-sm font-medium mb-2">Systeme de chauffage</h3>
+                        <p className="text-sm">
+                          Ajout de{" "}
+                          <span className="font-semibold">{thermopompeCount}</span>{" "}
+                          Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
+                        </p>
+                      </div>
+                    )}
+
+                    {showHotWaterStrategy && (
+                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-hot-water">
+                        <h3 className="text-sm font-medium mb-2">Pommeaux de douches et robinets</h3>
+                        <p className="text-sm">
+                          Installation de pommeaux de douches et robinets faible debit (reduction charge eau chaude domestique). (Voir details)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <Separator />
+              </>
+            )}
+
             <section>
-              <h2 className="text-base font-semibold mb-4">4. Comparatif global en GJ/annee</h2>
+              <h2 className="text-base font-semibold mb-4">
+                {hasAnyStrategy ? "5" : "4"}. Comparatif global en GJ/annee
+              </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -321,7 +499,9 @@ export default function ReportTab({ project }: ReportTabProps) {
             <Separator />
 
             <section>
-              <h2 className="text-base font-semibold mb-4">5. GES (Gaz a effet de serre)</h2>
+              <h2 className="text-base font-semibold mb-4">
+                {hasAnyStrategy ? "6" : "5"}. GES (Gaz a effet de serre)
+              </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -355,7 +535,9 @@ export default function ReportTab({ project }: ReportTabProps) {
             <Separator />
 
             <section>
-              <h2 className="text-base font-semibold mb-4">6. Approbation</h2>
+              <h2 className="text-base font-semibold mb-4">
+                {hasAnyStrategy ? "7" : "6"}. Approbation
+              </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -384,6 +566,61 @@ export default function ReportTab({ project }: ReportTabProps) {
                   </TableRow>
                 </TableBody>
               </Table>
+            </section>
+
+            <Separator />
+
+            <section>
+              <h2 className="text-base font-semibold mb-6" data-testid="text-annexes-title">
+                {hasAnyStrategy ? "8" : "7"}. Annexes
+              </h2>
+
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-sm font-semibold mb-2">1. Zone climatique</h3>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Donnees climatiques: {pre.buildingInfo?.climateData || "-"}
+                  </p>
+                  <AnnexImageUpload
+                    projectId={project.id}
+                    annexType="climateZone"
+                    label="Zone climatique"
+                    currentImage={project.annexClimateZoneImage}
+                  />
+                </div>
+
+                {showHeatingStrategy && (
+                  <div>
+                    <h3 className="text-sm font-semibold mb-2">2. Thermopompes</h3>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Ajout de {thermopompeCount} Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
+                    </p>
+                    <AnnexImageUpload
+                      projectId={project.id}
+                      annexType="thermopompes"
+                      label="Thermopompes"
+                      currentImage={project.annexThermopompesImage}
+                    />
+                  </div>
+                )}
+
+                {showHotWaterStrategy && (
+                  <div>
+                    <h3 className="text-sm font-semibold mb-2">
+                      {showHeatingStrategy ? "3" : "2"}. Robinetterie faible debit
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Installation de pommeaux de douches et robinets faible debit (reduction charge eau chaude domestique).
+                    </p>
+                    <AnnexImageUpload
+                      projectId={project.id}
+                      annexType="robineterie"
+                      label="Robinetterie faible debit"
+                      currentImage={project.annexRobineterieImage}
+                    />
+                  </div>
+                )}
+              </div>
             </section>
 
             <div className="pt-8 border-t text-center">
