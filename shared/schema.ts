@@ -1,18 +1,154 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, jsonb, timestamp, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
+export const projects = pgTable("projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  name: text("name").notNull(),
+  address: text("address"),
+  city: text("city"),
+  province: text("province"),
+  postalCode: text("postal_code"),
+  yearBuilt: text("year_built"),
+  numFloors: text("num_floors"),
+  numUnits: text("num_units"),
+  clientName: text("client_name"),
+  evaluator: text("evaluator"),
+  evaluationDate: text("evaluation_date"),
+  status: text("status").notNull().default("draft"),
+  preReportRaw: text("pre_report_raw"),
+  postReportRaw: text("post_report_raw"),
+  preReportData: jsonb("pre_report_data"),
+  postReportData: jsonb("post_report_data"),
+  comparisonData: jsonb("comparison_data"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertProjectSchema = createInsertSchema(projects).omit({
+  id: true,
+  createdAt: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type Project = typeof projects.$inferSelect;
+
+export const buildingZoneSchema = z.object({
+  element: z.string(),
+  grossArea: z.number().optional(),
+  netArea: z.number().optional(),
+  rsi: z.number().optional(),
+  heatLossMJ: z.number(),
+  heatLossPercent: z.number(),
+});
+
+export const monthlyEnergySchema = z.object({
+  month: z.string(),
+  heatingPrimary: z.number(),
+  heatingSecondary: z.number(),
+  hotWaterPrimary: z.number(),
+  hotWaterSecondary: z.number(),
+  lightingAppliances: z.number(),
+  ventilation: z.number(),
+  cooling: z.number(),
+});
+
+export const reportDataSchema = z.object({
+  fileName: z.string().optional(),
+  buildingInfo: z.object({
+    address: z.string().optional(),
+    city: z.string().optional(),
+    province: z.string().optional(),
+    postalCode: z.string().optional(),
+    yearBuilt: z.string().optional(),
+    numFloors: z.string().optional(),
+    orientation: z.string().optional(),
+    climateData: z.string().optional(),
+    occupants: z.string().optional(),
+    windowFraction: z.string().optional(),
+  }).optional(),
+  zone1: z.array(buildingZoneSchema).optional(),
+  zone1Total: z.object({
+    heatLossMJ: z.number(),
+    heatLossPercent: z.number(),
+  }).optional(),
+  zone3: z.array(buildingZoneSchema).optional(),
+  zone3Total: z.object({
+    heatLossMJ: z.number(),
+    heatLossPercent: z.number(),
+  }).optional(),
+  ventilation: z.object({
+    volume: z.number().optional(),
+    airChange: z.number().optional(),
+    heatLossMJ: z.number().optional(),
+    heatLossPercent: z.number().optional(),
+  }).optional(),
+  totalHeatLossMJ: z.number().optional(),
+  monthlyEnergy: z.array(monthlyEnergySchema).optional(),
+  annualEnergy: monthlyEnergySchema.optional(),
+  airLeakage: z.object({
+    cah50: z.number().optional(),
+    envelopeArea: z.number().optional(),
+    leakageArea: z.number().optional(),
+  }).optional(),
+  heating: z.object({
+    primaryType: z.string().optional(),
+    primaryEquipment: z.string().optional(),
+    primaryManufacturer: z.string().optional(),
+    primaryModel: z.string().optional(),
+    primaryEfficiency: z.string().optional(),
+    secondaryType: z.string().optional(),
+    secondaryEquipment: z.string().optional(),
+    secondaryEfficiency: z.string().optional(),
+    annualConsumption: z.number().optional(),
+    grossHeatLoss: z.number().optional(),
+  }).optional(),
+  cooling: z.object({
+    type: z.string().optional(),
+    seer: z.number().optional(),
+    cop: z.number().optional(),
+    annualEnergy: z.number().optional(),
+  }).optional(),
+  hotWater: z.object({
+    type: z.string().optional(),
+    energyFactor: z.number().optional(),
+    dailyConsumption: z.number().optional(),
+    annualConsumption: z.number().optional(),
+  }).optional(),
+  annualSummary: z.object({
+    heatingGJ: z.number().optional(),
+    hotWaterGJ: z.number().optional(),
+    baseLoadsGJ: z.number().optional(),
+    ventilationGJ: z.number().optional(),
+    coolingGJ: z.number().optional(),
+    totalGJ: z.number().optional(),
+    ghgElectricity: z.number().optional(),
+    ghgGas: z.number().optional(),
+    ghgTotal: z.number().optional(),
+  }).optional(),
+});
+
+export type ReportData = z.infer<typeof reportDataSchema>;
+export type BuildingZone = z.infer<typeof buildingZoneSchema>;
+export type MonthlyEnergy = z.infer<typeof monthlyEnergySchema>;
+
+export const comparisonSchema = z.object({
+  heatingBefore: z.number(),
+  heatingAfter: z.number(),
+  hotWaterBefore: z.number(),
+  hotWaterAfter: z.number(),
+  baseLoadsBefore: z.number(),
+  baseLoadsAfter: z.number(),
+  ventilationBefore: z.number(),
+  ventilationAfter: z.number(),
+  coolingBefore: z.number(),
+  coolingAfter: z.number(),
+  totalBefore: z.number(),
+  totalAfter: z.number(),
+  improvementPercent: z.number(),
+  ghsBefore: z.number(),
+  ghsAfter: z.number(),
+  ghsImprovementPercent: z.number(),
+});
+
+export type ComparisonData = z.infer<typeof comparisonSchema>;
