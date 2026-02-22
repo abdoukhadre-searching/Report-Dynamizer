@@ -1,0 +1,457 @@
+================================================================================
+  PARSED DATA FROM parseHot2000Report  
+  Generated: 2026-02-22T01:47:59.417Z
+================================================================================
+
+================================================================================
+  PRE-TRAVAUX REPORT (Avant les travaux)
+================================================================================
+
+buildingInfo:
+  address: "2327-2337 Rue Cartier"
+  city: "Montréal"
+  province: "QUÉBEC"
+  postalCode: "H2K 4E9"
+  numFloors: "Trois étages"
+  climateData: "MCTAVISH, QUÉBEC"
+  occupants: "12 adultes pour 50.0% du temps"
+zone1:
+  [0]:
+    element: "Plafond"
+    grossArea: 110.14
+    netArea: 110.14
+    rsi: 0.22
+    heatLossMJ: 67270.58
+    heatLossPercent: 24.71
+  [1]:
+    element: "Murs principaux"
+    grossArea: 168.2
+    netArea: 114.85
+    rsi: 1.51
+    heatLossMJ: 27851.4
+    heatLossPercent: 10.23
+  [2]:
+    element: "Portes"
+    grossArea: 26.86
+    netArea: 19.63
+    rsi: 0.97
+    heatLossMJ: 8092.46
+    heatLossPercent: 2.97
+  [3]:
+    element: "nord-est Fenêtres"
+    grossArea: 17.88
+    netArea: 17.88
+    rsi: 0.22
+    heatLossMJ: 32219.44
+    heatLossPercent: 11.83
+  [4]:
+    element: "sud-ouest Fenêtres"
+    grossArea: 15.83
+    netArea: 15.83
+    rsi: 0.24
+    heatLossMJ: 26807.01
+    heatLossPercent: 9.85
+zone1Total:
+  heatLossMJ: 162240.88
+  heatLossPercent: 59.59
+zone3:
+  [0]:
+    element: "Superficie des murs"
+    grossArea: 12.97
+    netArea: 6.6
+    rsi: 0.27
+    heatLossMJ: 9053.85
+    heatLossPercent: 3.33
+  [1]:
+    element: "Solive de rive"
+    grossArea: 4.95
+    netArea: 4.95
+    rsi: 0.95
+    heatLossMJ: 1965.42
+    heatLossPercent: 0.72
+  [2]:
+    element: "Air Fondation"
+    grossArea: 110.14
+    netArea: 110.14
+    heatLossMJ: 0
+    heatLossPercent: 0
+zone3Total:
+  heatLossMJ: 17842.07
+  heatLossPercent: 6.55
+ventilation:
+  volume: 998.7
+  airChange: 0.482
+  heatLossMJ: 92174.273
+  heatLossPercent: 33.86
+totalHeatLossMJ: 272257
+monthlyEnergy:
+  [0]:
+    month: "Jan"
+    heatingPrimary: 45177.3
+    heatingSecondary: 0
+    hotWaterPrimary: 5089.8
+    hotWaterSecondary: 0
+    lightingAppliances: 7820.7
+    ventilation: 942.4
+    cooling: 0
+  [1]:
+    month: "Fév"
+    heatingPrimary: 35279.2
+    heatingSecondary: 0
+    hotWaterPrimary: 4661.8
+    hotWaterSecondary: 0
+    lightingAppliances: 7063.9
+    ventilation: 744
+    cooling: 0
+  [2]:
+    month: "Mar"
+    heatingPrimary: 24519.5
+    heatingSecondary: 0
+    hotWaterPrimary: 5089.8
+    hotWaterSecondary: 0
+    lightingAppliances: 7820.7
+    ventilation: 541.6
+    cooling: 0
+  [3]:
+    month: "Avr"
+    heatingPrimary: 8184.2
+    heatingSecondary: 0
+    hotWaterPrimary: 4736.4
+    hotWaterSecondary: 0
+    lightingAppliances: 7568.5
+    ventilation: 222.6
+    cooling: 0
+  [4]:
+    month: "Mai"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 4627.8
+    hotWaterSecondary: 0
+    lightingAppliances: 7820.7
+    ventilation: 426.6
+    cooling: 2247.7
+  [5]:
+    month: "Jun"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 4220.4
+    hotWaterSecondary: 0
+    lightingAppliances: 7568.5
+    ventilation: 774.4
+    cooling: 4410.6
+  [6]:
+    month: "Jul"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 4165.8
+    hotWaterSecondary: 0
+    lightingAppliances: 7820.7
+    ventilation: 1062.9
+    cooling: 6256.8
+  [7]:
+    month: "Août"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 4094.3
+    hotWaterSecondary: 0
+    lightingAppliances: 7820.7
+    ventilation: 938.3
+    cooling: 5443.9
+  [8]:
+    month: "Sep"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 4031.4
+    hotWaterSecondary: 0
+    lightingAppliances: 7568.5
+    ventilation: 497.5
+    cooling: 2705.2
+  [9]:
+    month: "Oct"
+    heatingPrimary: 6130
+    heatingSecondary: 0
+    hotWaterPrimary: 4360.8
+    hotWaterSecondary: 0
+    lightingAppliances: 7820.7
+    ventilation: 244.8
+    cooling: 500.8
+  [10]:
+    month: "Nov"
+    heatingPrimary: 18239.9
+    heatingSecondary: 0
+    hotWaterPrimary: 4478.5
+    hotWaterSecondary: 0
+    lightingAppliances: 7568.5
+    ventilation: 417.7
+    cooling: 0
+  [11]:
+    month: "Déc"
+    heatingPrimary: 35092.7
+    heatingSecondary: 0
+    hotWaterPrimary: 4894.5
+    hotWaterSecondary: 0
+    lightingAppliances: 7820.7
+    ventilation: 746.8
+    cooling: 0
+annualEnergy:
+  month: "Annuel"
+  heatingPrimary: 172622.8
+  heatingSecondary: 0
+  hotWaterPrimary: 54451.2
+  hotWaterSecondary: 0
+  lightingAppliances: 92082.9
+  ventilation: 7559.6
+  cooling: 21565.1
+airLeakage:
+  cah50: 10
+  envelopeArea: 388.47
+  leakageArea: 3729.09
+heating:
+  grossHeatLoss: 272257
+  annualConsumption: 175972
+  primaryType: "Électricité"
+  primaryEquipment: "Plinthes/sys. hydronique/plénum"
+cooling:
+  annualEnergy: 24999.228
+  cop: 2.133
+hotWater:
+  dailyConsumption: 744.7
+  annualConsumption: 54451
+  energyFactor: 96.9
+annualSummary:
+  heatingGJ: 175.97172
+  hotWaterGJ: 54.45123
+  baseLoadsGJ: 92.0829
+  ventilationGJ: 7.5596000000000005
+  coolingGJ: 21.565099999999997
+  totalGJ: 351.63054999999997
+  ghgElectricity: 77.589
+  ghgGas: 0
+  ghgTotal: 77.589
+
+
+================================================================================
+  POST-TRAVAUX REPORT (Après les travaux / optimisation)
+================================================================================
+
+buildingInfo:
+  address: "2327-2337 Rue Cartier"
+  city: "Montréal"
+  province: "QUÉBEC"
+  postalCode: "H2K 4E9"
+  numFloors: "Trois étages"
+  climateData: "MCTAVISH, QUÉBEC"
+  occupants: "12 adultes pour 50.0% du temps"
+zone1:
+  [0]:
+    element: "Plafond"
+    grossArea: 110.14
+    netArea: 110.14
+    rsi: 0.22
+    heatLossMJ: 67270.58
+    heatLossPercent: 27.04
+  [1]:
+    element: "Murs principaux"
+    grossArea: 168.2
+    netArea: 114.85
+    rsi: 1.51
+    heatLossMJ: 27851.4
+    heatLossPercent: 11.2
+  [2]:
+    element: "Portes"
+    grossArea: 26.86
+    netArea: 19.63
+    rsi: 0.97
+    heatLossMJ: 8092.46
+    heatLossPercent: 3.25
+  [3]:
+    element: "nord-est Fenêtres"
+    grossArea: 17.88
+    netArea: 17.88
+    rsi: 0.22
+    heatLossMJ: 32219.44
+    heatLossPercent: 12.95
+  [4]:
+    element: "sud-ouest Fenêtres"
+    grossArea: 15.83
+    netArea: 15.83
+    rsi: 0.24
+    heatLossMJ: 26807.01
+    heatLossPercent: 10.78
+zone1Total:
+  heatLossMJ: 162240.88
+  heatLossPercent: 65.22
+zone3:
+  [0]:
+    element: "Superficie des murs"
+    grossArea: 12.97
+    netArea: 6.6
+    rsi: 0.27
+    heatLossMJ: 9053.85
+    heatLossPercent: 3.64
+  [1]:
+    element: "Solive de rive"
+    grossArea: 4.95
+    netArea: 4.95
+    rsi: 0.95
+    heatLossMJ: 1965.42
+    heatLossPercent: 0.79
+  [2]:
+    element: "Air Fondation"
+    grossArea: 110.14
+    netArea: 110.14
+    heatLossMJ: 0
+    heatLossPercent: 0
+zone3Total:
+  heatLossMJ: 17842.07
+  heatLossPercent: 7.17
+ventilation:
+  volume: 998.7
+  airChange: 0.371
+  heatLossMJ: 68695.063
+  heatLossPercent: 27.61
+totalHeatLossMJ: 248778
+monthlyEnergy:
+  [0]:
+    month: "Jan"
+    heatingPrimary: 6738.5
+    heatingSecondary: 13632.1
+    hotWaterPrimary: 4323.5
+    hotWaterSecondary: 0
+    lightingAppliances: 6682.4
+    ventilation: 2204.9
+    cooling: 0
+  [1]:
+    month: "Fév"
+    heatingPrimary: 6052.1
+    heatingSecondary: 7031.4
+    hotWaterPrimary: 3959.6
+    hotWaterSecondary: 0
+    lightingAppliances: 6035.7
+    ventilation: 1903
+    cooling: 0
+  [2]:
+    month: "Mar"
+    heatingPrimary: 4774.6
+    heatingSecondary: 1687.8
+    hotWaterPrimary: 4323.5
+    hotWaterSecondary: 0
+    lightingAppliances: 6682.4
+    ventilation: 1403
+    cooling: 0
+  [3]:
+    month: "Avr"
+    heatingPrimary: 1699.1
+    heatingSecondary: 43.1
+    hotWaterPrimary: 4024.1
+    hotWaterSecondary: 0
+    lightingAppliances: 6466.9
+    ventilation: 463.4
+    cooling: 0
+  [4]:
+    month: "Mai"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 3933.1
+    hotWaterSecondary: 0
+    lightingAppliances: 6682.4
+    ventilation: 399.1
+    cooling: 1312.8
+  [5]:
+    month: "Jun"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 3588.1
+    hotWaterSecondary: 0
+    lightingAppliances: 6466.9
+    ventilation: 720.5
+    cooling: 2527
+  [6]:
+    month: "Jul"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 3542.7
+    hotWaterSecondary: 0
+    lightingAppliances: 6682.4
+    ventilation: 998.3
+    cooling: 3605.6
+  [7]:
+    month: "Août"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 3482.3
+    hotWaterSecondary: 0
+    lightingAppliances: 6682.4
+    ventilation: 876.7
+    cooling: 3119.2
+  [8]:
+    month: "Sep"
+    heatingPrimary: 0
+    heatingSecondary: 0
+    hotWaterPrimary: 3428.4
+    hotWaterSecondary: 0
+    lightingAppliances: 6466.9
+    ventilation: 457.8
+    cooling: 1536.1
+  [9]:
+    month: "Oct"
+    heatingPrimary: 1312.6
+    heatingSecondary: 7.1
+    hotWaterPrimary: 3707.4
+    hotWaterSecondary: 0
+    lightingAppliances: 6682.4
+    ventilation: 408.7
+    cooling: 195.4
+  [10]:
+    month: "Nov"
+    heatingPrimary: 3679.3
+    heatingSecondary: 185.1
+    hotWaterPrimary: 3806.2
+    hotWaterSecondary: 0
+    lightingAppliances: 6466.9
+    ventilation: 1006.9
+    cooling: 0
+  [11]:
+    month: "Déc"
+    heatingPrimary: 6265.4
+    heatingSecondary: 5359.5
+    hotWaterPrimary: 4158.5
+    hotWaterSecondary: 0
+    lightingAppliances: 6682.4
+    ventilation: 1902.8
+    cooling: 0
+annualEnergy:
+  month: "Annuel"
+  heatingPrimary: 27946.1
+  heatingSecondary: 46277.4
+  hotWaterPrimary: 0
+  hotWaterSecondary: 78680.1
+  lightingAppliances: 12745.3
+  ventilation: 12296.2
+  cooling: 672.26
+airLeakage:
+  cah50: 7.3
+  envelopeArea: 388.47
+  leakageArea: 2722.23
+heating:
+  grossHeatLoss: 248778
+  annualConsumption: 160422
+  primaryType: "Électricité"
+  primaryEquipment: "Source d'air (Thermopompe)"
+cooling:
+  annualEnergy: 15473.988
+  cop: 3.173
+hotWater:
+  dailyConsumption: 629.3
+  annualConsumption: 46277
+  energyFactor: 96.3
+annualSummary:
+  heatingGJ: 67.25854
+  hotWaterGJ: 46.27738
+  baseLoadsGJ: 12.745299999999999
+  ventilationGJ: 12.2962
+  coolingGJ: 0.67226
+  totalGJ: 139.24968
+  ghgElectricity: 46.442
+  ghgGas: 0
+  ghgTotal: 46.442
