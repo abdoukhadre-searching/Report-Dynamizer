@@ -147,38 +147,57 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     }
   }
 
-  const yearMatch = text.match(/Année construite:\s*\n?\s*(\d{4})/);
-  if (yearMatch) info.yearBuilt = yearMatch[1];
-  else {
-    const yearIdx = findLineIndex(lines, "Année construite:");
-    if (yearIdx >= 0) {
-      for (let i = yearIdx + 1; i < Math.min(yearIdx + 5, lines.length); i++) {
-        if (/^\d{4}$/.test(lines[i])) {
-          info.yearBuilt = lines[i];
+  const caracIdx = findLineIndex(lines, "CARACTÉRISTIQUES GÉNÉRALES DE LA MAISON");
+  if (caracIdx >= 0) {
+    const lastKnownLabel = findLineIndex(lines, "Niveau phréatique:", caracIdx);
+    const searchEnd = lastKnownLabel >= 0 ? lastKnownLabel + 20 : caracIdx + 30;
+
+    for (let i = caracIdx; i < Math.min(searchEnd, lines.length); i++) {
+      const l = lines[i];
+      if (!info.numFloors && /étage/i.test(l) && !/Nombre/i.test(l)) {
+        info.numFloors = l;
+      }
+      if (!info.orientation) {
+        const lLow = l.toLowerCase();
+        if ((lLow === "nord" || lLow === "sud" || lLow === "est" || lLow === "ouest" ||
+            lLow === "nord-est" || lLow === "nord-ouest" || lLow === "sud-est" || lLow === "sud-ouest") &&
+            !lLow.includes("fenêtre")) {
+          info.orientation = l;
+        }
+      }
+      if (!info.yearBuilt && /^\d{4}$/.test(l)) {
+        info.yearBuilt = l;
+      }
+    }
+  }
+
+  if (!info.yearBuilt) {
+    const yearMatch = text.match(/Année construite:\s*\n?\s*(\d{4})/);
+    if (yearMatch) info.yearBuilt = yearMatch[1];
+  }
+
+  if (!info.numFloors) {
+    const floorsIdx = findLineIndex(lines, "Nombre d'étages:");
+    if (floorsIdx >= 0) {
+      for (let i = floorsIdx; i < Math.min(floorsIdx + 10, lines.length); i++) {
+        const l = lines[i].toLowerCase();
+        if (l.includes("étage") && !l.includes("nombre")) {
+          info.numFloors = lines[i];
           break;
         }
       }
     }
   }
 
-  const floorsIdx = findLineIndex(lines, "Nombre d'étages:");
-  if (floorsIdx >= 0) {
-    for (let i = floorsIdx; i < Math.min(floorsIdx + 10, lines.length); i++) {
-      const l = lines[i].toLowerCase();
-      if (l.includes("étage") && !l.includes("nombre")) {
-        info.numFloors = lines[i];
-        break;
-      }
-    }
-  }
-
-  const orientIdx = findLineIndex(lines, "Orientation de la façade:");
-  if (orientIdx >= 0) {
-    for (let i = orientIdx; i < Math.min(orientIdx + 5, lines.length); i++) {
-      const l = lines[i].toLowerCase();
-      if ((l.includes("nord") || l.includes("sud") || l.includes("est") || l.includes("ouest")) && !l.includes("orientation")) {
-        info.orientation = lines[i];
-        break;
+  if (!info.orientation) {
+    const orientIdx = findLineIndex(lines, "Orientation de la façade:");
+    if (orientIdx >= 0) {
+      for (let i = orientIdx; i < Math.min(orientIdx + 10, lines.length); i++) {
+        const l = lines[i].toLowerCase();
+        if ((l.includes("nord") || l.includes("sud") || l.includes("est") || l.includes("ouest")) && !l.includes("orientation") && !l.includes("fenêtre")) {
+          info.orientation = lines[i];
+          break;
+        }
       }
     }
   }
@@ -422,17 +441,32 @@ function parseAnnualEnergy(lines: string[]): MonthlyEnergy | undefined {
   const annuelIdx = findLineIndex(lines, "Annuel", startIdx);
   if (annuelIdx < 0) return undefined;
 
-  const nums = collectNumbers(lines, annuelIdx + 1, 7);
-  if (nums.length >= 7) {
+  const allNums: number[] = [];
+  const annuelLine = lines[annuelIdx];
+  const inlineMatch = annuelLine.match(/Annuel\s+([\d.,]+)/);
+  if (inlineMatch) {
+    allNums.push(parseFloat(inlineMatch[1].replace(",", ".")));
+  }
+
+  for (let i = annuelIdx + 1; i < lines.length && allNums.length < 7; i++) {
+    const cleaned = lines[i].replace(/,/g, ".").replace(/\s/g, "");
+    const val = parseFloat(cleaned);
+    if (!isNaN(val) && /^[-\d.]+$/.test(cleaned)) {
+      allNums.push(val);
+    }
+    if (lines[i] === "Vent." || lines[i].includes("ESTIMATION DES COUTS")) break;
+  }
+
+  if (allNums.length >= 7) {
     return {
       month: "Annuel",
-      heatingPrimary: nums[0],
-      heatingSecondary: nums[1],
-      hotWaterPrimary: nums[2],
-      hotWaterSecondary: nums[3],
-      lightingAppliances: nums[4],
-      ventilation: nums[5],
-      cooling: nums[6],
+      heatingPrimary: allNums[0],
+      heatingSecondary: allNums[1],
+      hotWaterPrimary: allNums[2],
+      hotWaterSecondary: allNums[3],
+      lightingAppliances: allNums[4],
+      ventilation: allNums[5],
+      cooling: allNums[6],
     };
   }
 
@@ -625,6 +659,13 @@ function parseAnnualSummary(text: string, monthlyEnergy: MonthlyEnergy[], annual
   if (summaryValues.heating > 0) heatingMJ = summaryValues.heating;
   if (summaryValues.hotWater > 0) hotWaterMJ = summaryValues.hotWater;
 
+  const kwhSummary = parseKwhSummary(text);
+  if (kwhSummary) {
+    if (kwhSummary.coolingKWh !== undefined) coolingMJ = kwhSummary.coolingKWh * 3.6;
+    if (kwhSummary.appliancesKWh !== undefined) baseLoadsMJ = kwhSummary.appliancesKWh * 3.6;
+    if (kwhSummary.ventilationKWh !== undefined) ventilationMJ = kwhSummary.ventilationKWh * 3.6;
+  }
+
   const ghgMatch = text.match(/(?:[eé]missions de gaz à effet|[eé]missions.*serre)\s*\n?\s*([\d.,]+)\s*tonnes/i);
   let ghgTotal = 0;
   if (ghgMatch) {
@@ -673,6 +714,41 @@ function parseSommaireMJ(text: string): { heating: number; hotWater: number } {
   return { heating, hotWater };
 }
 
+
+function parseKwhSummary(text: string): { heatingKWh?: number; coolingKWh?: number; hotWaterKWh?: number; appliancesKWh?: number; ventilationKWh?: number; totalKWh?: number } | undefined {
+  const lines = text.split("\n");
+  const idx = lines.findIndex(l => l.includes("SOMMAIRE DE LA CONSOMMATION ANNUELLE ESTIMÉE DE L'ÉNERGIE"));
+  if (idx < 0) return undefined;
+
+  let heatingKWh: number | undefined;
+  const kwhValues: number[] = [];
+
+  for (let i = idx; i < Math.min(idx + 30, lines.length); i++) {
+    const l = lines[i].trim();
+    const kwhLineMatch = l.match(/Électricité \(kWh\)\s*([\d.,]+)/);
+    if (kwhLineMatch) {
+      heatingKWh = parseFloat(kwhLineMatch[1].replace(",", "."));
+      continue;
+    }
+    const cleaned = l.replace(",", ".");
+    if (/^[\d.]+$/.test(cleaned) && cleaned.length > 1) {
+      kwhValues.push(parseFloat(cleaned));
+    }
+  }
+
+  if (heatingKWh !== undefined && kwhValues.length >= 4) {
+    return {
+      heatingKWh,
+      coolingKWh: kwhValues[0],
+      hotWaterKWh: kwhValues[1],
+      appliancesKWh: kwhValues[2],
+      ventilationKWh: kwhValues[3],
+      totalKWh: kwhValues.length >= 5 ? kwhValues[4] : undefined,
+    };
+  }
+
+  return undefined;
+}
 
 export function computeComparison(pre: ReportData, post: ReportData) {
   const preSummary = pre.annualSummary || {
