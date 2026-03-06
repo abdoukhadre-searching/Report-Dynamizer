@@ -143,6 +143,12 @@ function hasHotWaterChanged(pre: ReportData, post: ReportData): boolean {
   return preDailyHW !== undefined && postDailyHW !== undefined && preDailyHW !== postDailyHW;
 }
 
+function hasLedImprovement(pre: ReportData, post: ReportData): boolean {
+  const preLighting = pre.interiorLightingKWh;
+  const postLighting = post.interiorLightingKWh;
+  return preLighting !== undefined && postLighting !== undefined && preLighting > postLighting;
+}
+
 export default function ReportTab({ project }: ReportTabProps) {
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
@@ -157,8 +163,9 @@ export default function ReportTab({ project }: ReportTabProps) {
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
   const showHeatingStrategy = hasHeatingChanged(pre, post) && isThermopompeAdded(post);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
+  const showLedStrategy = hasLedImprovement(pre, post);
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
-  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy;
+  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy;
 
   return (
     <div className="space-y-4">
@@ -413,6 +420,15 @@ export default function ReportTab({ project }: ReportTabProps) {
                         </p>
                       </div>
                     )}
+
+                    {showLedStrategy && (
+                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-led">
+                        <h3 className="text-sm font-medium mb-2">Lumiere LED</h3>
+                        <p className="text-sm">
+                          Installation d'au moins 75% de LED dans le batiment.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </section>
 
@@ -589,37 +605,61 @@ export default function ReportTab({ project }: ReportTabProps) {
                   />
                 </div>
 
-                {showHeatingStrategy && (
-                  <div>
-                    <h3 className="text-sm font-semibold mb-2">2. Thermopompes</h3>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Ajout de {thermopompeCount} Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
-                    </p>
-                    <AnnexImageUpload
-                      projectId={project.id}
-                      annexType="thermopompes"
-                      label="Thermopompes"
-                      currentImage={project.annexThermopompesImage}
-                    />
-                  </div>
-                )}
+                {(() => {
+                  let annexNum = 2;
+                  return (
+                    <>
+                      {showHeatingStrategy && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">{annexNum++}. Thermopompes</h3>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Ajout de {thermopompeCount} Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
+                          </p>
+                          <AnnexImageUpload
+                            projectId={project.id}
+                            annexType="thermopompes"
+                            label="Thermopompes"
+                            currentImage={project.annexThermopompesImage}
+                          />
+                        </div>
+                      )}
 
-                {showHotWaterStrategy && (
-                  <div>
-                    <h3 className="text-sm font-semibold mb-2">
-                      {showHeatingStrategy ? "3" : "2"}. Robinetterie faible debit
-                    </h3>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Installation de pommeaux de douches et robinets faible debit (reduction charge eau chaude domestique).
-                    </p>
-                    <AnnexImageUpload
-                      projectId={project.id}
-                      annexType="robineterie"
-                      label="Robinetterie faible debit"
-                      currentImage={project.annexRobineterieImage}
-                    />
-                  </div>
-                )}
+                      {showHotWaterStrategy && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">
+                            {annexNum++}. Robinetterie faible debit
+                          </h3>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Installation de pommeaux de douches et robinets faible debit (reduction charge eau chaude domestique).
+                          </p>
+                          <AnnexImageUpload
+                            projectId={project.id}
+                            annexType="robineterie"
+                            label="Robinetterie faible debit"
+                            currentImage={project.annexRobineterieImage}
+                          />
+                        </div>
+                      )}
+
+                      {showLedStrategy && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">
+                            {annexNum++}. Lumiere LED
+                          </h3>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Installation d'au moins 75% de LED dans le batiment.
+                          </p>
+                          <AnnexImageUpload
+                            projectId={project.id}
+                            annexType="ledLighting"
+                            label="Lumiere LED"
+                            currentImage={project.annexLedLightingImage}
+                          />
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </section>
 

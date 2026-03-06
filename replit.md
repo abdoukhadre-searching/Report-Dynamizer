@@ -35,8 +35,17 @@ Web application for energy efficiency qualification under the APH SELECT program
 ## Parser Details
 - Handles French-language HOT2000 reports from Quebec
 - Line-by-line parsing (labels on separate lines from values)
-- Extracts: building info, Zone 1/3 heat loss, ventilation, monthly energy, annual summary, GHG emissions, hot water, cooling
+- Extracts: building info, Zone 1/3 heat loss, ventilation, monthly energy, annual summary, GHG emissions, hot water, cooling, interior lighting kWh
 - Text variants handled: "chauffeeau"/"chauffe-eau", "SOMMAIRE"/"SOMMAIRE", MJ format parsing
+- Parses "SOMMAIRE DES CHARGES DE BASE" → "Éclairage intérieur" kWh annuel for LED strategy detection
+
+## Dynamic Strategies (Report Tab)
+Strategies in "Stratégies utilisées pour améliorer l'efficacité du bâtiment" are conditionally shown:
+- **Étanchéité**: Shown when PRE/POST air tightness (CAH@50Pa) differs
+- **Système de chauffage**: Shown when heating equipment changes and POST has thermopompe
+- **Pommeaux de douches**: Shown when hot water daily consumption differs
+- **Lumière LED**: Shown when PRE interior lighting kWh > POST interior lighting kWh (from SOMMAIRE DES CHARGES DE BASE)
+Each strategy also gets a corresponding annex section with image upload capability.
 
 ## User Flow
 1. Create a new project

@@ -67,6 +67,7 @@ export function parseHot2000Report(content: string): ReportData {
   const cooling = parseCooling(fullText);
   const hotWater = parseHotWater(fullText);
   const annualSummary = parseAnnualSummary(fullText, monthlyEnergy, annualEnergy);
+  const interiorLightingKWh = parseInteriorLightingKWh(fullText);
 
   return {
     buildingInfo,
@@ -82,6 +83,7 @@ export function parseHot2000Report(content: string): ReportData {
     heating,
     cooling,
     hotWater,
+    interiorLightingKWh,
     annualSummary,
   };
 }
@@ -714,6 +716,34 @@ function parseSommaireMJ(text: string): { heating: number; hotWater: number } {
   return { heating, hotWater };
 }
 
+
+function parseInteriorLightingKWh(text: string): number | undefined {
+  const lines = text.split("\n");
+  const idx = lines.findIndex(l => l.toUpperCase().includes("SOMMAIRE DES CHARGES DE BASE"));
+  if (idx < 0) return undefined;
+
+  for (let i = idx; i < Math.min(idx + 30, lines.length); i++) {
+    const l = lines[i].trim();
+    const match = l.match(/[eé]clairage\s+int[eé]rieur\s+([\d.,]+)/i);
+    if (match) {
+      return parseFloat(match[1].replace(",", "."));
+    }
+  }
+
+  for (let i = idx; i < Math.min(idx + 30, lines.length); i++) {
+    const l = lines[i].trim();
+    if (/[eé]clairage\s+int[eé]rieur/i.test(l)) {
+      for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+        const valLine = lines[j].trim().replace(",", ".");
+        if (/^[\d.]+$/.test(valLine)) {
+          return parseFloat(valLine);
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
 
 function parseKwhSummary(text: string): { heatingKWh?: number; coolingKWh?: number; hotWaterKWh?: number; appliancesKWh?: number; ventilationKWh?: number; totalKWh?: number } | undefined {
   const lines = text.split("\n");

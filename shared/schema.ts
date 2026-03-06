@@ -25,6 +25,7 @@ export const projects = pgTable("projects", {
   annexClimateZoneImage: text("annex_climate_zone_image"),
   annexThermopompesImage: text("annex_thermopompes_image"),
   annexRobineterieImage: text("annex_robineterie_image"),
+  annexLedLightingImage: text("annex_led_lighting_image"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -118,6 +119,7 @@ export const reportDataSchema = z.object({
     dailyConsumption: z.number().optional(),
     annualConsumption: z.number().optional(),
   }).optional(),
+  interiorLightingKWh: z.number().optional(),
   annualSummary: z.object({
     heatingGJ: z.number().optional(),
     hotWaterGJ: z.number().optional(),
