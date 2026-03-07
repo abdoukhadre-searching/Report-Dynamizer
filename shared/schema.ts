@@ -116,6 +116,7 @@ export const reportDataSchema = z.object({
   }).optional(),
   hotWater: z.object({
     type: z.string().optional(),
+    primaryType: z.string().optional(),
     energyFactor: z.number().optional(),
     dailyConsumption: z.number().optional(),
     annualConsumption: z.number().optional(),
@@ -157,6 +158,10 @@ export const comparisonSchema = z.object({
   totalBefore: z.number(),
   totalAfter: z.number(),
   improvementPercent: z.number(),
+  ghsElectricityBefore: z.number(),
+  ghsElectricityAfter: z.number(),
+  ghsGasBefore: z.number(),
+  ghsGasAfter: z.number(),
   ghsBefore: z.number(),
   ghsAfter: z.number(),
   ghsImprovementPercent: z.number(),

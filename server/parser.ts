@@ -66,7 +66,10 @@ export function parseHot2000Report(content: string): ReportData {
   const heating = parseHeating(fullText);
   const cooling = parseCooling(fullText);
   const hotWater = parseHotWater(fullText);
-  const annualSummary = parseAnnualSummary(fullText, monthlyEnergy, annualEnergy);
+  const annualSummary = parseAnnualSummary(
+    fullText, monthlyEnergy, annualEnergy,
+    heating?.primaryType, hotWater?.primaryType
+  );
   const interiorLightingKWh = parseInteriorLightingKWh(fullText);
   const centralVentilation = parseCentralVentilation(fullText);
 
@@ -614,6 +617,24 @@ function parseHotWater(text: string): ReportData["hotWater"] {
   let dailyConsumption: number | undefined;
   let annualConsumption: number | undefined;
   let efficiency: number | undefined;
+  let primaryType: string | undefined;
+
+  const installIdx = lines.findIndex(l =>
+    l.trim().match(/INSTALLATION\s+DU\s+CHAUFFE[\s-]?EAU/i)
+  );
+  if (installIdx >= 0) {
+    for (let i = installIdx; i < Math.min(installIdx + 20, lines.length); i++) {
+      const l = lines[i].trim();
+      if (l.match(/gaz\s*naturel/i)) {
+        primaryType = "Gaz naturel";
+        break;
+      }
+      if (l.match(/[eé]lectricit[eé]/i) && !l.includes("SOMMAIRE")) {
+        primaryType = "Électricité";
+        break;
+      }
+    }
+  }
 
   const hwIdx = lines.findIndex(l => l.includes("SOMMAIRE ANNUEL DE PRODUCTION D'EAU CHAUDE") || l.includes("SOMMAIRE ANNUEL DE PRODUCTION D\u2019EAU CHAUDE"));
   if (hwIdx >= 0) {
@@ -633,10 +654,64 @@ function parseHotWater(text: string): ReportData["hotWater"] {
     }
   }
 
-  return { dailyConsumption, annualConsumption, energyFactor: efficiency };
+  return { dailyConsumption, annualConsumption, energyFactor: efficiency, primaryType };
 }
 
-function parseAnnualSummary(text: string, monthlyEnergy: MonthlyEnergy[], annualEnergy: MonthlyEnergy | undefined): ReportData["annualSummary"] {
+function isGazNaturel(fuelType?: string): boolean {
+  if (!fuelType) return false;
+  return /gaz\s*naturel/i.test(fuelType);
+}
+
+function calculateGES(
+  heatingMJ: number,
+  hotWaterMJ: number,
+  baseLoadsMJ: number,
+  ventilationMJ: number,
+  coolingMJ: number,
+  heatingFuelType?: string,
+  hotWaterFuelType?: string
+): { ghgElectricity: number; ghgGas: number; ghgTotal: number } {
+  const MJ_PER_M3_GAZ = 37.89;
+  const GCO2_PER_M3_GAZ = 1889.32;
+  const GCO2_PER_KWH_ELEC = 2.040;
+
+  let gasMJ = 0;
+  let electricMJ = 0;
+
+  if (isGazNaturel(heatingFuelType)) {
+    gasMJ += heatingMJ;
+  } else {
+    electricMJ += heatingMJ;
+  }
+
+  if (isGazNaturel(hotWaterFuelType)) {
+    gasMJ += hotWaterMJ;
+  } else {
+    electricMJ += hotWaterMJ;
+  }
+
+  electricMJ += baseLoadsMJ + ventilationMJ + coolingMJ;
+
+  const gasM3 = gasMJ / MJ_PER_M3_GAZ;
+  const ghgGas = (gasM3 * GCO2_PER_M3_GAZ) / 1000000;
+
+  const electricKWh = electricMJ / 3.6;
+  const ghgElectricity = (electricKWh * GCO2_PER_KWH_ELEC) / 1000000;
+
+  return {
+    ghgElectricity,
+    ghgGas,
+    ghgTotal: ghgElectricity + ghgGas,
+  };
+}
+
+function parseAnnualSummary(
+  text: string,
+  monthlyEnergy: MonthlyEnergy[],
+  annualEnergy: MonthlyEnergy | undefined,
+  heatingFuelType?: string,
+  hotWaterFuelType?: string
+): ReportData["annualSummary"] {
   let heatingMJ = 0;
   let hotWaterMJ = 0;
   let baseLoadsMJ = 0;
@@ -659,22 +734,13 @@ function parseAnnualSummary(text: string, monthlyEnergy: MonthlyEnergy[], annual
     }
   }
 
-  const summaryValues = parseSommaireMJ(text);
-  if (summaryValues.heating > 0) heatingMJ = summaryValues.heating;
-  if (summaryValues.hotWater > 0) hotWaterMJ = summaryValues.hotWater;
+  if (!annualEnergy && monthlyEnergy.length === 0) {
+    const summaryValues = parseSommaireMJ(text);
+    if (summaryValues.heating > 0) heatingMJ = summaryValues.heating;
+    if (summaryValues.hotWater > 0) hotWaterMJ = summaryValues.hotWater;
+  }
 
   const kwhSummary = parseKwhSummary(text);
-  if (kwhSummary) {
-    if (kwhSummary.coolingKWh !== undefined) coolingMJ = kwhSummary.coolingKWh * 3.6;
-    if (kwhSummary.appliancesKWh !== undefined) baseLoadsMJ = kwhSummary.appliancesKWh * 3.6;
-    if (kwhSummary.ventilationKWh !== undefined) ventilationMJ = kwhSummary.ventilationKWh * 3.6;
-  }
-
-  const ghgMatch = text.match(/(?:[eé]missions de gaz à effet|[eé]missions.*serre)\s*\n?\s*([\d.,]+)\s*tonnes/i);
-  let ghgTotal = 0;
-  if (ghgMatch) {
-    ghgTotal = parseFloat(ghgMatch[1].replace(",", "."));
-  }
 
   const heatingGJ = heatingMJ / 1000;
   const hotWaterGJ = hotWaterMJ / 1000;
@@ -683,6 +749,32 @@ function parseAnnualSummary(text: string, monthlyEnergy: MonthlyEnergy[], annual
   const coolingGJ = coolingMJ / 1000;
   const totalGJ = heatingGJ + hotWaterGJ + baseLoadsGJ + ventilationGJ + coolingGJ;
 
+  let ghgElectricity = 0;
+  let ghgGas = 0;
+  let ghgTotal = 0;
+
+  if (kwhSummary && (kwhSummary.gasHeatingM3 !== undefined || kwhSummary.heatingKWh !== undefined)) {
+    const MJ_PER_M3_GAZ = 37.89;
+    const GCO2_PER_M3_GAZ = 1889.32;
+    const GCO2_PER_KWH_ELEC = 2.040;
+
+    const totalElecKWh = (kwhSummary.totalKWh ?? 0);
+    ghgElectricity = (totalElecKWh * GCO2_PER_KWH_ELEC) / 1000000;
+
+    const totalGasM3 = kwhSummary.gasTotalM3 ?? 0;
+    ghgGas = (totalGasM3 * GCO2_PER_M3_GAZ) / 1000000;
+
+    ghgTotal = ghgElectricity + ghgGas;
+  } else {
+    const result = calculateGES(
+      heatingMJ, hotWaterMJ, baseLoadsMJ, ventilationMJ, coolingMJ,
+      heatingFuelType, hotWaterFuelType
+    );
+    ghgElectricity = result.ghgElectricity;
+    ghgGas = result.ghgGas;
+    ghgTotal = result.ghgTotal;
+  }
+
   return {
     heatingGJ,
     hotWaterGJ,
@@ -690,8 +782,8 @@ function parseAnnualSummary(text: string, monthlyEnergy: MonthlyEnergy[], annual
     ventilationGJ,
     coolingGJ,
     totalGJ,
-    ghgElectricity: ghgTotal,
-    ghgGas: 0,
+    ghgElectricity,
+    ghgGas,
     ghgTotal,
   };
 }
@@ -847,39 +939,72 @@ function parseInteriorLightingKWh(text: string): number | undefined {
   return undefined;
 }
 
-function parseKwhSummary(text: string): { heatingKWh?: number; coolingKWh?: number; hotWaterKWh?: number; appliancesKWh?: number; ventilationKWh?: number; totalKWh?: number } | undefined {
+function parseKwhSummary(text: string): { heatingKWh?: number; coolingKWh?: number; hotWaterKWh?: number; appliancesKWh?: number; ventilationKWh?: number; totalKWh?: number; gasHeatingM3?: number; gasCoolingM3?: number; gasHotWaterM3?: number; gasAppliancesM3?: number; gasVentilationM3?: number; gasTotalM3?: number } | undefined {
   const lines = text.split("\n");
   const idx = lines.findIndex(l => l.includes("SOMMAIRE DE LA CONSOMMATION ANNUELLE ESTIMÉE DE L'ÉNERGIE"));
   if (idx < 0) return undefined;
 
   let heatingKWh: number | undefined;
+  let gasHeatingM3: number | undefined;
   const kwhValues: number[] = [];
+  const gasValues: number[] = [];
+  let collectingGas = false;
+  let collectingElec = false;
 
-  for (let i = idx; i < Math.min(idx + 30, lines.length); i++) {
+  for (let i = idx; i < Math.min(idx + 50, lines.length); i++) {
     const l = lines[i].trim();
-    const kwhLineMatch = l.match(/Électricité \(kWh\)\s*([\d.,]+)/);
-    if (kwhLineMatch) {
-      heatingKWh = parseFloat(kwhLineMatch[1].replace(",", "."));
+    if (l.includes("ESTIMATION DES COUTS") || l.includes("ESTIMATION DES COÛTS")) break;
+
+    const gasLineMatch = l.match(/Gaz\s+naturel\s+\(m3\)\s*([\d.,]+)/i);
+    if (gasLineMatch) {
+      gasHeatingM3 = parseFloat(gasLineMatch[1].replace(",", "."));
+      collectingGas = true;
+      collectingElec = false;
       continue;
     }
+
+    const kwhLineMatch = l.match(/[ÉE]lectricit[eé]\s+\(kWh\)\s*([\d.,]+)/i);
+    if (kwhLineMatch) {
+      heatingKWh = parseFloat(kwhLineMatch[1].replace(",", "."));
+      collectingElec = true;
+      collectingGas = false;
+      continue;
+    }
+
     const cleaned = l.replace(",", ".");
     if (/^[\d.]+$/.test(cleaned) && cleaned.length > 1) {
-      kwhValues.push(parseFloat(cleaned));
+      if (collectingElec) {
+        kwhValues.push(parseFloat(cleaned));
+      } else if (collectingGas) {
+        gasValues.push(parseFloat(cleaned));
+      }
     }
   }
 
+  const result: any = {};
+  let hasData = false;
+
   if (heatingKWh !== undefined && kwhValues.length >= 4) {
-    return {
-      heatingKWh,
-      coolingKWh: kwhValues[0],
-      hotWaterKWh: kwhValues[1],
-      appliancesKWh: kwhValues[2],
-      ventilationKWh: kwhValues[3],
-      totalKWh: kwhValues.length >= 5 ? kwhValues[4] : undefined,
-    };
+    result.heatingKWh = heatingKWh;
+    result.coolingKWh = kwhValues[0];
+    result.hotWaterKWh = kwhValues[1];
+    result.appliancesKWh = kwhValues[2];
+    result.ventilationKWh = kwhValues[3];
+    result.totalKWh = kwhValues.length >= 5 ? kwhValues[4] : undefined;
+    hasData = true;
   }
 
-  return undefined;
+  if (gasHeatingM3 !== undefined && gasValues.length >= 4) {
+    result.gasHeatingM3 = gasHeatingM3;
+    result.gasCoolingM3 = gasValues[0];
+    result.gasHotWaterM3 = gasValues[1];
+    result.gasAppliancesM3 = gasValues[2];
+    result.gasVentilationM3 = gasValues[3];
+    result.gasTotalM3 = gasValues.length >= 5 ? gasValues[4] : undefined;
+    hasData = true;
+  }
+
+  return hasData ? result : undefined;
 }
 
 export function computeComparison(pre: ReportData, post: ReportData) {
@@ -898,6 +1023,10 @@ export function computeComparison(pre: ReportData, post: ReportData) {
     ? ((totalBefore - totalAfter) / totalBefore) * 100
     : 0;
 
+  const ghsElectricityBefore = preSummary.ghgElectricity || 0;
+  const ghsElectricityAfter = postSummary.ghgElectricity || 0;
+  const ghsGasBefore = preSummary.ghgGas || 0;
+  const ghsGasAfter = postSummary.ghgGas || 0;
   const ghsBefore = preSummary.ghgTotal || 0;
   const ghsAfter = postSummary.ghgTotal || 0;
   const ghsImprovementPercent = ghsBefore > 0
@@ -918,6 +1047,10 @@ export function computeComparison(pre: ReportData, post: ReportData) {
     totalBefore,
     totalAfter,
     improvementPercent,
+    ghsElectricityBefore,
+    ghsElectricityAfter,
+    ghsGasBefore,
+    ghsGasAfter,
     ghsBefore,
     ghsAfter,
     ghsImprovementPercent,

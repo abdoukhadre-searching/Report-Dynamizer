@@ -155,6 +155,14 @@ function hasVrcInstallation(post: ReportData): boolean {
   return cv.sensibleEfficiency0C !== undefined || cv.sensibleEfficiencyMinus25C !== undefined;
 }
 
+function hasGasConversion(pre: ReportData, post: ReportData): boolean {
+  const preHeatingGas = /gaz\s*naturel/i.test(pre.heating?.primaryType || "");
+  const preHotWaterGas = /gaz\s*naturel/i.test(pre.hotWater?.primaryType || "");
+  const postHeatingGas = /gaz\s*naturel/i.test(post.heating?.primaryType || "");
+  const postHotWaterGas = /gaz\s*naturel/i.test(post.hotWater?.primaryType || "");
+  return (preHeatingGas && !postHeatingGas) || (preHotWaterGas && !postHotWaterGas);
+}
+
 export default function ReportTab({ project }: ReportTabProps) {
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
@@ -171,8 +179,9 @@ export default function ReportTab({ project }: ReportTabProps) {
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post);
+  const showGasConversionStrategy = hasGasConversion(pre, post);
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
-  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy || showVrcStrategy;
+  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy || showVrcStrategy || showGasConversionStrategy;
 
   return (
     <div className="space-y-4">
@@ -447,6 +456,20 @@ export default function ReportTab({ project }: ReportTabProps) {
                         </p>
                       </div>
                     )}
+
+                    {showGasConversionStrategy && (
+                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-gas-conversion">
+                        <h3 className="text-sm font-medium mb-2">Conversion Gaz Naturel vers Electricite</h3>
+                        <p className="text-sm">
+                          {/gaz\s*naturel/i.test(pre.hotWater?.primaryType || "") && (
+                            <>Le systeme actuel de production d'eau chaude domestique au gaz naturel sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
+                          )}
+                          {/gaz\s*naturel/i.test(pre.heating?.primaryType || "") && !(/gaz\s*naturel/i.test(post.heating?.primaryType || "")) && (
+                            <>Le systeme de chauffage au gaz naturel sera converti a l'electricite.</>
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </section>
 
@@ -470,60 +493,60 @@ export default function ReportTab({ project }: ReportTabProps) {
                 <TableBody>
                   <TableRow>
                     <TableCell className="text-xs">Chauffage des locaux</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.heatingBefore.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.heatingAfter.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.heatingBefore ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.heatingAfter ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right">
-                      {comparison.heatingBefore > 0
-                        ? ((1 - comparison.heatingAfter / comparison.heatingBefore) * 100).toFixed(1)
+                      {(comparison.heatingBefore ?? 0) > 0
+                        ? ((1 - (comparison.heatingAfter ?? 0) / comparison.heatingBefore) * 100).toFixed(1)
                         : "0.0"}%
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-xs">Eau chaude domestique</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.hotWaterBefore.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.hotWaterAfter.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.hotWaterBefore ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.hotWaterAfter ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right">
-                      {comparison.hotWaterBefore > 0
-                        ? ((1 - comparison.hotWaterAfter / comparison.hotWaterBefore) * 100).toFixed(1)
+                      {(comparison.hotWaterBefore ?? 0) > 0
+                        ? ((1 - (comparison.hotWaterAfter ?? 0) / comparison.hotWaterBefore) * 100).toFixed(1)
                         : "0.0"}%
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-xs">Charges electriques de base</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.baseLoadsBefore.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.baseLoadsAfter.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.baseLoadsBefore ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.baseLoadsAfter ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right">
-                      {comparison.baseLoadsBefore > 0
-                        ? ((1 - comparison.baseLoadsAfter / comparison.baseLoadsBefore) * 100).toFixed(1)
+                      {(comparison.baseLoadsBefore ?? 0) > 0
+                        ? ((1 - (comparison.baseLoadsAfter ?? 0) / comparison.baseLoadsBefore) * 100).toFixed(1)
                         : "0.0"}%
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-xs">Electricite pour ventilation</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.ventilationBefore.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.ventilationAfter.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.ventilationBefore ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.ventilationAfter ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right">
-                      {comparison.ventilationBefore > 0
-                        ? ((1 - comparison.ventilationAfter / comparison.ventilationBefore) * 100).toFixed(1)
+                      {(comparison.ventilationBefore ?? 0) > 0
+                        ? ((1 - (comparison.ventilationAfter ?? 0) / comparison.ventilationBefore) * 100).toFixed(1)
                         : "0.0"}%
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-xs">Climatisation des locaux</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.coolingBefore.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.coolingAfter.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.coolingBefore ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.coolingAfter ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right">
-                      {comparison.coolingBefore > 0
-                        ? ((1 - comparison.coolingAfter / comparison.coolingBefore) * 100).toFixed(1)
+                      {(comparison.coolingBefore ?? 0) > 0
+                        ? ((1 - (comparison.coolingAfter ?? 0) / comparison.coolingBefore) * 100).toFixed(1)
                         : "0.0"}%
                     </TableCell>
                   </TableRow>
                   <TableRow className="font-semibold border-t-2">
                     <TableCell className="text-xs">Depenses annuelles TOTALES</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.totalBefore.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.totalAfter.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.totalBefore ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.totalAfter ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right">
-                      <Badge variant="default">{comparison.improvementPercent.toFixed(1)}%</Badge>
+                      <Badge variant="default">{(comparison.improvementPercent ?? 0).toFixed(1)}%</Badge>
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -548,18 +571,26 @@ export default function ReportTab({ project }: ReportTabProps) {
                 <TableBody>
                   <TableRow>
                     <TableCell className="text-xs">GES Electricite</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.ghsBefore.toFixed(5)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.ghsAfter.toFixed(5)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.ghsElectricityBefore ?? 0).toFixed(5)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.ghsElectricityAfter ?? 0).toFixed(5)}</TableCell>
                     <TableCell className="text-xs text-right">
-                      <Badge variant="default">{comparison.ghsImprovementPercent.toFixed(1)}%</Badge>
                     </TableCell>
                   </TableRow>
+                  {((comparison.ghsGasBefore ?? 0) > 0 || (comparison.ghsGasAfter ?? 0) > 0) && (
+                    <TableRow>
+                      <TableCell className="text-xs">GES Gaz naturel</TableCell>
+                      <TableCell className="text-xs text-right font-mono">{(comparison.ghsGasBefore ?? 0).toFixed(5)}</TableCell>
+                      <TableCell className="text-xs text-right font-mono">{(comparison.ghsGasAfter ?? 0).toFixed(5)}</TableCell>
+                      <TableCell className="text-xs text-right">
+                      </TableCell>
+                    </TableRow>
+                  )}
                   <TableRow className="font-semibold">
                     <TableCell className="text-xs">GES TOTAL</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.ghsBefore.toFixed(5)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.ghsAfter.toFixed(5)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.ghsBefore ?? 0).toFixed(5)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{(comparison.ghsAfter ?? 0).toFixed(5)}</TableCell>
                     <TableCell className="text-xs text-right">
-                      <Badge variant="default">{comparison.ghsImprovementPercent.toFixed(1)}%</Badge>
+                      <Badge variant="default">{(comparison.ghsImprovementPercent ?? 0).toFixed(1)}%</Badge>
                     </TableCell>
                   </TableRow>
                 </TableBody>

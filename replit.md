@@ -38,6 +38,10 @@ Web application for energy efficiency qualification under the APH SELECT program
 - Extracts: building info, Zone 1/3 heat loss, ventilation, monthly energy, annual summary, GHG emissions, hot water, cooling, interior lighting kWh
 - Text variants handled: "chauffeeau"/"chauffe-eau", "SOMMAIRE"/"SOMMAIRE", MJ format parsing
 - Parses "SOMMAIRE DES CHARGES DE BASE" → "Éclairage intérieur" kWh annuel for LED strategy detection
+- Parses fuel types: "Gaz naturel" or "Électricité" from INSTALLATION DE CHAUFFAGE and INSTALLATION DU CHAUFFE-EAU sections
+- Parses "SOMMAIRE DE LA CONSOMMATION ANNUELLE ESTIMÉE DE L'ÉNERGIE" for both gas (m³) and electricity (kWh) breakdowns separately
+- GES calculation: Gas = m³ × 1889.32 gCO2/m³ / 1,000,000; Electricity = kWh × 2.040 gCO2/kWh / 1,000,000 (Quebec 2019 factors)
+- When kwhSummary has both gas and electric totals, uses those directly; otherwise falls back to MJ-based conversion (1 m³ gas = 37.89 MJ)
 
 ## Dynamic Strategies (Report Tab)
 Strategies in "Stratégies utilisées pour améliorer l'efficacité du bâtiment" are conditionally shown:
@@ -46,7 +50,8 @@ Strategies in "Stratégies utilisées pour améliorer l'efficacité du bâtiment
 - **Pommeaux de douches**: Shown when hot water daily consumption differs
 - **Lumière LED**: Shown when PRE interior lighting kWh > POST interior lighting kWh (from SOMMAIRE DES CHARGES DE BASE)
 - **VRC (Ventilation avec récupération de chaleur)**: Shown when POST report contains "INSTALLATION DE VENTILATION CENTRALE" section; extracts sensible efficiency at 0°C and -25°C
-Each strategy also gets a corresponding annex section with image upload capability.
+- **Conversion Gaz Naturel vers Électricité**: Shown when PRE has gas (heating or hot water) and POST has electricity for same
+Each strategy also gets a corresponding annex section with image upload capability (except LED which has no annex).
 
 ## User Flow
 1. Create a new project

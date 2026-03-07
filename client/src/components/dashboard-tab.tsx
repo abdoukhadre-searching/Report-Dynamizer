@@ -152,7 +152,7 @@ export default function DashboardTab({ project }: DashboardTabProps) {
               <p className="text-xs text-muted-foreground">Total AVANT</p>
             </div>
             <p className="text-2xl font-semibold tabular-nums" data-testid="text-total-before">
-              {comparison.totalBefore.toFixed(2)}
+              {(comparison.totalBefore ?? 0).toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground">GJ/an</p>
           </CardContent>
@@ -164,7 +164,7 @@ export default function DashboardTab({ project }: DashboardTabProps) {
               <p className="text-xs text-muted-foreground">Total APRES</p>
             </div>
             <p className="text-2xl font-semibold tabular-nums" data-testid="text-total-after">
-              {comparison.totalAfter.toFixed(2)}
+              {(comparison.totalAfter ?? 0).toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground">GJ/an</p>
           </CardContent>
@@ -176,7 +176,7 @@ export default function DashboardTab({ project }: DashboardTabProps) {
               <p className="text-xs text-muted-foreground">Amelioration</p>
             </div>
             <p className="text-2xl font-semibold tabular-nums" data-testid="text-improvement">
-              {comparison.improvementPercent.toFixed(1)}%
+              {(comparison.improvementPercent ?? 0).toFixed(1)}%
             </p>
             <p className="text-xs text-muted-foreground">Reduction energie</p>
           </CardContent>
@@ -188,7 +188,7 @@ export default function DashboardTab({ project }: DashboardTabProps) {
               <p className="text-xs text-muted-foreground">GES Reduction</p>
             </div>
             <p className="text-2xl font-semibold tabular-nums" data-testid="text-ghs-improvement">
-              {comparison.ghsImprovementPercent.toFixed(1)}%
+              {(comparison.ghsImprovementPercent ?? 0).toFixed(1)}%
             </p>
             <p className="text-xs text-muted-foreground">T/an CO2</p>
           </CardContent>
@@ -346,10 +346,10 @@ export default function DashboardTab({ project }: DashboardTabProps) {
             <TableBody>
               <TableRow>
                 <TableCell className="text-xs">GES Electricite</TableCell>
-                <TableCell className="text-xs text-right font-mono">{comparison.ghsBefore.toFixed(3)}</TableCell>
-                <TableCell className="text-xs text-right font-mono">{comparison.ghsAfter.toFixed(3)}</TableCell>
+                <TableCell className="text-xs text-right font-mono">{(comparison.ghsBefore ?? 0).toFixed(3)}</TableCell>
+                <TableCell className="text-xs text-right font-mono">{(comparison.ghsAfter ?? 0).toFixed(3)}</TableCell>
                 <TableCell className="text-xs text-right">
-                  <Badge variant="secondary">{comparison.ghsImprovementPercent.toFixed(1)}%</Badge>
+                  <Badge variant="secondary">{(comparison.ghsImprovementPercent ?? 0).toFixed(1)}%</Badge>
                 </TableCell>
               </TableRow>
             </TableBody>
