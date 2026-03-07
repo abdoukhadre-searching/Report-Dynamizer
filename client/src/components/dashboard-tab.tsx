@@ -218,7 +218,7 @@ export default function DashboardTab({ project }: DashboardTabProps) {
                   </div>
                   <div className="pt-2 border-t">
                     <Badge variant="secondary" className="text-xs">
-                      -{reduction}%
+                      {reduction}%
                     </Badge>
                   </div>
                 </div>
