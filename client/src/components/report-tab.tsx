@@ -455,7 +455,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                             }}
                             data-testid="link-voir-details-robineterie"
                           >
-                            (Voir détails)
+                            [Voir détails]
                           </a>
                         </p>
                       </div>
