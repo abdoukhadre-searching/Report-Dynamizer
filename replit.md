@@ -45,6 +45,7 @@ Strategies in "Stratégies utilisées pour améliorer l'efficacité du bâtiment
 - **Système de chauffage**: Shown when heating equipment changes and POST has thermopompe
 - **Pommeaux de douches**: Shown when hot water daily consumption differs
 - **Lumière LED**: Shown when PRE interior lighting kWh > POST interior lighting kWh (from SOMMAIRE DES CHARGES DE BASE)
+- **VRC (Ventilation avec récupération de chaleur)**: Shown when POST report contains "INSTALLATION DE VENTILATION CENTRALE" section; extracts sensible efficiency at 0°C and -25°C
 Each strategy also gets a corresponding annex section with image upload capability.
 
 ## User Flow

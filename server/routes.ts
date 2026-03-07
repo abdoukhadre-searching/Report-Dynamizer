@@ -206,7 +206,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Image file is required" });
       }
       const annexType = req.body.annexType;
-      const validTypes = ["climateZone", "thermopompes", "robineterie", "ledLighting"];
+      const validTypes = ["climateZone", "thermopompes", "robineterie", "ledLighting", "vrc"];
       if (!validTypes.includes(annexType)) {
         return res.status(400).json({ message: "Invalid annex type" });
       }
@@ -227,6 +227,7 @@ export async function registerRoutes(
       else if (annexType === "thermopompes") updateData.annexThermopompesImage = imageUrl;
       else if (annexType === "robineterie") updateData.annexRobineterieImage = imageUrl;
       else if (annexType === "ledLighting") updateData.annexLedLightingImage = imageUrl;
+      else if (annexType === "vrc") updateData.annexVrcImage = imageUrl;
 
       const updated = await storage.updateProject(req.params.id, updateData);
       res.json(updated);

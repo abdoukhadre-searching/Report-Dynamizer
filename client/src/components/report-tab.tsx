@@ -149,6 +149,12 @@ function hasLedImprovement(pre: ReportData, post: ReportData): boolean {
   return preLighting !== undefined && postLighting !== undefined && preLighting > postLighting;
 }
 
+function hasVrcInstallation(post: ReportData): boolean {
+  if (!post.centralVentilation) return false;
+  const cv = post.centralVentilation;
+  return cv.sensibleEfficiency0C !== undefined || cv.sensibleEfficiencyMinus25C !== undefined;
+}
+
 export default function ReportTab({ project }: ReportTabProps) {
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
@@ -164,8 +170,9 @@ export default function ReportTab({ project }: ReportTabProps) {
   const showHeatingStrategy = hasHeatingChanged(pre, post) && isThermopompeAdded(post);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showLedStrategy = hasLedImprovement(pre, post);
+  const showVrcStrategy = hasVrcInstallation(post);
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
-  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy;
+  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy || showVrcStrategy;
 
   return (
     <div className="space-y-4">
@@ -429,6 +436,17 @@ export default function ReportTab({ project }: ReportTabProps) {
                         </p>
                       </div>
                     )}
+
+                    {showVrcStrategy && (
+                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-vrc">
+                        <h3 className="text-sm font-medium mb-2">Ventilation avec recuperation de chaleur (VRC)</h3>
+                        <p className="text-sm">
+                          Installation de systemes de ventilation avec recuperation de chaleur (VRC) dans chaque logement, presentant une efficacite de recuperation de chaleur sensible d'environ{" "}
+                          <span className="font-semibold">{post.centralVentilation?.sensibleEfficiency0C ?? "—"} %</span> a 0 °C et{" "}
+                          <span className="font-semibold">{post.centralVentilation?.sensibleEfficiencyMinus25C ?? "—"} %</span> a -25 °C, afin d'ameliorer la qualite de l'air interieur tout en reduisant les pertes de chaleur liees au renouvellement de l'air.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </section>
 
@@ -654,6 +672,23 @@ export default function ReportTab({ project }: ReportTabProps) {
                             annexType="ledLighting"
                             label="Lumiere LED"
                             currentImage={project.annexLedLightingImage}
+                          />
+                        </div>
+                      )}
+
+                      {showVrcStrategy && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">
+                            {annexNum++}. Ventilation avec recuperation de chaleur (VRC)
+                          </h3>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Installation de systemes de ventilation avec recuperation de chaleur (VRC).
+                          </p>
+                          <AnnexImageUpload
+                            projectId={project.id}
+                            annexType="vrc"
+                            label="VRC"
+                            currentImage={project.annexVrcImage}
                           />
                         </div>
                       )}

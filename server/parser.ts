@@ -68,6 +68,7 @@ export function parseHot2000Report(content: string): ReportData {
   const hotWater = parseHotWater(fullText);
   const annualSummary = parseAnnualSummary(fullText, monthlyEnergy, annualEnergy);
   const interiorLightingKWh = parseInteriorLightingKWh(fullText);
+  const centralVentilation = parseCentralVentilation(fullText);
 
   return {
     buildingInfo,
@@ -84,6 +85,7 @@ export function parseHot2000Report(content: string): ReportData {
     cooling,
     hotWater,
     interiorLightingKWh,
+    centralVentilation,
     annualSummary,
   };
 }
@@ -716,6 +718,88 @@ function parseSommaireMJ(text: string): { heating: number; hotWater: number } {
   return { heating, hotWater };
 }
 
+
+function parseCentralVentilation(text: string): ReportData["centralVentilation"] | undefined {
+  const lines = text.split("\n");
+  const idx = lines.findIndex(l => l.toUpperCase().includes("INSTALLATION DE VENTILATION CENTRALE"));
+  if (idx < 0) return undefined;
+
+  let type: string | undefined;
+  let sensibleEfficiency0C: number | undefined;
+  let sensibleEfficiencyMinus25C: number | undefined;
+
+  for (let i = idx; i < Math.min(idx + 50, lines.length); i++) {
+    const l = lines[i].trim();
+
+    if (/type\s+d.install/i.test(l)) {
+      const match = l.match(/type\s+d.install[^:]*:\s*(.+)/i);
+      if (match) {
+        type = match[1].trim();
+      } else {
+        for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+          const vl = lines[j].trim();
+          if (vl.length > 0 && vl.length < 30) {
+            type = vl;
+            break;
+          }
+        }
+      }
+    }
+
+    if (/r[eé]cup[eé]r.*chaleur\s+sensible/i.test(l)) {
+      const hasTemp0 = /0[.,]0\s*°?\s*C/i.test(l) && !/[-−]/.test(l.replace(/r[eé]cup[eé]r/i, "").split("0.0")[0] || "");
+      const hasTempM25 = /[-−]\s*25[.,]0\s*°?\s*C/i.test(l);
+
+      const pctMatch = l.match(/([\d]+)\s*%/);
+      let pctVal: number | undefined;
+      if (pctMatch) {
+        pctVal = parseInt(pctMatch[1], 10);
+      }
+
+      if (hasTemp0 && pctVal !== undefined && sensibleEfficiency0C === undefined) {
+        sensibleEfficiency0C = pctVal;
+      } else if (hasTempM25 && pctVal !== undefined && sensibleEfficiencyMinus25C === undefined) {
+        sensibleEfficiencyMinus25C = pctVal;
+      } else if (!hasTemp0 && !hasTempM25) {
+        if (pctVal !== undefined) {
+          for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+            const nl = lines[j].trim();
+            if (/0[.,]0\s*°?\s*C/i.test(nl) && !/[-−]/.test(nl.split("0")[0] || "") && sensibleEfficiency0C === undefined) {
+              sensibleEfficiency0C = pctVal;
+              break;
+            }
+            if (/[-−]\s*25[.,]0\s*°?\s*C/i.test(nl) && sensibleEfficiencyMinus25C === undefined) {
+              sensibleEfficiencyMinus25C = pctVal;
+              break;
+            }
+          }
+        } else {
+          for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+            const nl = lines[j].trim();
+            const pm = nl.match(/([\d]+)\s*%/);
+            if (pm) {
+              const val = parseInt(pm[1], 10);
+              for (let k = j + 1; k < Math.min(j + 3, lines.length); k++) {
+                const tl = lines[k].trim();
+                if (/0[.,]0\s*°?\s*C/i.test(tl) && !/[-−]/.test(tl.split("0")[0] || "") && sensibleEfficiency0C === undefined) {
+                  sensibleEfficiency0C = val;
+                  break;
+                }
+                if (/[-−]\s*25[.,]0\s*°?\s*C/i.test(tl) && sensibleEfficiencyMinus25C === undefined) {
+                  sensibleEfficiencyMinus25C = val;
+                  break;
+                }
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return { type, sensibleEfficiency0C, sensibleEfficiencyMinus25C };
+}
 
 function parseInteriorLightingKWh(text: string): number | undefined {
   const lines = text.split("\n");
