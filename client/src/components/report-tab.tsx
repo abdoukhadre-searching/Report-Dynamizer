@@ -155,12 +155,24 @@ function hasVrcInstallation(post: ReportData): boolean {
   return cv.sensibleEfficiency0C !== undefined || cv.sensibleEfficiencyMinus25C !== undefined;
 }
 
-function hasGasConversion(pre: ReportData, post: ReportData): boolean {
-  const preHeatingGas = /gaz\s*naturel/i.test(pre.heating?.primaryType || "");
-  const preHotWaterGas = /gaz\s*naturel/i.test(pre.hotWater?.primaryType || "");
-  const postHeatingGas = /gaz\s*naturel/i.test(post.heating?.primaryType || "");
-  const postHotWaterGas = /gaz\s*naturel/i.test(post.hotWater?.primaryType || "");
-  return (preHeatingGas && !postHeatingGas) || (preHotWaterGas && !postHotWaterGas);
+function isFossilFuel(fuelType?: string): boolean {
+  if (!fuelType) return false;
+  return /gaz\s*naturel|mazout|propane|diesel|butane|charbon|kérosène|bois|granules|lignite|essence/i.test(fuelType);
+}
+
+function hasFossilConversion(pre: ReportData, post: ReportData): boolean {
+  const preHeatingFossil = isFossilFuel(pre.heating?.primaryType);
+  const preHotWaterFossil = isFossilFuel(pre.hotWater?.primaryType);
+  const postHeatingFossil = isFossilFuel(post.heating?.primaryType);
+  const postHotWaterFossil = isFossilFuel(post.hotWater?.primaryType);
+  return (preHeatingFossil && !postHeatingFossil) || (preHotWaterFossil && !postHotWaterFossil);
+}
+
+function getPreFossilFuelLabel(pre: ReportData): string {
+  const types: string[] = [];
+  if (isFossilFuel(pre.heating?.primaryType)) types.push(pre.heating!.primaryType!);
+  if (isFossilFuel(pre.hotWater?.primaryType) && !types.includes(pre.hotWater!.primaryType!)) types.push(pre.hotWater!.primaryType!);
+  return types.length > 0 ? types.join(" / ") : "Combustible fossile";
 }
 
 export default function ReportTab({ project }: ReportTabProps) {
@@ -180,7 +192,7 @@ export default function ReportTab({ project }: ReportTabProps) {
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post);
-  const showGasConversionStrategy = hasGasConversion(pre, post);
+  const showGasConversionStrategy = hasFossilConversion(pre, post);
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
   const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy || showVrcStrategy || showGasConversionStrategy;
 
@@ -460,7 +472,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
                     {showGasConversionStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-gas-conversion">
-                        <h3 className="text-sm font-medium mb-2">Conversion Gaz Naturel vers Electricite</h3>
+                        <h3 className="text-sm font-medium mb-2">Conversion {getPreFossilFuelLabel(pre)} vers Electricite</h3>
                         <div className="space-y-3">
                           {gasConversionOptions.option1 && (
                             <div className="relative group">
@@ -475,11 +487,11 @@ export default function ReportTab({ project }: ReportTabProps) {
                               </Button>
                               {gasConversionOptions.option2 && <p className="text-sm font-medium mb-1">Option 1 :</p>}
                               <p className="text-sm">
-                                {/gaz\s*naturel/i.test(pre.hotWater?.primaryType || "") && (
-                                  <>Le systeme actuel de production d'eau chaude domestique au gaz naturel sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
+                                {isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && (
+                                  <>Le systeme actuel de production d'eau chaude domestique au {pre.hotWater?.primaryType?.toLowerCase()} sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
                                 )}
-                                {/gaz\s*naturel/i.test(pre.heating?.primaryType || "") && !(/gaz\s*naturel/i.test(post.heating?.primaryType || "")) && (
-                                  <>Le systeme de chauffage au gaz naturel sera converti a l'electricite.</>
+                                {isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType) && (
+                                  <>Le systeme de chauffage au {pre.heating?.primaryType?.toLowerCase()} sera converti a l'electricite.</>
                                 )}
                               </p>
                             </div>
@@ -497,7 +509,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                               </Button>
                               {gasConversionOptions.option1 && <p className="text-sm font-medium mb-1">Option 2 :</p>}
                               <p className="text-sm">
-                                Remplacement de la chaudiere au gaz naturel existante par une chaudiere electrique, permettant d'eliminer l'utilisation de combustibles fossiles et de reduire les emissions de gaz a effet de serre, tout en assurant le chauffage du batiment a partir d'une source d'energie electrique.
+                                Remplacement de la chaudiere au {pre.heating?.primaryType?.toLowerCase() || "combustible fossile"} existante par une chaudiere electrique, permettant d'eliminer l'utilisation de combustibles fossiles et de reduire les emissions de gaz a effet de serre, tout en assurant le chauffage du batiment a partir d'une source d'energie electrique.
                               </p>
                             </div>
                           )}
@@ -623,7 +635,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                   </TableRow>
                   {((comparison.ghsGasBefore ?? 0) > 0 || (comparison.ghsGasAfter ?? 0) > 0) && (
                     <TableRow>
-                      <TableCell className="text-xs">GES Gaz naturel</TableCell>
+                      <TableCell className="text-xs">GES {getPreFossilFuelLabel(pre)}</TableCell>
                       <TableCell className="text-xs text-right font-mono">{(comparison.ghsGasBefore ?? 0).toFixed(5)}</TableCell>
                       <TableCell className="text-xs text-right font-mono">{(comparison.ghsGasAfter ?? 0).toFixed(5)}</TableCell>
                       <TableCell className="text-xs text-right">

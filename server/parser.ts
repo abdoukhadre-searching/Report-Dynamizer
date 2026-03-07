@@ -624,15 +624,15 @@ function parseHotWater(text: string): ReportData["hotWater"] {
   );
   if (installIdx >= 0) {
     for (let i = installIdx; i < Math.min(installIdx + 20, lines.length); i++) {
-      const l = lines[i].trim();
-      if (l.match(/gaz\s*naturel/i)) {
-        primaryType = "Gaz naturel";
-        break;
+      const l = lines[i].trim().toLowerCase();
+      if (l.includes("sommaire")) break;
+      for (const key of Object.keys(EMISSION_FACTORS)) {
+        if (l.includes(key)) {
+          primaryType = lines[i].trim();
+          break;
+        }
       }
-      if (l.match(/[eé]lectricit[eé]/i) && !l.includes("SOMMAIRE")) {
-        primaryType = "Électricité";
-        break;
-      }
+      if (primaryType) break;
     }
   }
 
@@ -657,9 +657,38 @@ function parseHotWater(text: string): ReportData["hotWater"] {
   return { dailyConsumption, annualConsumption, energyFactor: efficiency, primaryType };
 }
 
-function isGazNaturel(fuelType?: string): boolean {
-  if (!fuelType) return false;
-  return /gaz\s*naturel/i.test(fuelType);
+const EMISSION_FACTORS: Record<string, { co2ePerUnit: number; mjPerUnit: number; unit: string }> = {
+  "gaz naturel":          { co2ePerUnit: 1889.320, mjPerUnit: 37.89, unit: "m³" },
+  "électricité":          { co2ePerUnit: 2.040,    mjPerUnit: 3.60,  unit: "kWh" },
+  "mazout léger no 1":    { co2ePerUnit: 2652.736, mjPerUnit: 38.78, unit: "L" },
+  "mazout léger no 2":    { co2ePerUnit: 2734.736, mjPerUnit: 38.50, unit: "L" },
+  "mazout lourd":         { co2ePerUnit: 3146.360, mjPerUnit: 42.50, unit: "L" },
+  "mazout":               { co2ePerUnit: 2734.736, mjPerUnit: 38.50, unit: "L" },
+  "propane":              { co2ePerUnit: 1543.984, mjPerUnit: 25.31, unit: "L" },
+  "diesel":               { co2ePerUnit: 2789.793, mjPerUnit: 38.30, unit: "L" },
+  "bois":                 { co2ePerUnit: 1834.970, mjPerUnit: 19.20, unit: "kg" },
+  "granules":             { co2ePerUnit: 1834.970, mjPerUnit: 19.20, unit: "kg" },
+  "biogaz":               { co2ePerUnit: 1889.320, mjPerUnit: 38.32, unit: "m³" },
+  "butane":               { co2ePerUnit: 1763.984, mjPerUnit: 28.44, unit: "L" },
+  "charbon":              { co2ePerUnit: 2346.830, mjPerUnit: 29.82, unit: "kg" },
+  "kérosène":             { co2ePerUnit: 2543.736, mjPerUnit: 37.68, unit: "L" },
+  "lignite":              { co2ePerUnit: 1486.830, mjPerUnit: 15.00, unit: "kg" },
+  "essence":              { co2ePerUnit: 2361.200, mjPerUnit: 34.87, unit: "L" },
+  "biodiésel":            { co2ePerUnit: 2497.000, mjPerUnit: 35.67, unit: "L" },
+};
+
+function getEmissionFactor(fuelType?: string): { co2ePerUnit: number; mjPerUnit: number; unit: string } | null {
+  if (!fuelType) return null;
+  const normalized = fuelType.toLowerCase().trim();
+  for (const [key, factor] of Object.entries(EMISSION_FACTORS)) {
+    if (normalized.includes(key)) return factor;
+  }
+  return null;
+}
+
+function isElectricity(fuelType?: string): boolean {
+  if (!fuelType) return true;
+  return /[eé]lectricit[eé]/i.test(fuelType);
 }
 
 function calculateGES(
@@ -670,38 +699,36 @@ function calculateGES(
   coolingMJ: number,
   heatingFuelType?: string,
   hotWaterFuelType?: string
-): { ghgElectricity: number; ghgGas: number; ghgTotal: number } {
-  const MJ_PER_M3_GAZ = 37.89;
-  const GCO2_PER_M3_GAZ = 1889.32;
-  const GCO2_PER_KWH_ELEC = 2.040;
+): { ghgElectricity: number; ghgFossil: number; ghgTotal: number } {
+  const elecFactor = EMISSION_FACTORS["électricité"];
+  let ghgElectricity = 0;
+  let ghgFossil = 0;
 
-  let gasMJ = 0;
-  let electricMJ = 0;
-
-  if (isGazNaturel(heatingFuelType)) {
-    gasMJ += heatingMJ;
+  const heatingEF = getEmissionFactor(heatingFuelType);
+  if (heatingEF && !isElectricity(heatingFuelType)) {
+    const units = heatingMJ / heatingEF.mjPerUnit;
+    ghgFossil += (units * heatingEF.co2ePerUnit) / 1000000;
   } else {
-    electricMJ += heatingMJ;
+    const kWh = heatingMJ / 3.6;
+    ghgElectricity += (kWh * elecFactor.co2ePerUnit) / 1000000;
   }
 
-  if (isGazNaturel(hotWaterFuelType)) {
-    gasMJ += hotWaterMJ;
+  const hotWaterEF = getEmissionFactor(hotWaterFuelType);
+  if (hotWaterEF && !isElectricity(hotWaterFuelType)) {
+    const units = hotWaterMJ / hotWaterEF.mjPerUnit;
+    ghgFossil += (units * hotWaterEF.co2ePerUnit) / 1000000;
   } else {
-    electricMJ += hotWaterMJ;
+    const kWh = hotWaterMJ / 3.6;
+    ghgElectricity += (kWh * elecFactor.co2ePerUnit) / 1000000;
   }
 
-  electricMJ += baseLoadsMJ + ventilationMJ + coolingMJ;
-
-  const gasM3 = gasMJ / MJ_PER_M3_GAZ;
-  const ghgGas = (gasM3 * GCO2_PER_M3_GAZ) / 1000000;
-
-  const electricKWh = electricMJ / 3.6;
-  const ghgElectricity = (electricKWh * GCO2_PER_KWH_ELEC) / 1000000;
+  const elecKWh = (baseLoadsMJ + ventilationMJ + coolingMJ) / 3.6;
+  ghgElectricity += (elecKWh * elecFactor.co2ePerUnit) / 1000000;
 
   return {
     ghgElectricity,
-    ghgGas,
-    ghgTotal: ghgElectricity + ghgGas,
+    ghgFossil,
+    ghgTotal: ghgElectricity + ghgFossil,
   };
 }
 
@@ -750,28 +777,27 @@ function parseAnnualSummary(
   const totalGJ = heatingGJ + hotWaterGJ + baseLoadsGJ + ventilationGJ + coolingGJ;
 
   let ghgElectricity = 0;
-  let ghgGas = 0;
+  let ghgFossil = 0;
   let ghgTotal = 0;
 
   if (kwhSummary && (kwhSummary.gasHeatingM3 !== undefined || kwhSummary.heatingKWh !== undefined)) {
-    const MJ_PER_M3_GAZ = 37.89;
-    const GCO2_PER_M3_GAZ = 1889.32;
-    const GCO2_PER_KWH_ELEC = 2.040;
+    const gazFactor = EMISSION_FACTORS["gaz naturel"];
+    const elecFactor = EMISSION_FACTORS["électricité"];
 
     const totalElecKWh = (kwhSummary.totalKWh ?? 0);
-    ghgElectricity = (totalElecKWh * GCO2_PER_KWH_ELEC) / 1000000;
+    ghgElectricity = (totalElecKWh * elecFactor.co2ePerUnit) / 1000000;
 
     const totalGasM3 = kwhSummary.gasTotalM3 ?? 0;
-    ghgGas = (totalGasM3 * GCO2_PER_M3_GAZ) / 1000000;
+    ghgFossil = (totalGasM3 * gazFactor.co2ePerUnit) / 1000000;
 
-    ghgTotal = ghgElectricity + ghgGas;
+    ghgTotal = ghgElectricity + ghgFossil;
   } else {
     const result = calculateGES(
       heatingMJ, hotWaterMJ, baseLoadsMJ, ventilationMJ, coolingMJ,
       heatingFuelType, hotWaterFuelType
     );
     ghgElectricity = result.ghgElectricity;
-    ghgGas = result.ghgGas;
+    ghgFossil = result.ghgFossil;
     ghgTotal = result.ghgTotal;
   }
 
@@ -783,7 +809,7 @@ function parseAnnualSummary(
     coolingGJ,
     totalGJ,
     ghgElectricity,
-    ghgGas,
+    ghgGas: ghgFossil,
     ghgTotal,
   };
 }
