@@ -436,7 +436,18 @@ export default function ReportTab({ project }: ReportTabProps) {
                         <p className="text-sm">
                           Ajout de{" "}
                           <span className="font-semibold">{thermopompeCount}</span>{" "}
-                          Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
+                          Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.{" "}
+                          <a
+                            href="#annex-thermopompes"
+                            className="text-primary underline cursor-pointer print:hidden"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              document.getElementById("annex-thermopompes")?.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            data-testid="link-voir-details-thermopompes"
+                          >
+                            [Voir détails]
+                          </a>
                         </p>
                       </div>
                     )}
@@ -724,7 +735,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                   return (
                     <>
                       {showHeatingStrategy && (
-                        <div>
+                        <div id="annex-thermopompes">
                           <h3 className="text-sm font-semibold mb-2">{annexNum++}. Thermopompes</h3>
                           <p className="text-xs text-muted-foreground mb-2">
                             Ajout de {thermopompeCount} Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
