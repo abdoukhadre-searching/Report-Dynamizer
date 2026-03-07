@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Printer, Upload, CheckCircle2, Loader2, ImageIcon } from "lucide-react";
+import { FileText, Printer, Upload, CheckCircle2, Loader2, ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -167,6 +167,7 @@ export default function ReportTab({ project }: ReportTabProps) {
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
   const comparison = project.comparisonData as ComparisonData | null;
+  const [gasConversionOptions, setGasConversionOptions] = useState<{ option1: boolean; option2: boolean }>({ option1: true, option2: true });
 
   if (!pre || !post || !comparison) return null;
 
@@ -461,23 +462,56 @@ export default function ReportTab({ project }: ReportTabProps) {
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-gas-conversion">
                         <h3 className="text-sm font-medium mb-2">Conversion Gaz Naturel vers Electricite</h3>
                         <div className="space-y-3">
-                          <div>
-                            <p className="text-sm font-medium mb-1">Option 1 :</p>
-                            <p className="text-sm">
-                              {/gaz\s*naturel/i.test(pre.hotWater?.primaryType || "") && (
-                                <>Le systeme actuel de production d'eau chaude domestique au gaz naturel sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
-                              )}
-                              {/gaz\s*naturel/i.test(pre.heating?.primaryType || "") && !(/gaz\s*naturel/i.test(post.heating?.primaryType || "")) && (
-                                <>Le systeme de chauffage au gaz naturel sera converti a l'electricite.</>
-                              )}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium mb-1">Option 2 :</p>
-                            <p className="text-sm">
-                              Remplacement de la chaudiere au gaz naturel existante par une chaudiere electrique, permettant d'eliminer l'utilisation de combustibles fossiles et de reduire les emissions de gaz a effet de serre, tout en assurant le chauffage du batiment a partir d'une source d'energie electrique.
-                            </p>
-                          </div>
+                          {gasConversionOptions.option1 && (
+                            <div className="relative group">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                                onClick={() => setGasConversionOptions(prev => ({ ...prev, option1: false }))}
+                                data-testid="button-remove-gas-option1"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                              <p className="text-sm font-medium mb-1">Option 1 :</p>
+                              <p className="text-sm">
+                                {/gaz\s*naturel/i.test(pre.hotWater?.primaryType || "") && (
+                                  <>Le systeme actuel de production d'eau chaude domestique au gaz naturel sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
+                                )}
+                                {/gaz\s*naturel/i.test(pre.heating?.primaryType || "") && !(/gaz\s*naturel/i.test(post.heating?.primaryType || "")) && (
+                                  <>Le systeme de chauffage au gaz naturel sera converti a l'electricite.</>
+                                )}
+                              </p>
+                            </div>
+                          )}
+                          {gasConversionOptions.option2 && (
+                            <div className="relative group">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                                onClick={() => setGasConversionOptions(prev => ({ ...prev, option2: false }))}
+                                data-testid="button-remove-gas-option2"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                              <p className="text-sm font-medium mb-1">Option 2 :</p>
+                              <p className="text-sm">
+                                Remplacement de la chaudiere au gaz naturel existante par une chaudiere electrique, permettant d'eliminer l'utilisation de combustibles fossiles et de reduire les emissions de gaz a effet de serre, tout en assurant le chauffage du batiment a partir d'une source d'energie electrique.
+                              </p>
+                            </div>
+                          )}
+                          {(!gasConversionOptions.option1 || !gasConversionOptions.option2) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="print:hidden"
+                              onClick={() => setGasConversionOptions({ option1: true, option2: true })}
+                              data-testid="button-restore-gas-options"
+                            >
+                              Restaurer les options
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )}
