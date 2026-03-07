@@ -659,16 +659,6 @@ export default function ReportTab({ project }: ReportTabProps) {
                         </div>
                       )}
 
-                      {showLedStrategy && (
-                        <div>
-                          <h3 className="text-sm font-semibold mb-2">
-                            {annexNum++}. Lumiere LED
-                          </h3>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Installation d'au moins 75% de LED dans le batiment.
-                          </p>
-                        </div>
-                      )}
 
                       {showVrcStrategy && (
                         <div>
