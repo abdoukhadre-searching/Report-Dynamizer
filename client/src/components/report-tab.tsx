@@ -473,7 +473,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                               >
                                 <X className="h-3 w-3" />
                               </Button>
-                              <p className="text-sm font-medium mb-1">Option 1 :</p>
+                              {gasConversionOptions.option2 && <p className="text-sm font-medium mb-1">Option 1 :</p>}
                               <p className="text-sm">
                                 {/gaz\s*naturel/i.test(pre.hotWater?.primaryType || "") && (
                                   <>Le systeme actuel de production d'eau chaude domestique au gaz naturel sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
@@ -495,7 +495,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                               >
                                 <X className="h-3 w-3" />
                               </Button>
-                              <p className="text-sm font-medium mb-1">Option 2 :</p>
+                              {gasConversionOptions.option1 && <p className="text-sm font-medium mb-1">Option 2 :</p>}
                               <p className="text-sm">
                                 Remplacement de la chaudiere au gaz naturel existante par une chaudiere electrique, permettant d'eliminer l'utilisation de combustibles fossiles et de reduire les emissions de gaz a effet de serre, tout en assurant le chauffage du batiment a partir d'une source d'energie electrique.
                               </p>
