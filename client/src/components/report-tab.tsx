@@ -445,7 +445,18 @@ export default function ReportTab({ project }: ReportTabProps) {
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-hot-water">
                         <h3 className="text-sm font-medium mb-2">Pommeaux de douches et robinets</h3>
                         <p className="text-sm">
-                          Installation de pommeaux de douches et robinets faible débit (réduction charge eau chaude domestique). (Voir détails)
+                          Installation de pommeaux de douche et de robinets à faible débit afin de réduire la consommation d'eau chaude domestique et, par conséquent, la charge associée à sa production.{" "}
+                          <a
+                            href="#annex-robineterie"
+                            className="text-primary underline cursor-pointer print:hidden"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              document.getElementById("annex-robineterie")?.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            data-testid="link-voir-details-robineterie"
+                          >
+                            (Voir détails)
+                          </a>
                         </p>
                       </div>
                     )}
@@ -728,12 +739,12 @@ export default function ReportTab({ project }: ReportTabProps) {
                       )}
 
                       {showHotWaterStrategy && (
-                        <div>
+                        <div id="annex-robineterie">
                           <h3 className="text-sm font-semibold mb-2">
                             {annexNum++}. Robinetterie faible débit
                           </h3>
                           <p className="text-xs text-muted-foreground mb-2">
-                            Installation de pommeaux de douches et robinets faible débit (réduction charge eau chaude domestique).
+                            Installation de pommeaux de douche et de robinets à faible débit afin de réduire la consommation d'eau chaude domestique et, par conséquent, la charge associée à sa production.
                           </p>
                           <AnnexImageUpload
                             projectId={project.id}
