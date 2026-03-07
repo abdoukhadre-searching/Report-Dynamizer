@@ -432,7 +432,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
                     {showHeatingStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-thermopompe">
-                        <h3 className="text-sm font-medium mb-2">Système de chauffage</h3>
+                        <h3 className="text-sm font-medium mb-2">Thermopompes</h3>
                         <p className="text-sm">
                           Ajout de{" "}
                           <span className="font-semibold">{thermopompeCount}</span>{" "}
