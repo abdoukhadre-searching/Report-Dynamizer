@@ -215,10 +215,10 @@ export default function ReportTab({ project }: ReportTabProps) {
             <div className="text-center space-y-2 pb-6 border-b">
               <p className="text-sm text-muted-foreground">2025</p>
               <h1 className="text-xl font-semibold">
-                Cahier preparatoire pour la qualification au programme APH SELECT
+                Cahier préparatoire pour la qualification au programme APH SELECT
               </h1>
               <p className="text-sm text-muted-foreground">
-                Evaluation realisee par la firme d'evaluation en efficacite energetique
+                Évaluation réalisée par la firme d'évaluation en efficacité énergétique
               </p>
             </div>
 
@@ -263,7 +263,7 @@ export default function ReportTab({ project }: ReportTabProps) {
             <Separator />
 
             <section>
-              <h2 className="text-base font-semibold mb-4">2. Sommaire des parametres du batiment avant les travaux</h2>
+              <h2 className="text-base font-semibold mb-4">2. Sommaire des paramètres du bâtiment avant les travaux</h2>
               {pre.zone1 && pre.zone1.length > 0 && (
                 <>
                   <h3 className="text-sm font-medium mb-3 text-muted-foreground">Zone 1: Au-dessus du niveau du sol</h3>
@@ -338,7 +338,7 @@ export default function ReportTab({ project }: ReportTabProps) {
             <Separator />
 
             <section>
-              <h2 className="text-base font-semibold mb-4">3. Sommaire des parametres du batiment apres optimisation</h2>
+              <h2 className="text-base font-semibold mb-4">3. Sommaire des paramètres du bâtiment après optimisation</h2>
               {post.zone1 && post.zone1.length > 0 && (
                 <>
                   <h3 className="text-sm font-medium mb-3 text-muted-foreground">Zone 1: Au-dessus du niveau du sol</h3>
@@ -416,15 +416,15 @@ export default function ReportTab({ project }: ReportTabProps) {
               <>
                 <section>
                   <h2 className="text-base font-semibold mb-4" data-testid="text-strategies-title">
-                    4. Strategies utilisees pour ameliorer l'efficacite du batiment
+                    4. Stratégies utilisées pour améliorer l'efficacité du bâtiment
                   </h2>
 
                   <div className="space-y-4">
                     {showAirTightnessStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-air-tightness">
-                        <h3 className="text-sm font-medium mb-2">Etancheite</h3>
+                        <h3 className="text-sm font-medium mb-2">Étanchéité</h3>
                         <p className="text-sm">
-                          Ameliorer l'etancheite du batiment a CAH maximum de{" "}
+                          Améliorer l'étanchéité du bâtiment à CAH maximum de{" "}
                           <span className="font-semibold">{post.airLeakage?.cah50}</span> @ 50 Pa.
                         </p>
                       </div>
@@ -432,7 +432,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
                     {showHeatingStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-thermopompe">
-                        <h3 className="text-sm font-medium mb-2">Systeme de chauffage</h3>
+                        <h3 className="text-sm font-medium mb-2">Système de chauffage</h3>
                         <p className="text-sm">
                           Ajout de{" "}
                           <span className="font-semibold">{thermopompeCount}</span>{" "}
@@ -445,34 +445,34 @@ export default function ReportTab({ project }: ReportTabProps) {
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-hot-water">
                         <h3 className="text-sm font-medium mb-2">Pommeaux de douches et robinets</h3>
                         <p className="text-sm">
-                          Installation de pommeaux de douches et robinets faible debit (reduction charge eau chaude domestique). (Voir details)
+                          Installation de pommeaux de douches et robinets faible débit (réduction charge eau chaude domestique). (Voir détails)
                         </p>
                       </div>
                     )}
 
                     {showLedStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-led">
-                        <h3 className="text-sm font-medium mb-2">Lumiere LED</h3>
+                        <h3 className="text-sm font-medium mb-2">Lumière LED</h3>
                         <p className="text-sm">
-                          Installation d'au moins 75% de LED dans le batiment.
+                          Installation d'au moins 75% de LED dans le bâtiment.
                         </p>
                       </div>
                     )}
 
                     {showVrcStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-vrc">
-                        <h3 className="text-sm font-medium mb-2">Ventilation avec recuperation de chaleur (VRC)</h3>
+                        <h3 className="text-sm font-medium mb-2">Ventilation avec récupération de chaleur (VRC)</h3>
                         <p className="text-sm">
-                          Installation de systemes de ventilation avec recuperation de chaleur (VRC) dans chaque logement, presentant une efficacite de recuperation de chaleur sensible d'environ{" "}
-                          <span className="font-semibold">{post.centralVentilation?.sensibleEfficiency0C ?? "—"} %</span> a 0 °C et{" "}
-                          <span className="font-semibold">{post.centralVentilation?.sensibleEfficiencyMinus25C ?? "—"} %</span> a -25 °C, afin d'ameliorer la qualite de l'air interieur tout en reduisant les pertes de chaleur liees au renouvellement de l'air.
+                          Installation de systèmes de ventilation avec récupération de chaleur (VRC) dans chaque logement, présentant une efficacité de récupération de chaleur sensible d'environ{" "}
+                          <span className="font-semibold">{post.centralVentilation?.sensibleEfficiency0C ?? "—"} %</span> à 0 °C et{" "}
+                          <span className="font-semibold">{post.centralVentilation?.sensibleEfficiencyMinus25C ?? "—"} %</span> à -25 °C, afin d'améliorer la qualité de l'air intérieur tout en réduisant les pertes de chaleur liées au renouvellement de l'air.
                         </p>
                       </div>
                     )}
 
                     {showGasConversionStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-gas-conversion">
-                        <h3 className="text-sm font-medium mb-2">Conversion {getPreFossilFuelLabel(pre)} vers Electricite</h3>
+                        <h3 className="text-sm font-medium mb-2">Conversion {getPreFossilFuelLabel(pre)} vers Électricité</h3>
                         <div className="space-y-3">
                           {gasConversionOptions.option1 && (
                             <div className="relative group">
@@ -536,15 +536,15 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section>
               <h2 className="text-base font-semibold mb-4">
-                {hasAnyStrategy ? "5" : "4"}. Comparatif global en GJ/annee
+                {hasAnyStrategy ? "5" : "4"}. Comparatif global en GJ/année
               </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">Poste</TableHead>
                     <TableHead className="text-xs text-right">Avant (GJ)</TableHead>
-                    <TableHead className="text-xs text-right">Apres (GJ)</TableHead>
-                    <TableHead className="text-xs text-right">Reduction</TableHead>
+                    <TableHead className="text-xs text-right">Après (GJ)</TableHead>
+                    <TableHead className="text-xs text-right">Réduction</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -569,7 +569,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-xs">Charges electriques de base</TableCell>
+                    <TableCell className="text-xs">Charges électriques de base</TableCell>
                     <TableCell className="text-xs text-right font-mono">{(comparison.baseLoadsBefore ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right font-mono">{(comparison.baseLoadsAfter ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right">
@@ -579,7 +579,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-xs">Electricite pour ventilation</TableCell>
+                    <TableCell className="text-xs">Électricité pour ventilation</TableCell>
                     <TableCell className="text-xs text-right font-mono">{(comparison.ventilationBefore ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right font-mono">{(comparison.ventilationAfter ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-right">
@@ -614,20 +614,20 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section>
               <h2 className="text-base font-semibold mb-4">
-                {hasAnyStrategy ? "6" : "5"}. GES (Gaz a effet de serre)
+                {hasAnyStrategy ? "6" : "5"}. GES (Gaz à effet de serre)
               </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">Indicateur</TableHead>
                     <TableHead className="text-xs text-right">Avant (T/A)</TableHead>
-                    <TableHead className="text-xs text-right">Apres (T/A)</TableHead>
-                    <TableHead className="text-xs text-right">Amelioration</TableHead>
+                    <TableHead className="text-xs text-right">Après (T/A)</TableHead>
+                    <TableHead className="text-xs text-right">Amélioration</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow>
-                    <TableCell className="text-xs">GES Electricite</TableCell>
+                    <TableCell className="text-xs">GES Électricité</TableCell>
                     <TableCell className="text-xs text-right font-mono">{(comparison.ghsElectricityBefore ?? 0).toFixed(5)}</TableCell>
                     <TableCell className="text-xs text-right font-mono">{(comparison.ghsElectricityAfter ?? 0).toFixed(5)}</TableCell>
                     <TableCell className="text-xs text-right">
@@ -671,7 +671,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                 </TableHeader>
                 <TableBody>
                   <TableRow>
-                    <TableCell className="text-xs">Consommation d'energie annuelle totale (GJ/A)</TableCell>
+                    <TableCell className="text-xs">Consommation d'énergie annuelle totale (GJ/A)</TableCell>
                     <TableCell className="text-xs text-right font-mono">{comparison.totalAfter.toFixed(3)} GJ</TableCell>
                     <TableCell className="text-xs text-right font-mono">{comparison.totalBefore.toFixed(3)} GJ</TableCell>
                     <TableCell className="text-xs text-right">
@@ -701,7 +701,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                 <div>
                   <h3 className="text-sm font-semibold mb-2">1. Zone climatique</h3>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Donnees climatiques: {pre.buildingInfo?.climateData || "-"}
+                    Données climatiques: {pre.buildingInfo?.climateData || "-"}
                   </p>
                   <AnnexImageUpload
                     projectId={project.id}
@@ -733,15 +733,15 @@ export default function ReportTab({ project }: ReportTabProps) {
                       {showHotWaterStrategy && (
                         <div>
                           <h3 className="text-sm font-semibold mb-2">
-                            {annexNum++}. Robinetterie faible debit
+                            {annexNum++}. Robinetterie faible débit
                           </h3>
                           <p className="text-xs text-muted-foreground mb-2">
-                            Installation de pommeaux de douches et robinets faible debit (reduction charge eau chaude domestique).
+                            Installation de pommeaux de douches et robinets faible débit (réduction charge eau chaude domestique).
                           </p>
                           <AnnexImageUpload
                             projectId={project.id}
                             annexType="robineterie"
-                            label="Robinetterie faible debit"
+                            label="Robinetterie faible débit"
                             currentImage={project.annexRobineterieImage}
                           />
                         </div>
@@ -751,10 +751,10 @@ export default function ReportTab({ project }: ReportTabProps) {
                       {showVrcStrategy && (
                         <div>
                           <h3 className="text-sm font-semibold mb-2">
-                            {annexNum++}. Ventilation avec recuperation de chaleur (VRC)
+                            {annexNum++}. Ventilation avec récupération de chaleur (VRC)
                           </h3>
                           <p className="text-xs text-muted-foreground mb-2">
-                            Installation de systemes de ventilation avec recuperation de chaleur (VRC).
+                            Installation de systèmes de ventilation avec récupération de chaleur (VRC).
                           </p>
                           <AnnexImageUpload
                             projectId={project.id}
