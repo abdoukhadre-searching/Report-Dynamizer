@@ -722,21 +722,39 @@ function parseInteriorLightingKWh(text: string): number | undefined {
   const idx = lines.findIndex(l => l.toUpperCase().includes("SOMMAIRE DES CHARGES DE BASE"));
   if (idx < 0) return undefined;
 
-  for (let i = idx; i < Math.min(idx + 30, lines.length); i++) {
-    const l = lines[i].trim();
-    const match = l.match(/[eé]clairage\s+int[eé]rieur\s+([\d.,]+)/i);
-    if (match) {
-      return parseFloat(match[1].replace(",", "."));
-    }
-  }
-
-  for (let i = idx; i < Math.min(idx + 30, lines.length); i++) {
+  const labels: string[] = [];
+  let labelStartIdx = -1;
+  for (let i = idx + 1; i < Math.min(idx + 40, lines.length); i++) {
     const l = lines[i].trim();
     if (/[eé]clairage\s+int[eé]rieur/i.test(l)) {
-      for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
-        const valLine = lines[j].trim().replace(",", ".");
-        if (/^[\d.]+$/.test(valLine)) {
-          return parseFloat(valLine);
+      const allNums = l.match(/[\d]+(?:[.,]\d+)?/g);
+      if (allNums && allNums.length >= 2) {
+        return parseFloat(allNums[allNums.length - 1].replace(",", "."));
+      }
+      if (labelStartIdx < 0) labelStartIdx = i;
+      labels.push("eclairage");
+      continue;
+    }
+    if (labelStartIdx > 0 && labels.length > 0 && labels.length < 5) {
+      if (/appareils|autres|usage|ext[eé]rieur/i.test(l) && !/[\d]/.test(l)) {
+        labels.push(l);
+        continue;
+      }
+    }
+    if (l.toLowerCase().includes("kwh annuel")) {
+      const eclairagePos = labels.indexOf("eclairage");
+      if (eclairagePos >= 0) {
+        let numCount = 0;
+        for (let j = i + 1; j < Math.min(i + 10, lines.length); j++) {
+          const vl = lines[j].trim().replace(",", ".");
+          if (/^[\d.]+$/.test(vl)) {
+            if (numCount === eclairagePos) {
+              return parseFloat(vl);
+            }
+            numCount++;
+          } else if (vl.length > 0 && !/^[\d.,\s]+$/.test(vl)) {
+            break;
+          }
         }
       }
     }
