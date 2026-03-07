@@ -667,12 +667,6 @@ export default function ReportTab({ project }: ReportTabProps) {
                           <p className="text-xs text-muted-foreground mb-2">
                             Installation d'au moins 75% de LED dans le batiment.
                           </p>
-                          <AnnexImageUpload
-                            projectId={project.id}
-                            annexType="ledLighting"
-                            label="Lumiere LED"
-                            currentImage={project.annexLedLightingImage}
-                          />
                         </div>
                       )}
 
