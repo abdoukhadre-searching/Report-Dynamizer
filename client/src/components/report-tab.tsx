@@ -460,14 +460,25 @@ export default function ReportTab({ project }: ReportTabProps) {
                     {showGasConversionStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-gas-conversion">
                         <h3 className="text-sm font-medium mb-2">Conversion Gaz Naturel vers Electricite</h3>
-                        <p className="text-sm">
-                          {/gaz\s*naturel/i.test(pre.hotWater?.primaryType || "") && (
-                            <>Le systeme actuel de production d'eau chaude domestique au gaz naturel sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
-                          )}
-                          {/gaz\s*naturel/i.test(pre.heating?.primaryType || "") && !(/gaz\s*naturel/i.test(post.heating?.primaryType || "")) && (
-                            <>Le systeme de chauffage au gaz naturel sera converti a l'electricite.</>
-                          )}
-                        </p>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium mb-1">Option 1 :</p>
+                            <p className="text-sm">
+                              {/gaz\s*naturel/i.test(pre.hotWater?.primaryType || "") && (
+                                <>Le systeme actuel de production d'eau chaude domestique au gaz naturel sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
+                              )}
+                              {/gaz\s*naturel/i.test(pre.heating?.primaryType || "") && !(/gaz\s*naturel/i.test(post.heating?.primaryType || "")) && (
+                                <>Le systeme de chauffage au gaz naturel sera converti a l'electricite.</>
+                              )}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium mb-1">Option 2 :</p>
+                            <p className="text-sm">
+                              Remplacement de la chaudiere au gaz naturel existante par une chaudiere electrique, permettant d'eliminer l'utilisation de combustibles fossiles et de reduire les emissions de gaz a effet de serre, tout en assurant le chauffage du batiment a partir d'une source d'energie electrique.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
