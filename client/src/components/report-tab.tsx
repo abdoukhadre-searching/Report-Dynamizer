@@ -488,10 +488,10 @@ export default function ReportTab({ project }: ReportTabProps) {
                               {gasConversionOptions.option2 && <p className="text-sm font-medium mb-1">Option 1 :</p>}
                               <p className="text-sm">
                                 {isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && (
-                                  <>Le systeme actuel de production d'eau chaude domestique au {pre.hotWater?.primaryType?.toLowerCase()} sera converti a l'electricite. Un chauffe-eau electrique independant sera installe dans chaque unite afin d'assurer une production d'eau chaude autonome et plus efficace. </>
+                                  <>Le système actuel de production d'eau chaude domestique au {pre.hotWater?.primaryType?.toLowerCase()} sera converti à l'électricité. Un chauffe-eau électrique indépendant sera installé dans chaque unité afin d'assurer une production d'eau chaude autonome et plus efficace. </>
                                 )}
                                 {isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType) && (
-                                  <>Le systeme de chauffage au {pre.heating?.primaryType?.toLowerCase()} sera converti a l'electricite.</>
+                                  <>Le système de chauffage au {pre.heating?.primaryType?.toLowerCase()} sera converti à l'électricité.</>
                                 )}
                               </p>
                             </div>
@@ -509,7 +509,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                               </Button>
                               {gasConversionOptions.option1 && <p className="text-sm font-medium mb-1">Option 2 :</p>}
                               <p className="text-sm">
-                                Remplacement de la chaudiere au {pre.heating?.primaryType?.toLowerCase() || "combustible fossile"} existante par une chaudiere electrique, permettant d'eliminer l'utilisation de combustibles fossiles et de reduire les emissions de gaz a effet de serre, tout en assurant le chauffage du batiment a partir d'une source d'energie electrique.
+                                Remplacement de la chaudière au {pre.heating?.primaryType?.toLowerCase() || "combustible fossile"} existante par une chaudière électrique, permettant d'éliminer l'utilisation de combustibles fossiles et de réduire les émissions de gaz à effet de serre, tout en assurant le chauffage du bâtiment à partir d'une source d'énergie électrique.
                               </p>
                             </div>
                           )}
