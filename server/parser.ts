@@ -780,7 +780,12 @@ function parseAnnualSummary(
   let ghgFossil = 0;
   let ghgTotal = 0;
 
-  if (kwhSummary && (kwhSummary.gasHeatingM3 !== undefined || kwhSummary.heatingKWh !== undefined)) {
+  const heatingIsGaz = heatingFuelType && /gaz\s*naturel/i.test(heatingFuelType);
+  const hotWaterIsGaz = hotWaterFuelType && /gaz\s*naturel/i.test(hotWaterFuelType);
+  const hasFossilNonGaz = (heatingFuelType && !isElectricity(heatingFuelType) && !heatingIsGaz) ||
+                           (hotWaterFuelType && !isElectricity(hotWaterFuelType) && !hotWaterIsGaz);
+
+  if (!hasFossilNonGaz && kwhSummary && (kwhSummary.gasHeatingM3 !== undefined || kwhSummary.heatingKWh !== undefined)) {
     const gazFactor = EMISSION_FACTORS["gaz naturel"];
     const elecFactor = EMISSION_FACTORS["électricité"];
 
