@@ -488,10 +488,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                               {gasConversionOptions.option2 && <p className="text-sm font-medium mb-1">Option 1 :</p>}
                               <p className="text-sm">
                                 {isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && (
-                                  <>Le système actuel de production d'eau chaude domestique au {pre.hotWater?.primaryType?.toLowerCase()} sera converti à l'électricité. Un chauffe-eau électrique indépendant sera installé dans chaque unité afin d'assurer une production d'eau chaude autonome et plus efficace. </>
-                                )}
-                                {isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType) && (
-                                  <>Le système de chauffage au {pre.heating?.primaryType?.toLowerCase()} sera converti à l'électricité.</>
+                                  <>Le système actuel de production d'eau chaude domestique au {pre.hotWater?.primaryType?.toLowerCase()} sera converti à l'électricité. Un chauffe-eau électrique indépendant sera installé dans chaque unité afin d'assurer une production d'eau chaude autonome et plus efficace.</>
                                 )}
                               </p>
                             </div>
