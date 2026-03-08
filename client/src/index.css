@@ -277,6 +277,10 @@
     background-color: var(--elevate-2);
   }
 
+  .report-prose {
+    font-family: 'Inter', sans-serif;
+  }
+
   .report-prose p,
   .report-prose span:not(.font-semibold):not(.font-bold):not(.font-medium),
   .report-prose li,
@@ -284,6 +288,28 @@
     font-weight: 400 !important;
     font-variation-settings: normal !important;
     font-optical-sizing: auto !important;
+  }
+
+  .report-prose h2 {
+    font-family: 'Playfair Display', serif !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    color: #1e3a5f;
+    letter-spacing: -0.01em;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #d1dbe8;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .report-prose h3 {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    color: #2d4a6f;
+  }
+
+  .report-prose p {
+    line-height: 1.75;
+    color: #334155;
   }
 
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
@@ -311,7 +337,11 @@
   }
 
   .report-prose h1,
-  .report-prose h2,
+  .report-prose h2 {
+    font-family: 'Playfair Display', 'Georgia', serif !important;
+    color: #1e3a5f !important;
+  }
+
   .report-prose h3 {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
   }

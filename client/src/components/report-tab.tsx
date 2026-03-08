@@ -367,19 +367,29 @@ export default function ReportTab({ project }: ReportTabProps) {
 
       <div className="print:p-0" id="report-content">
         <Card className="print:shadow-none print:border-none">
-          <CardContent className="p-8 space-y-8 report-prose">
-            <div className="text-center space-y-3 pb-6 border-b">
-              <p className="text-sm text-muted-foreground">{new Date().getFullYear()}</p>
-              <h1 className="text-xl font-semibold" data-testid="text-report-title">
-                Cahier préparatoire pour la qualification au programme APH SELECT
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Évaluation réalisée par la firme d'évaluation en efficacité énergétique
+          <CardContent className="p-8 space-y-8 report-prose relative overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] z-0 print:opacity-[0.04]" aria-hidden="true">
+              <p className="text-[120px] font-bold tracking-widest text-slate-900 rotate-[-30deg] whitespace-nowrap" style={{ fontFamily: "'Playfair Display', serif" }}>
+                APH SELECT
               </p>
-              <p className="text-sm font-medium mt-2">{fullAddress}</p>
             </div>
 
-            <section id="toc-resume">
+            <div className="relative z-10 text-center space-y-4 pb-8 border-b-2 border-slate-200">
+              <div className="inline-block mb-2">
+                <div className="w-16 h-1 bg-slate-300 mx-auto mb-6 rounded-full" />
+              </div>
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-400" style={{ fontFamily: "'Inter', sans-serif" }}>{new Date().getFullYear()}</p>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-800" style={{ fontFamily: "'Playfair Display', serif" }} data-testid="text-report-title">
+                Cahier préparatoire pour la qualification<br />au programme APH SELECT
+              </h1>
+              <div className="w-12 h-0.5 bg-slate-300 mx-auto my-2 rounded-full" />
+              <p className="text-sm text-slate-500" style={{ fontFamily: "'Inter', sans-serif" }}>
+                Évaluation réalisée par la firme d'évaluation en efficacité énergétique
+              </p>
+              <p className="text-sm font-semibold text-slate-700 mt-3" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
+            </div>
+
+            <section id="toc-resume" className="relative z-10">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-resume">
                 1. Résumé exécutif
               </h2>
@@ -417,8 +427,13 @@ export default function ReportTab({ project }: ReportTabProps) {
         </Card>
 
         <Card className="print:shadow-none print:border-none print:break-before-page mt-6">
-          <CardContent className="p-8 report-prose">
-            <section>
+          <CardContent className="p-8 report-prose relative overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] z-0 print:opacity-[0.04]" aria-hidden="true">
+              <p className="text-[120px] font-bold tracking-widest text-slate-900 rotate-[-30deg] whitespace-nowrap" style={{ fontFamily: "'Playfair Display', serif" }}>
+                APH SELECT
+              </p>
+            </div>
+            <section className="relative z-10">
               <h2 className="text-base font-semibold mb-6">Table des matières</h2>
               <nav className="space-y-2 text-sm">
                 {tocItems.map((item, idx) => {
@@ -446,9 +461,14 @@ export default function ReportTab({ project }: ReportTabProps) {
         </Card>
 
         <Card className="print:shadow-none print:border-none print:break-before-page mt-6">
-          <CardContent className="p-8 space-y-8 report-prose">
+          <CardContent className="p-8 space-y-8 report-prose relative overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] z-0 print:opacity-[0.04]" aria-hidden="true">
+              <p className="text-[120px] font-bold tracking-widest text-slate-900 rotate-[-30deg] whitespace-nowrap" style={{ fontFamily: "'Playfair Display', serif" }}>
+                APH SELECT
+              </p>
+            </div>
 
-            <section id="toc-description">
+            <section id="toc-description" className="relative z-10">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-description">
                 2. Description du bâtiment
               </h2>
@@ -488,9 +508,9 @@ export default function ReportTab({ project }: ReportTabProps) {
               </div>
             </section>
 
-            <Separator />
+            <Separator className="relative z-10" />
 
-            <section id="toc-profil">
+            <section id="toc-profil" className="relative z-10">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-profil">
                 3. Profil de consommation énergétique actuel
               </h2>
@@ -534,9 +554,9 @@ export default function ReportTab({ project }: ReportTabProps) {
               </div>
             </section>
 
-            <Separator />
+            <Separator className="relative z-10" />
 
-            <section id="toc-strategies">
+            <section id="toc-strategies" className="relative z-10">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-strategies">
                 4. Stratégie d'optimisation énergétique
               </h2>
@@ -635,9 +655,9 @@ export default function ReportTab({ project }: ReportTabProps) {
               </div>
             </section>
 
-            <Separator />
+            <Separator className="relative z-10" />
 
-            <section id="toc-performance">
+            <section id="toc-performance" className="relative z-10">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-performance">
                 5. Performance énergétique après optimisation
               </h2>
@@ -730,9 +750,9 @@ export default function ReportTab({ project }: ReportTabProps) {
               </div>
             </section>
 
-            <Separator />
+            <Separator className="relative z-10" />
 
-            <section id="toc-comparatif">
+            <section id="toc-comparatif" className="relative z-10">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-comparatif">
                 6. Comparatif énergétique
               </h2>
@@ -811,9 +831,9 @@ export default function ReportTab({ project }: ReportTabProps) {
               </div>
             </section>
 
-            <Separator />
+            <Separator className="relative z-10" />
 
-            <section id="toc-conclusion">
+            <section id="toc-conclusion" className="relative z-10">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-conclusion">
                 7. Conclusion
               </h2>
@@ -840,9 +860,9 @@ export default function ReportTab({ project }: ReportTabProps) {
               </div>
             </section>
 
-            <Separator />
+            <Separator className="relative z-10" />
 
-            <section id="toc-annexes">
+            <section id="toc-annexes" className="relative z-10">
               <h2 className="text-base font-semibold mb-6" data-testid="text-annexes-title">
                 8. Annexes
               </h2>
