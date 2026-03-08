@@ -305,6 +305,36 @@ export default function ReportTab({ project }: ReportTabProps) {
   const preHeatingEquipment = pre.heating?.primaryEquipment || "plinthes électriques";
   const windowFraction = getWindowFraction(pre);
 
+  const heatLossComponents = (() => {
+    const items: { name: string; avant: number; apres: number }[] = [];
+    const preZ1 = pre.zone1 || [];
+    const postZ1 = post.zone1 || [];
+    const preZ3 = pre.zone3 || [];
+    const postZ3 = post.zone3 || [];
+    const elementNames = new Set([...preZ1.map(z => z.element), ...postZ1.map(z => z.element)]);
+    elementNames.forEach(name => {
+      const preItem = preZ1.find(z => z.element === name);
+      const postItem = postZ1.find(z => z.element === name);
+      if ((preItem?.heatLossMJ ?? 0) > 0 || (postItem?.heatLossMJ ?? 0) > 0) {
+        items.push({ name, avant: parseFloat(((preItem?.heatLossMJ ?? 0) / 1000).toFixed(2)), apres: parseFloat(((postItem?.heatLossMJ ?? 0) / 1000).toFixed(2)) });
+      }
+    });
+    const z3Names = new Set([...preZ3.map(z => z.element), ...postZ3.map(z => z.element)]);
+    z3Names.forEach(name => {
+      const preItem = preZ3.find(z => z.element === name);
+      const postItem = postZ3.find(z => z.element === name);
+      if ((preItem?.heatLossMJ ?? 0) > 0 || (postItem?.heatLossMJ ?? 0) > 0) {
+        items.push({ name: `${name} (Fond.)`, avant: parseFloat(((preItem?.heatLossMJ ?? 0) / 1000).toFixed(2)), apres: parseFloat(((postItem?.heatLossMJ ?? 0) / 1000).toFixed(2)) });
+      }
+    });
+    const preVent = pre.ventilation?.heatLossMJ ?? 0;
+    const postVent = post.ventilation?.heatLossMJ ?? 0;
+    if (preVent > 0 || postVent > 0) {
+      items.push({ name: "Ventilation", avant: parseFloat((preVent / 1000).toFixed(2)), apres: parseFloat((postVent / 1000).toFixed(2)) });
+    }
+    return items;
+  })();
+
   const tocItems = [
     "Résumé exécutif",
     "Description du bâtiment",
@@ -331,7 +361,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
       <div className="print:p-0" id="report-content">
         <Card className="print:shadow-none print:border-none">
-          <CardContent className="p-8 space-y-8 report-prose">
+          <CardContent className="p-8 space-y-8 report-prose font-sans text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
             <div className="text-center space-y-3 pb-6 border-b">
               <p className="text-sm text-muted-foreground">{new Date().getFullYear()}</p>
               <h1 className="text-xl font-semibold" data-testid="text-report-title">
@@ -472,17 +502,19 @@ export default function ReportTab({ project }: ReportTabProps) {
 
                 <div className="my-6">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Répartition de la consommation énergétique avant travaux (GJ/an)</p>
-                  <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={prePieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
-                          {prePieData.map((_, idx) => (
-                            <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value: number) => `${value} GJ`} />
-                      </PieChart>
-                    </ResponsiveContainer>
+                  <div className="flex justify-center">
+                    <div className="h-[280px] w-full max-w-[500px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={prePieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                            {prePieData.map((_, idx) => (
+                              <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value: number) => `${value} GJ`} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -617,34 +649,38 @@ export default function ReportTab({ project }: ReportTabProps) {
 
                 <div className="my-6">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Comparatif énergétique Avant / Après travaux (GJ/an)</p>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={comparisonBarData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip formatter={(value: number) => `${value} GJ`} />
-                        <Legend />
-                        <Bar dataKey="avant" name="Avant travaux" fill="#ef4444" />
-                        <Bar dataKey="apres" name="Après travaux" fill="#22c55e" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <div className="flex justify-center">
+                    <div className="h-[300px] w-full max-w-[600px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={comparisonBarData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip formatter={(value: number) => `${value} GJ`} />
+                          <Legend />
+                          <Bar dataKey="avant" name="Avant travaux" fill="#ef4444" />
+                          <Bar dataKey="apres" name="Après travaux" fill="#22c55e" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
 
                 <div className="my-6">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Répartition de la consommation énergétique après travaux (GJ/an)</p>
-                  <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={postPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
-                          {postPieData.map((_, idx) => (
-                            <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value: number) => `${value} GJ`} />
-                      </PieChart>
-                    </ResponsiveContainer>
+                  <div className="flex justify-center">
+                    <div className="h-[280px] w-full max-w-[500px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={postPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                            {postPieData.map((_, idx) => (
+                              <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value: number) => `${value} GJ`} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
 
@@ -657,18 +693,20 @@ export default function ReportTab({ project }: ReportTabProps) {
 
                 <div className="my-6">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Évolution mensuelle de la consommation énergétique – Avant / Après travaux (GJ)</p>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={monthlyChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip formatter={(value: number) => `${value} GJ`} />
-                        <Legend />
-                        <Area type="monotone" dataKey="avant" name="Avant travaux" stroke="#ef4444" fill="#ef4444" fillOpacity={0.2} />
-                        <Area type="monotone" dataKey="apres" name="Après travaux" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                  <div className="flex justify-center">
+                    <div className="h-[300px] w-full max-w-[600px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={monthlyChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip formatter={(value: number) => `${value} GJ`} />
+                          <Legend />
+                          <Area type="monotone" dataKey="avant" name="Avant travaux" stroke="#ef4444" fill="#ef4444" fillOpacity={0.2} />
+                          <Area type="monotone" dataKey="apres" name="Après travaux" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
 
@@ -684,51 +722,77 @@ export default function ReportTab({ project }: ReportTabProps) {
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-comparatif">
                 Comparatif énergétique
               </h2>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Usage énergétique</TableHead>
-                    <TableHead className="text-xs text-right">Avant travaux (GJ)</TableHead>
-                    <TableHead className="text-xs text-right">Après travaux (GJ)</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="text-xs">Chauffage des locaux</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{heatingBeforeGJ.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{heatingAfterGJ.toFixed(2)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="text-xs">Eau chaude domestique</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{hotWaterBeforeGJ.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{hotWaterAfterGJ.toFixed(2)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="text-xs">Charges électriques de base</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{baseLoadsBeforeGJ.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{baseLoadsAfterGJ.toFixed(2)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="text-xs">Ventilation</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{ventilationBeforeGJ.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{ventilationAfterGJ.toFixed(2)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="text-xs">Climatisation</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{coolingBeforeGJ.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{coolingAfterGJ.toFixed(2)}</TableCell>
-                  </TableRow>
-                  <TableRow className="font-semibold border-t-2">
-                    <TableCell className="text-xs">Consommation totale</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{totalBeforeGJ.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{totalAfterGJ.toFixed(2)}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-              <div className="mt-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">Amélioration énergétique totale :</span>
-                  <Badge variant="default">{improvementPct.toFixed(1)} %</Badge>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-primary/10">
+                      <TableHead className="text-xs font-semibold text-foreground py-3">Usage énergétique</TableHead>
+                      <TableHead className="text-xs font-semibold text-foreground text-right py-3">Avant travaux (GJ)</TableHead>
+                      <TableHead className="text-xs font-semibold text-foreground text-right py-3">Après travaux (GJ)</TableHead>
+                      <TableHead className="text-xs font-semibold text-foreground text-right py-3">Variation (GJ)</TableHead>
+                      <TableHead className="text-xs font-semibold text-foreground text-right py-3">Réduction</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[
+                      { label: "Chauffage des locaux", avant: heatingBeforeGJ, apres: heatingAfterGJ },
+                      { label: "Eau chaude domestique", avant: hotWaterBeforeGJ, apres: hotWaterAfterGJ },
+                      { label: "Charges électriques de base", avant: baseLoadsBeforeGJ, apres: baseLoadsAfterGJ },
+                      { label: "Ventilation", avant: ventilationBeforeGJ, apres: ventilationAfterGJ },
+                      { label: "Climatisation", avant: coolingBeforeGJ, apres: coolingAfterGJ },
+                    ].map((row, idx) => {
+                      const variation = row.apres - row.avant;
+                      const pct = row.avant > 0 ? ((row.avant - row.apres) / row.avant) * 100 : 0;
+                      return (
+                        <TableRow key={idx} className={idx % 2 === 0 ? "bg-muted/30" : ""}>
+                          <TableCell className="text-xs py-2.5">{row.label}</TableCell>
+                          <TableCell className="text-xs text-right py-2.5 tabular-nums">{row.avant.toFixed(2)}</TableCell>
+                          <TableCell className="text-xs text-right py-2.5 tabular-nums">{row.apres.toFixed(2)}</TableCell>
+                          <TableCell className={`text-xs text-right py-2.5 tabular-nums ${variation < 0 ? "text-green-600" : variation > 0 ? "text-red-600" : ""}`}>
+                            {variation < 0 ? "" : "+"}{variation.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-xs text-right py-2.5">
+                            {pct > 0 ? (
+                              <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                                {pct.toFixed(1)} %
+                              </span>
+                            ) : pct < 0 ? (
+                              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                                +{Math.abs(pct).toFixed(1)} %
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    <TableRow className="border-t-2 bg-primary/5 font-semibold">
+                      <TableCell className="text-xs py-3">Consommation totale</TableCell>
+                      <TableCell className="text-xs text-right py-3 tabular-nums">{totalBeforeGJ.toFixed(2)}</TableCell>
+                      <TableCell className="text-xs text-right py-3 tabular-nums">{totalAfterGJ.toFixed(2)}</TableCell>
+                      <TableCell className={`text-xs text-right py-3 tabular-nums ${(totalAfterGJ - totalBeforeGJ) < 0 ? "text-green-600" : ""}`}>
+                        {(totalAfterGJ - totalBeforeGJ) < 0 ? "" : "+"}{(totalAfterGJ - totalBeforeGJ).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-xs text-right py-3">
+                        <Badge variant="default" className="text-xs">{improvementPct.toFixed(1)} %</Badge>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">GES Avant</p>
+                  <p className="text-sm font-semibold tabular-nums">{ghsBefore.toFixed(3)} T CO₂</p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">GES Après</p>
+                  <p className="text-sm font-semibold tabular-nums">{ghsAfter.toFixed(3)} T CO₂</p>
+                </div>
+                <div className="rounded-lg border bg-green-50 p-3">
+                  <p className="text-xs text-muted-foreground">Réduction GES</p>
+                  <p className="text-sm font-semibold text-green-700 tabular-nums">{ghsImprovementPct.toFixed(1)} %</p>
                 </div>
               </div>
             </section>
@@ -852,6 +916,30 @@ export default function ReportTab({ project }: ReportTabProps) {
                           />
                         </div>
                       )}
+
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2">{annexNum++}. Pertes thermiques par composante</h3>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Comparaison des pertes thermiques annuelles par composante du bâtiment, avant et après travaux (GJ/an).
+                        </p>
+                        {heatLossComponents.length > 0 && (
+                          <div className="flex justify-center">
+                            <div className="h-[350px] w-full max-w-[600px]">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={heatLossComponents} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis type="number" tick={{ fontSize: 11 }} unit=" GJ" />
+                                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
+                                  <Tooltip formatter={(value: number) => `${value} GJ`} />
+                                  <Legend />
+                                  <Bar dataKey="avant" name="Avant travaux" fill="#ef4444" barSize={12} />
+                                  <Bar dataKey="apres" name="Après travaux" fill="#22c55e" barSize={12} />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </>
                   );
                 })()}
