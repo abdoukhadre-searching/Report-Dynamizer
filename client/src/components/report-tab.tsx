@@ -412,17 +412,17 @@ export default function ReportTab({ project }: ReportTabProps) {
                   </p>
                 </div>
 
-                <div className="px-10 pb-8 mt-auto">
+                <div className="px-10 pb-10">
                   <div className="flex items-end justify-between pt-5" style={{ borderTop: '3px solid #0d5257' }}>
                     <img
                       src={mabLogoPath}
                       alt="MAB - Marc André Boucher, Conseils Immobiliers"
-                      className="h-18 w-auto object-contain"
+                      style={{ height: '72px', width: 'auto' }}
                       data-testid="img-company-logo"
                     />
-                    <div className="text-right text-xs text-slate-500" style={{ fontFamily: "'Inter', sans-serif" }}>
-                      <p className="font-semibold" style={{ color: '#0d5257' }}>9433-6450 QC INC.</p>
-                      <p className="mt-1">{new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
+                    <div className="text-right" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      <p className="text-sm font-semibold" style={{ color: '#0d5257' }}>9433-6450 QC INC.</p>
+                      <p className="text-sm text-slate-500 mt-1">{new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
                     </div>
                   </div>
                 </div>
