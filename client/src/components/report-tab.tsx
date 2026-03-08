@@ -16,6 +16,8 @@ import {
 import { FileText, Printer, Upload, Loader2, ImageIcon } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import buildingCoverPath from "@assets/building-sketch-cover.png";
+import cmhcLogoPath from "@assets/1689212055229_1772954865707.jpg";
+import aphSelectBannerPath from "@assets/large_aph_select_1772954873435.png";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -375,32 +377,39 @@ export default function ReportTab({ project }: ReportTabProps) {
               <div className="w-3 flex-shrink-0" style={{ background: 'linear-gradient(to bottom, #1e3a5f, #c0392b)' }} />
 
               <div className="flex-1 flex flex-col">
-                <div className="flex items-start justify-between px-8 pt-8 pb-4">
-                  <div>
-                    <h1 className="text-xl font-bold leading-snug mb-2" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f', maxWidth: '420px' }} data-testid="text-report-title">
-                      Cahier préparatoire pour la qualification au programme APH SELECT
-                    </h1>
-                    <p className="text-sm text-slate-500 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
-                  </div>
+                <div className="flex items-center justify-between px-8 pt-6 pb-3">
+                  <img
+                    src={cmhcLogoPath}
+                    alt="CMHC / SCHL"
+                    className="h-12 w-auto object-contain"
+                    data-testid="img-cmhc-logo"
+                  />
                   <div className="text-right flex-shrink-0 ml-6">
                     <p className="text-4xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: '#c0392b' }}>{new Date().getFullYear()}</p>
                   </div>
                 </div>
 
-                <div className="px-8 py-4 flex-1 flex items-center justify-center">
-                  <div className="w-full max-w-[520px] overflow-hidden rounded shadow-md">
+                <div className="px-8 pb-4">
+                  <h1 className="text-xl font-bold leading-snug mb-2" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f' }} data-testid="text-report-title">
+                    Cahier préparatoire pour la qualification au programme APH SELECT
+                  </h1>
+                  <p className="text-sm text-slate-500 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
+                </div>
+
+                <div className="px-8 py-3 flex-1 flex items-center justify-center">
+                  <div className="w-full overflow-hidden rounded-lg shadow-lg">
                     <img
-                      src={project.annexClimateZoneImage || buildingCoverPath}
-                      alt="Photo du bâtiment"
+                      src={aphSelectBannerPath}
+                      alt="APH SELECT — Pour immeubles collectifs"
                       className="w-full h-auto object-cover"
-                      style={{ maxHeight: '340px' }}
-                      data-testid="img-cover-building"
+                      style={{ maxHeight: '280px' }}
+                      data-testid="img-aph-select-banner"
                     />
                   </div>
                 </div>
 
                 <div className="px-8 py-4">
-                  <p className="text-sm italic text-slate-600 text-center mb-6" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  <p className="text-sm italic text-slate-600 text-center" style={{ fontFamily: "'Inter', sans-serif" }}>
                     Évaluation réalisée par la firme d'évaluation en efficacité{'\u00A0'}énergétique Marc-André Boucher
                   </p>
                 </div>
