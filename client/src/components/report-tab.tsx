@@ -376,27 +376,25 @@ export default function ReportTab({ project }: ReportTabProps) {
             <div className="flex" style={{ height: '100vh', maxHeight: '1056px', minHeight: '750px' }}>
               <div className="w-3 flex-shrink-0" style={{ background: 'linear-gradient(to bottom, #0d5257, #0a7b72, #0d5257)' }} />
 
-              <div className="flex-1 flex flex-col">
-                <div className="flex items-center justify-between px-10 pt-8 pb-4">
-                  <img
-                    src={cmhcLogoPath}
-                    alt="CMHC / SCHL"
-                    className="h-14 w-auto object-contain"
-                    data-testid="img-cmhc-logo"
-                  />
-                  <div className="text-right flex-shrink-0 ml-6">
-                    <p className="text-5xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }}>{new Date().getFullYear()}</p>
+              <div className="flex-1 flex flex-col justify-between">
+                <div className="px-10 pt-10">
+                  <div className="flex items-start justify-between mb-8">
+                    <img
+                      src={cmhcLogoPath}
+                      alt="CMHC / SCHL"
+                      className="h-14 w-auto object-contain"
+                      data-testid="img-cmhc-logo"
+                    />
+                    <p className="text-5xl font-bold flex-shrink-0 ml-6" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }}>{new Date().getFullYear()}</p>
                   </div>
-                </div>
 
-                <div className="px-10 pt-2 pb-6">
-                  <h1 className="text-2xl font-bold leading-snug mb-3" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }} data-testid="text-report-title">
+                  <h1 className="text-3xl font-bold leading-tight mb-5" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }} data-testid="text-report-title">
                     Cahier préparatoire pour la qualification<br />au programme APH SELECT
                   </h1>
-                  <p className="text-sm text-slate-500 mt-2" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
+                  <p className="text-lg font-medium mt-3" style={{ fontFamily: "'Inter', sans-serif", color: '#334155' }}>{fullAddress}</p>
                 </div>
 
-                <div className="px-10 py-4 flex-1 flex items-center justify-center">
+                <div className="px-10 py-6 flex items-center justify-center">
                   <div className="w-full overflow-hidden rounded-lg shadow-xl" style={{ border: '2px solid #0d5257' }}>
                     <img
                       src={aphSelectBannerPath}
@@ -407,22 +405,21 @@ export default function ReportTab({ project }: ReportTabProps) {
                   </div>
                 </div>
 
-                <div className="px-10 py-6">
-                  <p className="text-sm italic text-center" style={{ fontFamily: "'Inter', sans-serif", color: '#334155' }}>
-                    Évaluation réalisée par la firme d'évaluation en efficacité{'\u00A0'}énergétique Marc-André Boucher
+                <div className="px-10 pt-4 pb-2">
+                  <p className="text-base italic text-center leading-relaxed" style={{ fontFamily: "'Inter', sans-serif", color: '#334155' }}>
+                    Évaluation réalisée par la firme d'évaluation en efficacité{'\u00A0'}énergétique<br />
+                    <span className="font-semibold not-italic" style={{ color: '#0d5257' }}>Marc-André Boucher</span>
                   </p>
                 </div>
 
-                <div className="mt-auto px-10 pb-8">
+                <div className="px-10 pb-8 mt-auto">
                   <div className="flex items-end justify-between pt-5" style={{ borderTop: '3px solid #0d5257' }}>
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={mabLogoPath}
-                        alt="MAB - Marc André Boucher, Conseils Immobiliers"
-                        className="h-18 w-auto object-contain"
-                        data-testid="img-company-logo"
-                      />
-                    </div>
+                    <img
+                      src={mabLogoPath}
+                      alt="MAB - Marc André Boucher, Conseils Immobiliers"
+                      className="h-18 w-auto object-contain"
+                      data-testid="img-company-logo"
+                    />
                     <div className="text-right text-xs text-slate-500" style={{ fontFamily: "'Inter', sans-serif" }}>
                       <p className="font-semibold" style={{ color: '#0d5257' }}>9433-6450 QC INC.</p>
                       <p className="mt-1">{new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
