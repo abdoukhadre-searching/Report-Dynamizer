@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Printer, Upload, Loader2, ImageIcon } from "lucide-react";
+import { FileText, Printer, Upload, Loader2, ImageIcon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -221,6 +221,71 @@ export default function ReportTab({ project }: ReportTabProps) {
     window.print();
   };
 
+  const handleExportWord = () => {
+    const reportEl = document.getElementById("report-content");
+    if (!reportEl) return;
+
+    const clone = reportEl.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll("[data-print-hidden]").forEach(el => el.remove());
+    clone.querySelectorAll("input, label, button").forEach(el => el.remove());
+
+    const svgs = clone.querySelectorAll("svg.recharts-surface");
+    svgs.forEach(svg => {
+      const svgEl = svg as SVGSVGElement;
+      const canvas = document.createElement("canvas");
+      const bbox = svgEl.getBoundingClientRect();
+      canvas.width = bbox.width * 2;
+      canvas.height = bbox.height * 2;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const data = new XMLSerializer().serializeToString(svgEl);
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(data)));
+      }
+    });
+
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:w="urn:schemas-microsoft-com:office:word"
+            xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
+          h1 { font-size: 18pt; font-weight: bold; text-align: center; margin-bottom: 8pt; }
+          h2 { font-size: 13pt; font-weight: bold; margin-top: 16pt; margin-bottom: 8pt; border-bottom: 1px solid #e5e5e5; padding-bottom: 4pt; }
+          h3 { font-size: 11pt; font-weight: bold; margin-top: 12pt; margin-bottom: 6pt; }
+          p { margin: 6pt 0; }
+          table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
+          th, td { border: 1px solid #ccc; padding: 4pt 8pt; font-size: 10pt; }
+          th { background-color: #f0f4ff; font-weight: bold; }
+          ul { margin: 6pt 0; padding-left: 20pt; }
+          li { margin: 3pt 0; }
+          .text-center { text-align: center; }
+          .font-semibold { font-weight: bold; }
+          img { max-width: 400px; }
+        </style>
+      </head>
+      <body>
+        ${clone.innerHTML}
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${project.name || "rapport"}_qualification.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
   const showHeatingStrategy = hasHeatingChanged(pre, post) && isThermopompeAdded(post);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
@@ -353,10 +418,16 @@ export default function ReportTab({ project }: ReportTabProps) {
           <FileText className="w-4 h-4 text-muted-foreground" />
           <h2 className="font-medium">Cahier de qualification APH SELECT</h2>
         </div>
-        <Button variant="secondary" size="sm" onClick={handlePrint} data-testid="button-print">
-          <Printer className="w-4 h-4 mr-2" />
-          Imprimer / PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExportWord} data-testid="button-export-word">
+            <Download className="w-4 h-4 mr-2" />
+            Word
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handlePrint} data-testid="button-print">
+            <Printer className="w-4 h-4 mr-2" />
+            Imprimer / PDF
+          </Button>
+        </div>
       </div>
 
       <div className="print:p-0" id="report-content">
