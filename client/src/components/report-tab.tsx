@@ -407,32 +407,39 @@ export default function ReportTab({ project }: ReportTabProps) {
               </div>
             </section>
 
-            <Separator />
+          </CardContent>
+        </Card>
 
+        <Card className="print:shadow-none print:border-none print:break-before-page mt-6">
+          <CardContent className="p-8 report-prose">
             <section>
-              <h2 className="text-base font-semibold mb-4">Table des matières</h2>
-              <nav className="space-y-1 text-sm">
+              <h2 className="text-base font-semibold mb-6">Table des matières</h2>
+              <nav className="space-y-2 text-sm">
                 {tocItems.map((item, idx) => {
                   const ids = ["toc-resume", "toc-description", "toc-profil", "toc-strategies", "toc-performance", "toc-comparatif", "toc-conclusion", "toc-annexes"];
                   return (
                     <a
                       key={idx}
                       href={`#${ids[idx]}`}
-                      className="block py-1 text-primary hover:underline cursor-pointer print:text-foreground print:no-underline"
+                      className="flex items-center gap-3 py-2 px-3 rounded-md text-primary hover:bg-primary/5 hover:underline cursor-pointer transition-colors print:text-foreground print:no-underline print:px-0 print:hover:bg-transparent"
                       onClick={(e) => {
                         e.preventDefault();
                         document.getElementById(ids[idx])?.scrollIntoView({ behavior: "smooth" });
                       }}
                       data-testid={`link-toc-${idx}`}
                     >
-                      {idx + 1}. {item}
+                      <span className="font-semibold min-w-[1.5rem]">{idx + 1}.</span>
+                      <span>{item}</span>
                     </a>
                   );
                 })}
               </nav>
             </section>
+          </CardContent>
+        </Card>
 
-            <Separator />
+        <Card className="print:shadow-none print:border-none print:break-before-page mt-6">
+          <CardContent className="p-8 space-y-8 report-prose">
 
             <section id="toc-description">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-description">
