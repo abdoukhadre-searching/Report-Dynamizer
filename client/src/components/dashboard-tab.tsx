@@ -21,6 +21,15 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
 } from "recharts";
 import {
   TrendingDown,
@@ -31,6 +40,8 @@ import {
   Snowflake,
   Gauge,
   Leaf,
+  Home,
+  FlameKindling,
 } from "lucide-react";
 
 interface DashboardTabProps {
@@ -97,9 +108,69 @@ export default function DashboardTab({ project }: DashboardTabProps) {
 
   const barChartData = summaryCards.map((card) => ({
     name: card.label,
-    Avant: Number(card.before.toFixed(2)),
-    Apres: Number(card.after.toFixed(2)),
+    Avant: Number((card.before ?? 0).toFixed(2)),
+    Après: Number((card.after ?? 0).toFixed(2)),
   }));
+
+  const monthLabels = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Août", "Sep", "Oct", "Nov", "Déc"];
+  const monthlyComparisonData = monthLabels.map((month, idx) => {
+    const preMonth = pre.monthlyEnergy?.[idx];
+    const postMonth = post.monthlyEnergy?.[idx];
+    const preTotal = preMonth
+      ? (preMonth.heatingPrimary + preMonth.heatingSecondary + preMonth.hotWaterPrimary + preMonth.hotWaterSecondary + preMonth.lightingAppliances + preMonth.ventilation + preMonth.cooling) / 1000
+      : 0;
+    const postTotal = postMonth
+      ? (postMonth.heatingPrimary + postMonth.heatingSecondary + postMonth.hotWaterPrimary + postMonth.hotWaterSecondary + postMonth.lightingAppliances + postMonth.ventilation + postMonth.cooling) / 1000
+      : 0;
+    return { month, Avant: Number(preTotal.toFixed(2)), Après: Number(postTotal.toFixed(2)) };
+  });
+
+  const monthlyHeatingData = monthLabels.map((month, idx) => {
+    const preMonth = pre.monthlyEnergy?.[idx];
+    const postMonth = post.monthlyEnergy?.[idx];
+    const preHeating = preMonth ? (preMonth.heatingPrimary + preMonth.heatingSecondary) / 1000 : 0;
+    const postHeating = postMonth ? (postMonth.heatingPrimary + postMonth.heatingSecondary) / 1000 : 0;
+    return { month, Avant: Number(preHeating.toFixed(2)), Après: Number(postHeating.toFixed(2)) };
+  });
+
+  const radarData = summaryCards.map((card) => ({
+    category: card.label,
+    reduction: card.before > 0 ? Number((((card.before - card.after) / card.before) * 100).toFixed(1)) : 0,
+  }));
+
+  const heatLossComparisonData = (() => {
+    const elements: { name: string; Avant: number; Après: number }[] = [];
+    const preZone1 = pre.zone1 || [];
+    const postZone1 = post.zone1 || [];
+    const allElements = new Set([...preZone1.map(z => z.element), ...postZone1.map(z => z.element)]);
+    allElements.forEach(el => {
+      const preEl = preZone1.find(z => z.element === el);
+      const postEl = postZone1.find(z => z.element === el);
+      elements.push({
+        name: el.length > 15 ? el.substring(0, 15) + "…" : el,
+        Avant: Number(((preEl?.heatLossMJ ?? 0) / 1000).toFixed(2)),
+        Après: Number(((postEl?.heatLossMJ ?? 0) / 1000).toFixed(2)),
+      });
+    });
+    if (pre.ventilation?.heatLossMJ || post.ventilation?.heatLossMJ) {
+      elements.push({
+        name: "Ventilation",
+        Avant: Number(((pre.ventilation?.heatLossMJ ?? 0) / 1000).toFixed(2)),
+        Après: Number(((post.ventilation?.heatLossMJ ?? 0) / 1000).toFixed(2)),
+      });
+    }
+    return elements;
+  })();
+
+  const gesBarData = [
+    { name: "GES Total", Avant: Number((comparison.ghsBefore ?? 0).toFixed(4)), Après: Number((comparison.ghsAfter ?? 0).toFixed(4)) },
+  ];
+  if ((comparison.ghsElectricityBefore ?? 0) > 0 || (comparison.ghsElectricityAfter ?? 0) > 0) {
+    gesBarData.push({ name: "GES Électricité", Avant: Number((comparison.ghsElectricityBefore ?? 0).toFixed(4)), Après: Number((comparison.ghsElectricityAfter ?? 0).toFixed(4)) });
+  }
+  if ((comparison.ghsGasBefore ?? 0) > 0 || (comparison.ghsGasAfter ?? 0) > 0) {
+    gesBarData.push({ name: "GES Combustible", Avant: Number((comparison.ghsGasBefore ?? 0).toFixed(4)), Après: Number((comparison.ghsGasAfter ?? 0).toFixed(4)) });
+  }
 
   const pieDataBefore = summaryCards.map((card) => ({
     name: card.label,
@@ -161,7 +232,7 @@ export default function DashboardTab({ project }: DashboardTabProps) {
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-2">
               <Gauge className="w-4 h-4 text-chart-4" />
-              <p className="text-xs text-muted-foreground">Total APRES</p>
+              <p className="text-xs text-muted-foreground">Total APRÈS</p>
             </div>
             <p className="text-2xl font-semibold tabular-nums" data-testid="text-total-after">
               {(comparison.totalAfter ?? 0).toFixed(2)}
@@ -173,19 +244,19 @@ export default function DashboardTab({ project }: DashboardTabProps) {
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-2">
               <TrendingDown className="w-4 h-4 text-chart-4" />
-              <p className="text-xs text-muted-foreground">Amelioration</p>
+              <p className="text-xs text-muted-foreground">Amélioration</p>
             </div>
             <p className="text-2xl font-semibold tabular-nums" data-testid="text-improvement">
               {(comparison.improvementPercent ?? 0).toFixed(1)}%
             </p>
-            <p className="text-xs text-muted-foreground">Reduction energie</p>
+            <p className="text-xs text-muted-foreground">Réduction énergie</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-2">
               <Leaf className="w-4 h-4 text-chart-4" />
-              <p className="text-xs text-muted-foreground">GES Reduction</p>
+              <p className="text-xs text-muted-foreground">GES Réduction</p>
             </div>
             <p className="text-2xl font-semibold tabular-nums" data-testid="text-ghs-improvement">
               {(comparison.ghsImprovementPercent ?? 0).toFixed(1)}%
@@ -213,7 +284,7 @@ export default function DashboardTab({ project }: DashboardTabProps) {
                     <span className="text-sm font-mono">{card.before.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-muted-foreground">Apres</span>
+                    <span className="text-xs text-muted-foreground">Après</span>
                     <span className="text-sm font-mono">{card.after.toFixed(2)}</span>
                   </div>
                   <div className="pt-2 border-t">
@@ -230,30 +301,37 @@ export default function DashboardTab({ project }: DashboardTabProps) {
 
       <Card>
         <CardContent className="p-6">
-          <h3 className="font-medium mb-4">Comparatif energetique (GJ/an)</h3>
+          <h3 className="font-medium mb-4">Comparatif énergétique (GJ/an)</h3>
           <div className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "6px",
-                    fontSize: 12,
-                  }}
-                />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="Avant" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Apres" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Après" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="font-medium mb-4">Profil énergétique mensuel (GJ/mois)</h3>
+          <div className="h-[320px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyComparisonData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Area type="monotone" dataKey="Avant" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.15} strokeWidth={2} />
+                <Area type="monotone" dataKey="Après" stroke="hsl(var(--chart-4))" fill="hsl(var(--chart-4))" fillOpacity={0.15} strokeWidth={2} />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
@@ -262,7 +340,66 @@ export default function DashboardTab({ project }: DashboardTabProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardContent className="p-6">
-            <h3 className="font-medium mb-4">Repartition AVANT travaux</h3>
+            <h3 className="font-medium mb-4">Chauffage mensuel (GJ/mois)</h3>
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyHeatingData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Line type="monotone" dataKey="Avant" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="Après" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-medium mb-4">Réduction par catégorie (%)</h3>
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <PolarRadiusAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} domain={[0, 100]} />
+                  <Radar dataKey="reduction" stroke="hsl(var(--chart-4))" fill="hsl(var(--chart-4))" fillOpacity={0.3} strokeWidth={2} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: 12 }} formatter={(value: number) => [`${value}%`, "Réduction"]} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {heatLossComparisonData.length > 0 && (
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-medium mb-4">Pertes thermiques par composante (GJ/an)</h3>
+            <div className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={heatLossComparisonData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Avant" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="Après" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-medium mb-4">Répartition AVANT travaux</h3>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -289,7 +426,7 @@ export default function DashboardTab({ project }: DashboardTabProps) {
         </Card>
         <Card>
           <CardContent className="p-6">
-            <h3 className="font-medium mb-4">Repartition APRES travaux</h3>
+            <h3 className="font-medium mb-4">Répartition APRÈS travaux</h3>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -331,31 +468,54 @@ export default function DashboardTab({ project }: DashboardTabProps) {
         </Card>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="font-medium mb-4">GES (Gaz a effet de serre)</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Indicateur</TableHead>
-                <TableHead className="text-xs text-right">Avant (T/A)</TableHead>
-                <TableHead className="text-xs text-right">Apres (T/A)</TableHead>
-                <TableHead className="text-xs text-right">Reduction</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell className="text-xs">GES Electricite</TableCell>
-                <TableCell className="text-xs text-right font-mono">{(comparison.ghsBefore ?? 0).toFixed(3)}</TableCell>
-                <TableCell className="text-xs text-right font-mono">{(comparison.ghsAfter ?? 0).toFixed(3)}</TableCell>
-                <TableCell className="text-xs text-right">
-                  <Badge variant="secondary">{(comparison.ghsImprovementPercent ?? 0).toFixed(1)}%</Badge>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-medium mb-4">GES - Gaz à effet de serre (T CO2/an)</h3>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={gesBarData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Avant" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Après" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-medium mb-4">Résumé GES</h3>
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between p-3 rounded-md bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Leaf className="w-4 h-4 text-chart-1" />
+                  <span className="text-sm">GES Avant</span>
+                </div>
+                <span className="text-lg font-semibold font-mono" data-testid="text-ges-before">{(comparison.ghsBefore ?? 0).toFixed(4)} T</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-md bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Leaf className="w-4 h-4 text-chart-4" />
+                  <span className="text-sm">GES Après</span>
+                </div>
+                <span className="text-lg font-semibold font-mono" data-testid="text-ges-after">{(comparison.ghsAfter ?? 0).toFixed(4)} T</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-md border-2 border-primary/20 bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <TrendingDown className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Réduction GES</span>
+                </div>
+                <Badge variant="default" className="text-base px-3 py-1" data-testid="text-ges-reduction">{(comparison.ghsImprovementPercent ?? 0).toFixed(1)}%</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
