@@ -293,7 +293,7 @@
   .report-prose h2 {
     font-family: 'Playfair Display', serif !important;
     font-weight: 700 !important;
-    font-size: 1.1rem !important;
+    font-size: 1.25rem !important;
     color: #0d5257;
     letter-spacing: -0.01em;
     padding-bottom: 0.5rem;
@@ -306,10 +306,12 @@
   .report-prose h3 {
     font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
+    font-size: 1.05rem !important;
     color: #0d5257;
   }
 
   .report-prose p {
+    font-size: 0.95rem !important;
     line-height: 1.75;
     color: #334155;
   }
@@ -325,6 +327,11 @@
 }
 
 @media print {
+  @page {
+    size: letter;
+    margin: 0.6in;
+  }
+
   body, body * {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
     font-variation-settings: normal !important;
@@ -344,8 +351,29 @@
     color: #0d5257 !important;
   }
 
+  .report-prose h2 {
+    font-size: 1.35rem !important;
+  }
+
   .report-prose h3 {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    font-size: 1.1rem !important;
+  }
+
+  .report-prose p,
+  .report-prose li,
+  .report-prose td,
+  .report-prose span {
+    font-size: 12pt !important;
+    line-height: 1.7 !important;
+  }
+
+  .report-prose .text-xs {
+    font-size: 10pt !important;
+  }
+
+  .report-prose .text-sm {
+    font-size: 11pt !important;
   }
 
   .cover-page-card {
@@ -356,6 +384,27 @@
   .cover-page-card > div > div {
     height: 100vh !important;
     max-height: none !important;
+  }
+
+  .cover-page-card h1 {
+    font-size: 28pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .cover-page-card .cover-address {
+    font-size: 16pt !important;
+  }
+
+  .cover-page-card .cover-year {
+    font-size: 48pt !important;
+  }
+
+  .cover-page-card .cover-eval-text {
+    font-size: 13pt !important;
+  }
+
+  .cover-page-card .cover-footer-text {
+    font-size: 11pt !important;
   }
 
   .print\:break-before-page {

@@ -385,13 +385,13 @@ export default function ReportTab({ project }: ReportTabProps) {
                       className="h-14 w-auto object-contain"
                       data-testid="img-cmhc-logo"
                     />
-                    <p className="text-5xl font-bold flex-shrink-0 ml-6" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }}>{new Date().getFullYear()}</p>
+                    <p className="text-5xl font-bold flex-shrink-0 ml-6 cover-year" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }}>{new Date().getFullYear()}</p>
                   </div>
 
                   <h1 className="text-3xl font-bold leading-tight mb-5" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }} data-testid="text-report-title">
                     Cahier préparatoire pour la qualification<br />au programme APH SELECT
                   </h1>
-                  <p className="text-lg font-medium mt-3" style={{ fontFamily: "'Inter', sans-serif", color: '#334155' }}>{fullAddress}</p>
+                  <p className="text-lg font-medium mt-3 cover-address" style={{ fontFamily: "'Inter', sans-serif", color: '#334155' }}>{fullAddress}</p>
                 </div>
 
                 <div className="px-10 py-6 flex items-center justify-center">
@@ -406,9 +406,9 @@ export default function ReportTab({ project }: ReportTabProps) {
                 </div>
 
                 <div className="px-10 pt-4 pb-2">
-                  <p className="text-base italic text-center leading-relaxed" style={{ fontFamily: "'Inter', sans-serif", color: '#334155' }}>
+                  <p className="text-base italic text-center leading-relaxed cover-eval-text" style={{ fontFamily: "'Inter', sans-serif", color: '#334155' }}>
                     Évaluation réalisée par la firme d'évaluation en efficacité{'\u00A0'}énergétique<br />
-                    <span className="font-semibold not-italic" style={{ color: '#0d5257' }}>Marc-André Boucher</span>
+                    <span className="font-semibold not-italic cover-eval-text" style={{ color: '#0d5257' }}>Marc-André Boucher</span>
                   </p>
                 </div>
 
@@ -421,8 +421,8 @@ export default function ReportTab({ project }: ReportTabProps) {
                       data-testid="img-company-logo"
                     />
                     <div className="text-right" style={{ fontFamily: "'Inter', sans-serif" }}>
-                      <p className="text-sm font-semibold" style={{ color: '#0d5257' }}>9433-6450 QC INC.</p>
-                      <p className="text-sm text-slate-500 mt-1">{new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
+                      <p className="text-sm font-semibold cover-footer-text" style={{ color: '#0d5257' }}>9433-6450 QC INC.</p>
+                      <p className="text-sm text-slate-500 mt-1 cover-footer-text">{new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
                     </div>
                   </div>
                 </div>
