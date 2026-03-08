@@ -472,6 +472,41 @@ export default function ReportTab({ project }: ReportTabProps) {
                   L'ensemble des interventions proposées permet ainsi d'améliorer significativement la performance énergétique du bâtiment tout en contribuant à réduire ses coûts d'exploitation et son empreinte environnementale.
                 </p>
               </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 not-prose" data-testid="kpi-summary-cards">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 print:bg-slate-50" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M12 8v4l2 2"/></svg>
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total AVANT</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900" style={{ fontFamily: "'Inter', sans-serif" }}>{totalBeforeGJ.toFixed(2)}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">GJ/an</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 print:bg-slate-50" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg className="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total APRÈS</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900" style={{ fontFamily: "'Inter', sans-serif" }}>{totalAfterGJ.toFixed(2)}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">GJ/an</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 print:bg-slate-50" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Amélioration</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900" style={{ fontFamily: "'Inter', sans-serif" }}>{improvementPct.toFixed(1)}%</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Réduction énergie</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 print:bg-slate-50" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg className="w-4 h-4 text-teal-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 22h20"/><path d="M6.36 17.4 4 17l-2-4 1.1-.55a2 2 0 0 1 1.8 0l.17.1a2 2 0 0 0 1.8 0L8 12 5 6l.9-.45a2 2 0 0 1 2.09.2l4.02 3a2 2 0 0 0 2.1.2L18 7"/></svg>
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">GES Réduction</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900" style={{ fontFamily: "'Inter', sans-serif" }}>{ghsImprovementPct.toFixed(1)}%</p>
+                  <p className="text-xs text-slate-400 mt-0.5">T/an CO2</p>
+                </div>
+              </div>
             </section>
 
           </CardContent>
