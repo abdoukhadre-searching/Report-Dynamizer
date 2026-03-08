@@ -305,8 +305,16 @@ export default function ReportTab({ project }: ReportTabProps) {
   const preHeatingEquipment = pre.heating?.primaryEquipment || "plinthes électriques";
   const windowFraction = getWindowFraction(pre);
 
-  const sectionNum = { current: 1 };
-  const nextSection = () => sectionNum.current++;
+  const tocItems = [
+    "Résumé exécutif",
+    "Description du bâtiment",
+    "Profil de consommation énergétique actuel",
+    "Stratégie d'optimisation énergétique",
+    "Performance énergétique après optimisation",
+    "Comparatif énergétique",
+    "Conclusion",
+    "Annexes",
+  ];
 
   return (
     <div className="space-y-4">
@@ -335,11 +343,10 @@ export default function ReportTab({ project }: ReportTabProps) {
               <p className="text-sm font-medium mt-2">{fullAddress}</p>
             </div>
 
-            <section>
+            <section id="toc-resume">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-resume">
-                {sectionNum.current}. Résumé exécutif
+                Résumé exécutif
               </h2>
-              {nextSection()}
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
                   Le présent rapport présente l'analyse de performance énergétique du bâtiment résidentiel situé au {fullAddress}.
@@ -373,10 +380,34 @@ export default function ReportTab({ project }: ReportTabProps) {
             <Separator />
 
             <section>
+              <h2 className="text-base font-semibold mb-4">Table des matières</h2>
+              <nav className="space-y-1 text-sm">
+                {tocItems.map((item, idx) => {
+                  const ids = ["toc-resume", "toc-description", "toc-profil", "toc-strategies", "toc-performance", "toc-comparatif", "toc-conclusion", "toc-annexes"];
+                  return (
+                    <a
+                      key={idx}
+                      href={`#${ids[idx]}`}
+                      className="block py-1 text-primary hover:underline cursor-pointer print:text-foreground print:no-underline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById(ids[idx])?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      data-testid={`link-toc-${idx}`}
+                    >
+                      {idx + 1}. {item}
+                    </a>
+                  );
+                })}
+              </nav>
+            </section>
+
+            <Separator />
+
+            <section id="toc-description">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-description">
-                {sectionNum.current}. Description du bâtiment
+                Description du bâtiment
               </h2>
-              {nextSection()}
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
                   Le bâtiment analysé est un immeuble résidentiel situé au {fullAddress}
@@ -415,11 +446,10 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <Separator />
 
-            <section>
+            <section id="toc-profil">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-profil">
-                {sectionNum.current}. Profil de consommation énergétique actuel
+                Profil de consommation énergétique actuel
               </h2>
-              {nextSection()}
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
                   La consommation énergétique annuelle totale du bâtiment est estimée à <span className="font-semibold">{totalBeforeGJ.toFixed(2)} GJ</span> par année.
@@ -460,11 +490,10 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <Separator />
 
-            <section>
+            <section id="toc-strategies">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-strategies">
-                {sectionNum.current}. Stratégie d'optimisation énergétique
+                Stratégie d'optimisation énergétique
               </h2>
-              {nextSection()}
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
                   À la suite de l'analyse énergétique et des relevés effectués sur le bâtiment, plusieurs mesures d'amélioration énergétique ont été identifiées afin d'optimiser la performance énergétique de l'immeuble.
@@ -562,11 +591,10 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <Separator />
 
-            <section>
+            <section id="toc-performance">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-performance">
-                {sectionNum.current}. Performance énergétique après optimisation
+                Performance énergétique après optimisation
               </h2>
-              {nextSection()}
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
                   La modélisation énergétique réalisée avec l'ensemble des mesures proposées démontre une amélioration significative de la performance énergétique du bâtiment.
@@ -652,11 +680,10 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <Separator />
 
-            <section>
+            <section id="toc-comparatif">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-comparatif">
-                {sectionNum.current}. Comparatif énergétique
+                Comparatif énergétique
               </h2>
-              {nextSection()}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -699,17 +726,19 @@ export default function ReportTab({ project }: ReportTabProps) {
                 </TableBody>
               </Table>
               <div className="mt-3 text-sm">
-                <p>Amélioration énergétique totale : <Badge variant="default">{improvementPct.toFixed(1)} %</Badge></p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">Amélioration énergétique totale :</span>
+                  <Badge variant="default">{improvementPct.toFixed(1)} %</Badge>
+                </div>
               </div>
             </section>
 
             <Separator />
 
-            <section>
+            <section id="toc-conclusion">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-conclusion">
-                {sectionNum.current}. Conclusion
+                Conclusion
               </h2>
-              {nextSection()}
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
                   L'analyse énergétique réalisée démontre que l'implantation des mesures d'efficacité énergétique proposées permettrait d'améliorer significativement la performance énergétique du bâtiment.
@@ -735,9 +764,9 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <Separator />
 
-            <section>
+            <section id="toc-annexes">
               <h2 className="text-base font-semibold mb-6" data-testid="text-annexes-title">
-                {sectionNum.current}. Annexes
+                Annexes
               </h2>
 
               <div className="space-y-8">
