@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { FileText, Printer, Upload, Loader2, ImageIcon } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
-import buildingCoverPath from "@assets/building-cover.png";
+import buildingCoverPath from "@assets/building-sketch-cover.png";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -388,12 +388,12 @@ export default function ReportTab({ project }: ReportTabProps) {
                 </div>
 
                 <div className="px-8 py-4 flex-1 flex items-center justify-center">
-                  <div className="w-full max-w-[500px] overflow-hidden rounded-lg shadow-lg" style={{ border: '3px solid #1e3a5f' }}>
+                  <div className="w-full max-w-[520px] overflow-hidden rounded shadow-md">
                     <img
                       src={project.annexClimateZoneImage || buildingCoverPath}
                       alt="Photo du bâtiment"
                       className="w-full h-auto object-cover"
-                      style={{ maxHeight: '320px' }}
+                      style={{ maxHeight: '340px' }}
                       data-testid="img-cover-building"
                     />
                   </div>
