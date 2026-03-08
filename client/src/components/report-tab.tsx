@@ -193,8 +193,9 @@ export default function ReportTab({ project }: ReportTabProps) {
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post);
   const showGasConversionStrategy = hasFossilConversion(pre, post);
+  const showHeatPumpWaterHeaterStrategy = !!(post.hotWater?.equipmentType && /thermopompe/i.test(post.hotWater.equipmentType));
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
-  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy || showVrcStrategy || showGasConversionStrategy;
+  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy || showVrcStrategy || showGasConversionStrategy || showHeatPumpWaterHeaterStrategy;
 
   return (
     <div className="space-y-4">
@@ -492,6 +493,28 @@ export default function ReportTab({ project }: ReportTabProps) {
                       </div>
                     )}
 
+                    {showHeatPumpWaterHeaterStrategy && (
+                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-heat-pump-water-heater">
+                        <h3 className="text-sm font-medium mb-2">Chauffe-eaux Thermopompe</h3>
+                        <p className="text-sm">
+                          Installation de{" "}
+                          <span className="font-semibold">{thermopompeCount}</span>{" "}
+                          Chauffe-eaux Thermopompe {post.hotWater?.manufacturer || ""} Hybrid electric water {post.hotWater?.model || ""}.{" "}
+                          <a
+                            href="#annex-chauffe-eau-thermopompe"
+                            className="text-primary underline cursor-pointer print:hidden"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              document.getElementById("annex-chauffe-eau-thermopompe")?.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            data-testid="link-voir-details-chauffe-eau"
+                          >
+                            [Voir détails]
+                          </a>
+                        </p>
+                      </div>
+                    )}
+
                     {showGasConversionStrategy && (
                       <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-gas-conversion">
                         <h3 className="text-sm font-medium mb-2">Conversion {getPreFossilFuelLabel(pre)} vers Électricité</h3>
@@ -766,6 +789,23 @@ export default function ReportTab({ project }: ReportTabProps) {
                         </div>
                       )}
 
+
+                      {showHeatPumpWaterHeaterStrategy && (
+                        <div id="annex-chauffe-eau-thermopompe">
+                          <h3 className="text-sm font-semibold mb-2">
+                            {annexNum++}. Chauffe-eaux Thermopompe
+                          </h3>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Installation de {thermopompeCount} Chauffe-eaux Thermopompe {post.hotWater?.manufacturer || ""} Hybrid electric water {post.hotWater?.model || ""}.
+                          </p>
+                          <AnnexImageUpload
+                            projectId={project.id}
+                            annexType="chauffeEauThermopompe"
+                            label="Chauffe-eaux Thermopompe"
+                            currentImage={project.annexChauffeEauThermopompeImage}
+                          />
+                        </div>
+                      )}
 
                       {showVrcStrategy && (
                         <div>

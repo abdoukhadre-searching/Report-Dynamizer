@@ -618,21 +618,46 @@ function parseHotWater(text: string): ReportData["hotWater"] {
   let annualConsumption: number | undefined;
   let efficiency: number | undefined;
   let primaryType: string | undefined;
+  let equipmentType: string | undefined;
+  let manufacturer: string | undefined;
+  let model: string | undefined;
 
   const installIdx = lines.findIndex(l =>
     l.trim().match(/INSTALLATION\s+DU\s+CHAUFFE[\s-]?EAU/i)
   );
   if (installIdx >= 0) {
-    for (let i = installIdx; i < Math.min(installIdx + 20, lines.length); i++) {
-      const l = lines[i].trim().toLowerCase();
-      if (l.includes("sommaire")) break;
-      for (const key of Object.keys(EMISSION_FACTORS)) {
-        if (l.includes(key)) {
-          primaryType = lines[i].trim();
-          break;
+    for (let i = installIdx; i < Math.min(installIdx + 30, lines.length); i++) {
+      const l = lines[i].trim();
+      const lLower = l.toLowerCase();
+      if (lLower.includes("sommaire")) break;
+
+      if (!primaryType) {
+        for (const key of Object.keys(EMISSION_FACTORS)) {
+          if (lLower.includes(key)) {
+            primaryType = l;
+            break;
+          }
         }
       }
-      if (primaryType) break;
+
+      if (lLower === "type" || lLower.startsWith("type ")) {
+        const nextLine = (lines[i + 1] || "").trim();
+        if (nextLine && !nextLine.match(/^(fabricant|mod[eè]le|type)/i)) {
+          equipmentType = nextLine;
+        }
+      }
+      if (lLower === "fabricant" || lLower.startsWith("fabricant ")) {
+        const nextLine = (lines[i + 1] || "").trim();
+        if (nextLine && !nextLine.match(/^(type|mod[eè]le|fabricant)/i)) {
+          manufacturer = nextLine;
+        }
+      }
+      if (lLower.match(/^mod[eè]le/)) {
+        const nextLine = (lines[i + 1] || "").trim();
+        if (nextLine && !nextLine.match(/^(type|fabricant|mod[eè]le)/i)) {
+          model = nextLine;
+        }
+      }
     }
   }
 
@@ -654,7 +679,7 @@ function parseHotWater(text: string): ReportData["hotWater"] {
     }
   }
 
-  return { dailyConsumption, annualConsumption, energyFactor: efficiency, primaryType };
+  return { dailyConsumption, annualConsumption, energyFactor: efficiency, primaryType, equipmentType, manufacturer, model };
 }
 
 const EMISSION_FACTORS: Record<string, { co2ePerUnit: number; mjPerUnit: number; unit: string }> = {
