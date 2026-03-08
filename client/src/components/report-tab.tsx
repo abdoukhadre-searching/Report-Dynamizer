@@ -371,41 +371,41 @@ export default function ReportTab({ project }: ReportTabProps) {
         {/* ── COVER PAGE ── */}
         <Card className="print:shadow-none print:border-none overflow-hidden">
           <CardContent className="p-0 report-prose">
-            <div className="flex min-h-[700px]">
+            <div className="flex cover-page-container" style={{ minHeight: '700px' }}>
               <div className="w-3 flex-shrink-0" style={{ background: 'linear-gradient(to bottom, #1e3a5f, #c0392b)' }} />
 
               <div className="flex-1 flex flex-col">
-                <div className="flex items-start justify-between px-8 pt-8 pb-4">
+                <div className="flex items-start justify-between px-8 pt-8 pb-2">
                   <div>
-                    <h1 className="text-xl font-bold leading-snug mb-2" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f', maxWidth: '420px' }} data-testid="text-report-title">
+                    <h1 className="text-2xl font-bold leading-snug mb-2" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f', maxWidth: '440px' }} data-testid="text-report-title">
                       Cahier préparatoire pour la qualification au programme APH SELECT
                     </h1>
                     <p className="text-sm text-slate-500 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
                   </div>
                   <div className="text-right flex-shrink-0 ml-6">
-                    <p className="text-4xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: '#c0392b' }}>{new Date().getFullYear()}</p>
+                    <p className="text-5xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: '#c0392b' }}>{new Date().getFullYear()}</p>
                   </div>
                 </div>
 
-                <div className="px-8 py-4 flex-1 flex items-center justify-center">
-                  <div className="w-full max-w-[500px] overflow-hidden rounded-lg shadow-lg" style={{ border: '3px solid #1e3a5f' }}>
+                <div className="px-8 py-6 flex-1 flex items-center justify-center">
+                  <div className="w-full overflow-hidden rounded-lg shadow-lg" style={{ border: '3px solid #1e3a5f' }}>
                     <img
                       src={project.annexClimateZoneImage || buildingCoverPath}
                       alt="Photo du bâtiment"
-                      className="w-full h-auto object-cover"
-                      style={{ maxHeight: '320px' }}
+                      className="w-full object-cover cover-building-img"
+                      style={{ height: '360px' }}
                       data-testid="img-cover-building"
                     />
                   </div>
                 </div>
 
-                <div className="px-8 py-4">
-                  <p className="text-sm italic text-slate-600 text-center mb-6" style={{ fontFamily: "'Inter', sans-serif" }}>
+                <div className="px-8 pt-2 pb-4">
+                  <p className="text-sm italic text-slate-600 text-center" style={{ fontFamily: "'Inter', sans-serif" }}>
                     Évaluation réalisée par la firme d'évaluation en efficacité{'\u00A0'}énergétique Marc-André Boucher
                   </p>
                 </div>
 
-                <div className="mt-auto px-8 pb-6">
+                <div className="mt-auto px-8 pb-8">
                   <div className="flex items-end justify-between pt-5" style={{ borderTop: '2px solid #1e3a5f' }}>
                     <div className="flex items-center gap-4">
                       <img

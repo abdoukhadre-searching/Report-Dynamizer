@@ -351,6 +351,16 @@
     page-break-before: always !important;
   }
 
+  .cover-page-container {
+    min-height: calc(100vh - 2rem) !important;
+    height: calc(100vh - 2rem) !important;
+  }
+
+  .cover-building-img {
+    height: 420px !important;
+    max-height: 50vh !important;
+  }
+
   table, table tr, table td, table th {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
