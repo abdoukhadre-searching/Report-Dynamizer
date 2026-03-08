@@ -297,6 +297,25 @@
 }
 
 @media print {
+  body, body * {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    font-variation-settings: normal !important;
+    font-optical-sizing: auto !important;
+  }
+
+  .report-prose,
+  .report-prose * {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    font-variation-settings: normal !important;
+    font-optical-sizing: auto !important;
+  }
+
+  .report-prose h1,
+  .report-prose h2,
+  .report-prose h3 {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  }
+
   .print\:break-before-page {
     break-before: page !important;
     page-break-before: always !important;
