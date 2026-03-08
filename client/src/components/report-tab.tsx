@@ -361,7 +361,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
       <div className="print:p-0" id="report-content">
         <Card className="print:shadow-none print:border-none">
-          <CardContent className="p-8 space-y-8 report-prose font-sans text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <CardContent className="p-8 space-y-8 report-prose">
             <div className="text-center space-y-3 pb-6 border-b">
               <p className="text-sm text-muted-foreground">{new Date().getFullYear()}</p>
               <h1 className="text-xl font-semibold" data-testid="text-report-title">
