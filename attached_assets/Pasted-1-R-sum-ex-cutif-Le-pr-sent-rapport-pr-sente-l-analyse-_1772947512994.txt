@@ -1,0 +1,134 @@
+1. Résumé exécutif
+
+Le présent rapport présente l’analyse de performance énergétique du bâtiment résidentiel situé au 4874-4896 rue Drolet, Montréal (Québec) H2T 2G7. L’immeuble comprend 12 unités résidentielles réparties sur deux étages.
+
+Une modélisation énergétique du bâtiment a été réalisée à l’aide du logiciel Hot2000 afin d’évaluer la consommation énergétique actuelle de l’immeuble et d’identifier des mesures permettant d’améliorer son efficacité énergétique.
+
+Les résultats de la simulation démontrent qu’en appliquant les mesures d’amélioration proposées, la consommation énergétique annuelle du bâtiment pourrait être réduite de 651.47 GJ par année à 389.10 GJ par année, soit une amélioration énergétique globale d’environ 40.2 %.
+
+Cette amélioration est principalement attribuable :
+
+à l’installation de thermopompes haute efficacité
+
+à l’amélioration de l’étanchéité du bâtiment
+
+à la réduction de la consommation d’eau chaude domestique
+
+à la conversion de l’éclairage vers la technologie DEL (LED)
+
+Ces mesures permettent également de réduire les émissions annuelles de gaz à effet de serre, qui passeraient de 0.369 tonne de CO₂ par année à 0.220 tonne, soit également une réduction d’environ 40 %.
+
+L’ensemble des interventions proposées permet ainsi d’améliorer significativement la performance énergétique du bâtiment tout en contribuant à réduire ses coûts d’exploitation et son empreinte environnementale.
+
+2. Description du bâtiment
+
+Le bâtiment analysé est un immeuble résidentiel situé au 4874-4896 rue Drolet, Montréal (Québec) H2T 2G7, comprenant 12 logements locatifs.
+
+Construit en 1925, il s’agit d’un bâtiment typique du parc immobilier montréalais du début du XXe siècle. La façade principale du bâtiment est illustrée ci-dessus par une photographie prise lors de la visite d’inspection.
+
+L’immeuble possède une architecture classique de cette période et une structure composée principalement de murs massifs.
+
+Le bâtiment possède un toit plat et des murs extérieurs présentant une isolation limitée selon les standards actuels. Les fenêtres sont de type coulissant à double vitrage avec cadre en aluminium.
+
+L’analyse énergétique indique un taux de changement d’air de 11.7 CAH à 50 Pa, ce qui témoigne d’un niveau relativement élevé d’infiltration d’air et contribue aux pertes thermiques du bâtiment.
+
+Le système de chauffage des logements est assuré par plinthes électriques, tandis que la production d’eau chaude domestique est réalisée par des chauffe-eau électriques.
+
+La fraction de la surface des murs hors-terre occupée par les fenêtres est estimée à environ 15.9 %, ce qui influence également les pertes thermiques de l’enveloppe du bâtiment.
+
+Ces caractéristiques sont représentatives des bâtiments construits avant l’introduction des normes modernes d’efficacité énergétique, ce qui explique le potentiel important d’amélioration énergétique.
+
+3. Profil de consommation énergétique actuel
+
+La consommation énergétique annuelle totale du bâtiment est estimée à 651.47 GJ par année.
+
+L’analyse de la répartition de cette consommation énergétique démontre que la plus grande portion de l’énergie est utilisée pour le chauffage des locaux, qui représente environ 310 GJ par année, soit près de la moitié de la consommation énergétique totale du bâtiment.
+
+La deuxième source de consommation énergétique est associée aux charges électriques de base, incluant l’éclairage et les appareils utilisés par les occupants. Cette catégorie représente environ 184 GJ par année.
+
+La production d’eau chaude domestique représente quant à elle environ 107 GJ par année.
+
+Les systèmes de ventilation et de climatisation représentent une portion plus faible de la consommation énergétique globale du bâtiment.
+
+Cette répartition démontre que les stratégies visant à améliorer l’efficacité du système de chauffage et à réduire les pertes thermiques du bâtiment constituent les interventions les plus efficaces pour diminuer la consommation énergétique globale.
+
+(Insérer ici le graphique de répartition énergétique avant travaux.)
+
+4. Stratégie d’optimisation énergétique
+
+À la suite de l’analyse énergétique et des relevés effectués sur le bâtiment, plusieurs mesures d’amélioration énergétique ont été identifiées afin d’optimiser la performance énergétique de l’immeuble.
+
+Ces mesures ont été sélectionnées en fonction de leur impact énergétique, de leur faisabilité technique et de leur capacité à réduire la consommation énergétique globale du bâtiment.
+
+Amélioration de l’étanchéité du bâtiment
+
+Une amélioration de l’étanchéité de l’enveloppe du bâtiment est recommandée afin de réduire les infiltrations d’air et les pertes thermiques.
+
+L’objectif est de réduire le taux de changement d’air à environ 7 CAH à 50 Pa, ce qui permettrait d’améliorer l’efficacité du système de chauffage et de réduire les pertes énergétiques associées à l’infiltration d’air.
+
+Installation de thermopompes haute efficacité
+
+L’installation de 12 thermopompes murales haute efficacité est proposée afin d’améliorer la performance énergétique du système de chauffage et de climatisation.
+
+Les thermopompes recommandées possèdent une capacité minimale de 12 000 BTU, avec une efficacité d’environ 10 HSPF2 et 23 SEER2.
+
+Ces équipements permettent de produire plus d’énergie thermique qu’ils n’en consomment, ce qui contribue à réduire la consommation énergétique associée au chauffage des logements.
+
+Réduction de la consommation d’eau chaude domestique
+
+L’installation de pommeaux de douche et de robinets à faible débit est recommandée afin de réduire la consommation d’eau chaude domestique.
+
+Cette mesure permet de diminuer la quantité d’énergie nécessaire pour chauffer l’eau utilisée dans les logements tout en maintenant un niveau de confort adéquat pour les occupants.
+
+Conversion de l’éclairage vers la technologie DEL
+
+La conversion d’au moins 75 % de l’éclairage du bâtiment vers des luminaires DEL est également recommandée.
+
+Les luminaires DEL consomment significativement moins d’énergie que les ampoules traditionnelles et contribuent à réduire la consommation électrique associée aux charges de base du bâtiment.
+
+5. Performance énergétique après optimisation
+
+La modélisation énergétique réalisée avec l’ensemble des mesures proposées démontre une amélioration significative de la performance énergétique du bâtiment.
+
+Après l’implantation des mesures recommandées, la consommation énergétique annuelle totale du bâtiment passerait de :
+
+651.47 GJ/an à 389.10 GJ/an
+
+ce qui correspond à une amélioration énergétique globale d’environ 40.2 %.
+
+La réduction la plus importante est observée au niveau du chauffage des locaux, principalement grâce à l’installation de thermopompes et à l’amélioration de l’étanchéité du bâtiment.
+
+La consommation énergétique liée à la climatisation diminue également, tandis que les charges de base et la consommation d’eau chaude domestique sont légèrement réduites grâce aux mesures d’efficacité énergétique mises en place.
+
+(Insérer ici le graphique comparatif énergétique Avant / Après.)
+
+(Insérer ici le graphique de répartition énergétique après travaux.)
+
+Afin d’illustrer l’évolution de la consommation énergétique au cours de l’année, le graphique suivant présente le profil énergétique mensuel du bâtiment avant et après l’implantation des mesures d’efficacité énergétique.
+
+On observe que les gains énergétiques les plus importants se produisent durant la période hivernale, lorsque les besoins en chauffage sont les plus élevés. L’installation de thermopompes et l’amélioration de l’étanchéité du bâtiment permettent ainsi de réduire significativement la consommation énergétique pendant les mois les plus froids.
+
+(Insérer ici le graphique : Évolution mensuelle de la consommation énergétique – Avant / Après travaux.)
+
+Cette analyse mensuelle confirme que les mesures proposées permettent d’améliorer la performance énergétique du bâtiment tout au long de l’année, avec un impact particulièrement marqué durant la saison de chauffage.
+
+6. Comparatif énergétique
+Usage énergétique	Avant travaux	Après travaux
+Chauffage des locaux	310.40 GJ	99.39 GJ
+Eau chaude domestique	107.19 GJ	90.84 GJ
+Charges électriques de base	184.17 GJ	158.15 GJ
+Ventilation	13.64 GJ	20.36 GJ
+Climatisation	36.07 GJ	20.35 GJ
+Consommation totale	651.47 GJ	389.10 GJ
+
+Amélioration énergétique totale : 40.2 %
+
+7. Conclusion
+
+L’analyse énergétique réalisée démontre que l’implantation des mesures d’efficacité énergétique proposées permettrait d’améliorer significativement la performance énergétique du bâtiment.
+
+La consommation énergétique annuelle pourrait être réduite d’environ 40 %, ce qui entraînerait également une réduction importante des émissions de gaz à effet de serre.
+
+Les mesures recommandées — notamment l’installation de thermopompes, l’amélioration de l’étanchéité du bâtiment, la conversion de l’éclairage vers la technologie DEL et l’installation de robinetterie à faible débit — constituent des interventions efficaces et techniquement réalisables.
+
+La mise en œuvre de ces stratégies permettra non seulement de réduire les coûts d’exploitation du bâtiment, mais également d’améliorer le confort des occupants et de valoriser la performance énergétique de l’immeuble à long terme.
