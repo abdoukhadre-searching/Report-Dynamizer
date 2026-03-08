@@ -53,7 +53,7 @@ export default function ProjectPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <header className="border-b bg-card print:hidden">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-4">
           <Button
             variant="ghost"
@@ -79,9 +79,9 @@ export default function ProjectPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-6">
+      <main className="max-w-6xl mx-auto px-6 py-6 print:px-0 print:py-0 print:max-w-none">
         <Tabs defaultValue="upload">
-          <TabsList className="mb-6" data-testid="tabs-project">
+          <TabsList className="mb-6 print:hidden" data-testid="tabs-project">
             <TabsTrigger value="upload" data-testid="tab-upload">
               Rapports
             </TabsTrigger>
