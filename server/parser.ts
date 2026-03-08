@@ -626,9 +626,10 @@ function parseHotWater(text: string): ReportData["hotWater"] {
     l.trim().match(/INSTALLATION\s+DU\s+CHAUFFE[\s-]?EAU/i)
   );
   if (installIdx >= 0) {
-    for (let i = installIdx; i < Math.min(installIdx + 30, lines.length); i++) {
+    for (let i = installIdx; i < Math.min(installIdx + 50, lines.length); i++) {
       const l = lines[i].trim();
       const lLower = l.toLowerCase();
+      if (lLower.match(/^page\s+\d/i) || lLower.match(/^\f/) || lLower.match(/^\d{4}-\d{2}-\d{2}$/) || lLower === "h2k") continue;
       if (lLower.includes("sommaire")) break;
 
       if (!primaryType) {
@@ -640,22 +641,52 @@ function parseHotWater(text: string): ReportData["hotWater"] {
         }
       }
 
-      if (lLower === "type" || lLower.startsWith("type ")) {
-        const nextLine = (lines[i + 1] || "").trim();
-        if (nextLine && !nextLine.match(/^(fabricant|mod[eè]le|type)/i)) {
-          equipmentType = nextLine;
+      if (!equipmentType && lLower.match(/^type\s*:?\s*$/)) {
+        for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+          const val = lines[j].trim();
+          if (!val || val.match(/^(page\s+\d|\\f|H2K)/i)) continue;
+          if (val.match(/^(fabricant|mod[eè]le|capacit|emplacement)/i)) break;
+          if (!primaryType && !equipmentType) {
+            for (const key of Object.keys(EMISSION_FACTORS)) {
+              if (val.toLowerCase().includes(key)) {
+                primaryType = val;
+                break;
+              }
+            }
+            if (primaryType) continue;
+          }
+          if (!equipmentType && !val.match(/^(fabricant|mod[eè]le|capacit)/i)) {
+            equipmentType = val;
+            break;
+          }
         }
       }
-      if (lLower === "fabricant" || lLower.startsWith("fabricant ")) {
-        const nextLine = (lines[i + 1] || "").trim();
-        if (nextLine && !nextLine.match(/^(type|mod[eè]le|fabricant)/i)) {
-          manufacturer = nextLine;
+      if (!manufacturer && !model && lLower.match(/^fabricant\s*:?\s*$/)) {
+        const nextIdx = i + 1;
+        const nextL = (lines[nextIdx] || "").trim().toLowerCase();
+        if (nextL.match(/^mod[eè]le\s*:?\s*$/)) {
+          for (let j = nextIdx + 1; j < Math.min(nextIdx + 5, lines.length); j++) {
+            const val = lines[j].trim();
+            if (!val || val.match(/^(page\s+\d|\\f|H2K)/i)) continue;
+            if (val.match(/^(capacit|emplacement|facteur)/i)) break;
+            if (!manufacturer) { manufacturer = val; continue; }
+            if (!model) { model = val; break; }
+          }
+        } else {
+          for (let j = nextIdx; j < Math.min(nextIdx + 3, lines.length); j++) {
+            const val = lines[j].trim();
+            if (!val || val.match(/^(page\s+\d|\\f|H2K)/i)) continue;
+            if (val.match(/^(mod[eè]le|capacit|emplacement)/i)) break;
+            if (!manufacturer) { manufacturer = val; break; }
+          }
         }
       }
-      if (lLower.match(/^mod[eè]le/)) {
-        const nextLine = (lines[i + 1] || "").trim();
-        if (nextLine && !nextLine.match(/^(type|fabricant|mod[eè]le)/i)) {
-          model = nextLine;
+      if (!model && lLower.match(/^mod[eè]le\s*:?\s*$/)) {
+        for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+          const val = lines[j].trim();
+          if (!val || val.match(/^(page\s+\d|\\f|H2K)/i)) continue;
+          if (val.match(/^(fabricant|capacit|emplacement)/i)) break;
+          if (!model) { model = val; break; }
         }
       }
     }
