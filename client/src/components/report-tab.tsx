@@ -375,7 +375,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section id="toc-resume">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-resume">
-                Résumé exécutif
+                1. Résumé exécutif
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
@@ -436,7 +436,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section id="toc-description">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-description">
-                Description du bâtiment
+                2. Description du bâtiment
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
@@ -478,7 +478,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section id="toc-profil">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-profil">
-                Profil de consommation énergétique actuel
+                3. Profil de consommation énergétique actuel
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
@@ -524,7 +524,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section id="toc-strategies">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-strategies">
-                Stratégie d'optimisation énergétique
+                4. Stratégie d'optimisation énergétique
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
@@ -625,7 +625,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section id="toc-performance">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-performance">
-                Performance énergétique après optimisation
+                5. Performance énergétique après optimisation
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
@@ -720,7 +720,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section id="toc-comparatif">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-comparatif">
-                Comparatif énergétique
+                6. Comparatif énergétique
               </h2>
               <div className="border rounded-lg overflow-hidden">
                 <Table>
@@ -801,7 +801,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section id="toc-conclusion">
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-conclusion">
-                Conclusion
+                7. Conclusion
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
                 <p>
@@ -830,7 +830,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <section id="toc-annexes">
               <h2 className="text-base font-semibold mb-6" data-testid="text-annexes-title">
-                Annexes
+                8. Annexes
               </h2>
 
               <div className="space-y-8">
