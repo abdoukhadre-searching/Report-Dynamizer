@@ -279,9 +279,12 @@
 
   .report-prose,
   .report-prose * {
-    font-variation-settings: 'opsz' 16 !important;
-    font-style: normal;
-    font-synthesis: none;
+    font-variation-settings: 'opsz' 14 !important;
+    font-optical-sizing: none !important;
+    font-style: normal !important;
+    font-synthesis: none !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
