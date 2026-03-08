@@ -76,7 +76,7 @@ function AnnexImageUpload({
   return (
     <div className="mt-3">
       {currentImage ? (
-        <div className="space-y-2">
+        <div className="space-y-2 flex flex-col items-center">
           <img
             src={currentImage}
             alt={label}
