@@ -208,7 +208,13 @@ function getWindowFraction(pre: ReportData): string {
   return "N/A";
 }
 
-const PIE_COLORS = ["#3b82f6", "#f97316", "#10b981", "#8b5cf6", "#ef4444"];
+const PIE_COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+];
 
 export default function ReportTab({ project }: ReportTabProps) {
   const pre = project.preReportData as ReportData | null;
@@ -666,8 +672,8 @@ export default function ReportTab({ project }: ReportTabProps) {
                           <YAxis tick={{ fontSize: 11 }} />
                           <Tooltip formatter={(value: number) => `${value} GJ`} />
                           <Legend />
-                          <Bar dataKey="avant" name="Avant travaux" fill="#ef4444" />
-                          <Bar dataKey="apres" name="Après travaux" fill="#22c55e" />
+                          <Bar dataKey="avant" name="Avant travaux" fill="hsl(var(--chart-1))" />
+                          <Bar dataKey="apres" name="Après travaux" fill="hsl(var(--chart-4))" />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -710,8 +716,8 @@ export default function ReportTab({ project }: ReportTabProps) {
                           <YAxis tick={{ fontSize: 11 }} />
                           <Tooltip formatter={(value: number) => `${value} GJ`} />
                           <Legend />
-                          <Area type="monotone" dataKey="avant" name="Avant travaux" stroke="#ef4444" fill="#ef4444" fillOpacity={0.2} />
-                          <Area type="monotone" dataKey="apres" name="Après travaux" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} />
+                          <Area type="monotone" dataKey="avant" name="Avant travaux" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.2} />
+                          <Area type="monotone" dataKey="apres" name="Après travaux" stroke="hsl(var(--chart-4))" fill="hsl(var(--chart-4))" fillOpacity={0.2} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -940,8 +946,8 @@ export default function ReportTab({ project }: ReportTabProps) {
                                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
                                   <Tooltip formatter={(value: number) => `${value} GJ`} />
                                   <Legend />
-                                  <Bar dataKey="avant" name="Avant travaux" fill="#ef4444" barSize={12} />
-                                  <Bar dataKey="apres" name="Après travaux" fill="#22c55e" barSize={12} />
+                                  <Bar dataKey="avant" name="Avant travaux" fill="hsl(var(--chart-1))" barSize={12} />
+                                  <Bar dataKey="apres" name="Après travaux" fill="hsl(var(--chart-4))" barSize={12} />
                                 </BarChart>
                               </ResponsiveContainer>
                             </div>
