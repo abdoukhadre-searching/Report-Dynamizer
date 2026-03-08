@@ -737,17 +737,17 @@ export default function ReportTab({ project }: ReportTabProps) {
                 6. Comparatif énergétique
               </h2>
               <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-primary/10">
-                      <TableHead className="text-xs font-semibold text-foreground py-3">Usage énergétique</TableHead>
-                      <TableHead className="text-xs font-semibold text-foreground text-right py-3">Avant travaux (GJ)</TableHead>
-                      <TableHead className="text-xs font-semibold text-foreground text-right py-3">Après travaux (GJ)</TableHead>
-                      <TableHead className="text-xs font-semibold text-foreground text-right py-3">Variation (GJ)</TableHead>
-                      <TableHead className="text-xs font-semibold text-foreground text-right py-3">Réduction</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
+                  <thead>
+                    <tr className="bg-[hsl(212,85%,42%)] text-white">
+                      <th className="text-xs font-semibold py-3 px-4 text-left border-r border-white/30">Usage énergétique</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right border-r border-white/30">Avant travaux (GJ)</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right border-r border-white/30">Après travaux (GJ)</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right border-r border-white/30">Variation (GJ)</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right">Réduction</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {[
                       { label: "Chauffage des locaux", avant: heatingBeforeGJ, apres: heatingAfterGJ },
                       { label: "Eau chaude domestique", avant: hotWaterBeforeGJ, apres: hotWaterAfterGJ },
@@ -758,14 +758,14 @@ export default function ReportTab({ project }: ReportTabProps) {
                       const variation = row.apres - row.avant;
                       const pct = row.avant > 0 ? ((row.avant - row.apres) / row.avant) * 100 : 0;
                       return (
-                        <TableRow key={idx} className={idx % 2 === 0 ? "bg-muted/30" : ""}>
-                          <TableCell className="text-xs py-2.5">{row.label}</TableCell>
-                          <TableCell className="text-xs text-right py-2.5 tabular-nums">{row.avant.toFixed(2)}</TableCell>
-                          <TableCell className="text-xs text-right py-2.5 tabular-nums">{row.apres.toFixed(2)}</TableCell>
-                          <TableCell className={`text-xs text-right py-2.5 tabular-nums ${variation < 0 ? "text-green-600" : variation > 0 ? "text-red-600" : ""}`}>
+                        <tr key={idx} className={idx % 2 === 0 ? "bg-blue-50/50" : "bg-white"}>
+                          <td className="text-xs py-2.5 px-4 border-r border-gray-200">{row.label}</td>
+                          <td className="text-xs text-right py-2.5 px-4 tabular-nums border-r border-gray-200">{row.avant.toFixed(2)}</td>
+                          <td className="text-xs text-right py-2.5 px-4 tabular-nums border-r border-gray-200">{row.apres.toFixed(2)}</td>
+                          <td className={`text-xs text-right py-2.5 px-4 tabular-nums border-r border-gray-200 ${variation < 0 ? "text-green-600" : variation > 0 ? "text-red-600" : ""}`}>
                             {variation < 0 ? "" : "+"}{variation.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-xs text-right py-2.5">
+                          </td>
+                          <td className="text-xs text-right py-2.5 px-4">
                             {pct > 0 ? (
                               <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                                 {pct.toFixed(1)} %
@@ -777,23 +777,23 @@ export default function ReportTab({ project }: ReportTabProps) {
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       );
                     })}
-                    <TableRow className="border-t-2 bg-primary/5 font-semibold">
-                      <TableCell className="text-xs py-3">Consommation totale</TableCell>
-                      <TableCell className="text-xs text-right py-3 tabular-nums">{totalBeforeGJ.toFixed(2)}</TableCell>
-                      <TableCell className="text-xs text-right py-3 tabular-nums">{totalAfterGJ.toFixed(2)}</TableCell>
-                      <TableCell className={`text-xs text-right py-3 tabular-nums ${(totalAfterGJ - totalBeforeGJ) < 0 ? "text-green-600" : ""}`}>
+                    <tr className="border-t-2 border-gray-300 bg-[hsl(212,85%,95%)] font-semibold">
+                      <td className="text-xs py-3 px-4 border-r border-gray-200">Consommation totale</td>
+                      <td className="text-xs text-right py-3 px-4 tabular-nums border-r border-gray-200">{totalBeforeGJ.toFixed(2)}</td>
+                      <td className="text-xs text-right py-3 px-4 tabular-nums border-r border-gray-200">{totalAfterGJ.toFixed(2)}</td>
+                      <td className={`text-xs text-right py-3 px-4 tabular-nums border-r border-gray-200 ${(totalAfterGJ - totalBeforeGJ) < 0 ? "text-green-600" : ""}`}>
                         {(totalAfterGJ - totalBeforeGJ) < 0 ? "" : "+"}{(totalAfterGJ - totalBeforeGJ).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-xs text-right py-3">
+                      </td>
+                      <td className="text-xs text-right py-3 px-4">
                         <Badge variant="default" className="text-xs">{improvementPct.toFixed(1)} %</Badge>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div className="rounded-lg border p-3">
