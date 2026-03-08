@@ -371,62 +371,61 @@ export default function ReportTab({ project }: ReportTabProps) {
 
       <div className="print:p-0" id="report-content">
         {/* ── COVER PAGE ── */}
-        <Card className="print:shadow-none print:border-none overflow-hidden">
+        <Card className="print:shadow-none print:border-none overflow-hidden cover-page-card">
           <CardContent className="p-0 report-prose">
-            <div className="flex min-h-[700px]">
-              <div className="w-3 flex-shrink-0" style={{ background: 'linear-gradient(to bottom, #1e3a5f, #c0392b)' }} />
+            <div className="flex" style={{ height: '100vh', maxHeight: '1056px', minHeight: '750px' }}>
+              <div className="w-3 flex-shrink-0" style={{ background: 'linear-gradient(to bottom, #0d5257, #0a7b72, #0d5257)' }} />
 
               <div className="flex-1 flex flex-col">
-                <div className="flex items-center justify-between px-8 pt-6 pb-3">
+                <div className="flex items-center justify-between px-10 pt-8 pb-4">
                   <img
                     src={cmhcLogoPath}
                     alt="CMHC / SCHL"
-                    className="h-12 w-auto object-contain"
+                    className="h-14 w-auto object-contain"
                     data-testid="img-cmhc-logo"
                   />
                   <div className="text-right flex-shrink-0 ml-6">
-                    <p className="text-4xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: '#c0392b' }}>{new Date().getFullYear()}</p>
+                    <p className="text-5xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }}>{new Date().getFullYear()}</p>
                   </div>
                 </div>
 
-                <div className="px-8 pb-4">
-                  <h1 className="text-xl font-bold leading-snug mb-2" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f' }} data-testid="text-report-title">
-                    Cahier préparatoire pour la qualification au programme APH SELECT
+                <div className="px-10 pt-2 pb-6">
+                  <h1 className="text-2xl font-bold leading-snug mb-3" style={{ fontFamily: "'Playfair Display', serif", color: '#0d5257' }} data-testid="text-report-title">
+                    Cahier préparatoire pour la qualification<br />au programme APH SELECT
                   </h1>
-                  <p className="text-sm text-slate-500 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
+                  <p className="text-sm text-slate-500 mt-2" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
                 </div>
 
-                <div className="px-8 py-3 flex-1 flex items-center justify-center">
-                  <div className="w-full overflow-hidden rounded-lg shadow-lg">
+                <div className="px-10 py-4 flex-1 flex items-center justify-center">
+                  <div className="w-full overflow-hidden rounded-lg shadow-xl" style={{ border: '2px solid #0d5257' }}>
                     <img
                       src={aphSelectBannerPath}
                       alt="APH SELECT — Pour immeubles collectifs"
                       className="w-full h-auto object-cover"
-                      style={{ maxHeight: '280px' }}
                       data-testid="img-aph-select-banner"
                     />
                   </div>
                 </div>
 
-                <div className="px-8 py-4">
-                  <p className="text-sm italic text-slate-600 text-center" style={{ fontFamily: "'Inter', sans-serif" }}>
+                <div className="px-10 py-6">
+                  <p className="text-sm italic text-center" style={{ fontFamily: "'Inter', sans-serif", color: '#334155' }}>
                     Évaluation réalisée par la firme d'évaluation en efficacité{'\u00A0'}énergétique Marc-André Boucher
                   </p>
                 </div>
 
-                <div className="mt-auto px-8 pb-6">
-                  <div className="flex items-end justify-between pt-5" style={{ borderTop: '2px solid #1e3a5f' }}>
+                <div className="mt-auto px-10 pb-8">
+                  <div className="flex items-end justify-between pt-5" style={{ borderTop: '3px solid #0d5257' }}>
                     <div className="flex items-center gap-4">
                       <img
                         src={mabLogoPath}
                         alt="MAB - Marc André Boucher, Conseils Immobiliers"
-                        className="h-16 w-auto object-contain"
+                        className="h-18 w-auto object-contain"
                         data-testid="img-company-logo"
                       />
                     </div>
                     <div className="text-right text-xs text-slate-500" style={{ fontFamily: "'Inter', sans-serif" }}>
-                      <p className="font-semibold text-slate-700">9433-6450 QC INC.</p>
-                      <p>{new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
+                      <p className="font-semibold" style={{ color: '#0d5257' }}>9433-6450 QC INC.</p>
+                      <p className="mt-1">{new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
                     </div>
                   </div>
                 </div>
@@ -444,7 +443,7 @@ export default function ReportTab({ project }: ReportTabProps) {
               </p>
             </div>
 
-            <div className="relative z-10 flex items-center justify-between pb-3 mb-2" style={{ borderBottom: '2px solid #1e3a5f' }}>
+            <div className="relative z-10 flex items-center justify-between pb-3 mb-2" style={{ borderBottom: '2px solid #0d5257' }}>
               <img src={mabLogoPath} alt="MAB" className="h-10 w-auto object-contain opacity-80" />
               <p className="text-xs text-slate-400 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>Cahier de qualification — APH SELECT</p>
             </div>
@@ -493,7 +492,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                 APH SELECT
               </p>
             </div>
-            <div className="relative z-10 flex items-center justify-between pb-3 mb-6" style={{ borderBottom: '2px solid #1e3a5f' }}>
+            <div className="relative z-10 flex items-center justify-between pb-3 mb-6" style={{ borderBottom: '2px solid #0d5257' }}>
               <img src={mabLogoPath} alt="MAB" className="h-10 w-auto object-contain opacity-80" />
               <p className="text-xs text-slate-400 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>Cahier de qualification — APH SELECT</p>
             </div>
@@ -532,7 +531,7 @@ export default function ReportTab({ project }: ReportTabProps) {
               </p>
             </div>
 
-            <div className="relative z-10 flex items-center justify-between pb-3 mb-6" style={{ borderBottom: '2px solid #1e3a5f' }}>
+            <div className="relative z-10 flex items-center justify-between pb-3 mb-6" style={{ borderBottom: '2px solid #0d5257' }}>
               <img src={mabLogoPath} alt="MAB" className="h-10 w-auto object-contain opacity-80" />
               <p className="text-xs text-slate-400 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>Cahier de qualification — APH SELECT</p>
             </div>
@@ -828,7 +827,7 @@ export default function ReportTab({ project }: ReportTabProps) {
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
                   <thead>
-                    <tr style={{ backgroundColor: "#e8eef6", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
+                    <tr style={{ backgroundColor: "#e0f0f0", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
                       <th className="text-xs font-semibold py-3 px-4 text-left text-slate-700 border-r border-slate-200">Usage énergétique</th>
                       <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700 border-r border-slate-200">Avant travaux (GJ)</th>
                       <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700 border-r border-slate-200">Après travaux (GJ)</th>
@@ -870,7 +869,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                         </tr>
                       );
                     })}
-                    <tr style={{ backgroundColor: "#e8eef6", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} className="font-semibold border-t-2 border-slate-300">
+                    <tr style={{ backgroundColor: "#e0f0f0", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} className="font-semibold border-t-2 border-slate-300">
                       <td className="text-xs py-3 px-4 text-slate-700 border-r border-slate-200">Consommation totale</td>
                       <td className="text-xs text-right py-3 px-4 tabular-nums text-slate-700 border-r border-slate-200">{totalBeforeGJ.toFixed(2)}</td>
                       <td className="text-xs text-right py-3 px-4 tabular-nums text-slate-700 border-r border-slate-200">{totalAfterGJ.toFixed(2)}</td>
