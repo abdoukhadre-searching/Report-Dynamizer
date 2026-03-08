@@ -500,7 +500,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 print:bg-slate-50" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <svg className="w-4 h-4 text-teal-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 22h20"/><path d="M6.36 17.4 4 17l-2-4 1.1-.55a2 2 0 0 1 1.8 0l.17.1a2 2 0 0 0 1.8 0L8 12 5 6l.9-.45a2 2 0 0 1 2.09.2l4.02 3a2 2 0 0 0 2.1.2L18 7"/></svg>
+                    <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                     <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">GES Réduction</span>
                   </div>
                   <p className="text-2xl font-bold text-slate-900" style={{ fontFamily: "'Inter', sans-serif" }}>{ghsImprovementPct.toFixed(1)}%</p>
