@@ -277,14 +277,13 @@
     background-color: var(--elevate-2);
   }
 
-  .report-prose,
-  .report-prose * {
-    font-variation-settings: 'opsz' 14 !important;
-    font-optical-sizing: none !important;
-    font-style: normal !important;
-    font-synthesis: none !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  .report-prose p,
+  .report-prose span:not(.font-semibold):not(.font-bold):not(.font-medium),
+  .report-prose li,
+  .report-prose td {
+    font-weight: 400 !important;
+    font-variation-settings: normal !important;
+    font-optical-sizing: auto !important;
   }
 
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
