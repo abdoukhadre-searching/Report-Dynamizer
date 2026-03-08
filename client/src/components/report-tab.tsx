@@ -739,12 +739,12 @@ export default function ReportTab({ project }: ReportTabProps) {
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
                   <thead>
-                    <tr style={{ backgroundColor: "#1e5a9e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} className="text-white">
-                      <th className="text-xs font-semibold py-3 px-4 text-left border-r border-white/30">Usage énergétique</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right border-r border-white/30">Avant travaux (GJ)</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right border-r border-white/30">Après travaux (GJ)</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right border-r border-white/30">Variation (GJ)</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right">Réduction</th>
+                    <tr style={{ backgroundColor: "#e8eef6", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
+                      <th className="text-xs font-semibold py-3 px-4 text-left text-slate-700 border-r border-slate-200">Usage énergétique</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700 border-r border-slate-200">Avant travaux (GJ)</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700 border-r border-slate-200">Après travaux (GJ)</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700 border-r border-slate-200">Variation (GJ)</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700">Réduction</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -781,15 +781,15 @@ export default function ReportTab({ project }: ReportTabProps) {
                         </tr>
                       );
                     })}
-                    <tr style={{ backgroundColor: "#1e5a9e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} className="text-white font-semibold">
-                      <td className="text-xs py-3 px-4 border-r border-white/30">Consommation totale</td>
-                      <td className="text-xs text-right py-3 px-4 tabular-nums border-r border-white/30">{totalBeforeGJ.toFixed(2)}</td>
-                      <td className="text-xs text-right py-3 px-4 tabular-nums border-r border-white/30">{totalAfterGJ.toFixed(2)}</td>
-                      <td className={`text-xs text-right py-3 px-4 tabular-nums border-r border-white/30 ${(totalAfterGJ - totalBeforeGJ) < 0 ? "text-green-200" : ""}`}>
+                    <tr style={{ backgroundColor: "#e8eef6", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} className="font-semibold border-t-2 border-slate-300">
+                      <td className="text-xs py-3 px-4 text-slate-700 border-r border-slate-200">Consommation totale</td>
+                      <td className="text-xs text-right py-3 px-4 tabular-nums text-slate-700 border-r border-slate-200">{totalBeforeGJ.toFixed(2)}</td>
+                      <td className="text-xs text-right py-3 px-4 tabular-nums text-slate-700 border-r border-slate-200">{totalAfterGJ.toFixed(2)}</td>
+                      <td className={`text-xs text-right py-3 px-4 tabular-nums border-r border-slate-200 ${(totalAfterGJ - totalBeforeGJ) < 0 ? "text-green-600" : ""}`}>
                         {(totalAfterGJ - totalBeforeGJ) < 0 ? "" : "+"}{(totalAfterGJ - totalBeforeGJ).toFixed(2)}
                       </td>
                       <td className="text-xs text-right py-3 px-4">
-                        <span className="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold text-white">{improvementPct.toFixed(1)} %</span>
+                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{improvementPct.toFixed(1)} %</span>
                       </td>
                     </tr>
                   </tbody>
