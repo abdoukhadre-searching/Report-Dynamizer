@@ -421,10 +421,11 @@ export default function ReportTab({ project }: ReportTabProps) {
                     <a
                       key={idx}
                       href={`#${ids[idx]}`}
-                      className="flex items-center gap-3 py-2 px-3 rounded-md text-primary hover:bg-primary/5 hover:underline cursor-pointer transition-colors print:text-foreground print:no-underline print:px-0 print:hover:bg-transparent"
+                      className="flex items-center gap-3 py-2 px-3 rounded-md text-primary hover:bg-primary/5 hover:underline cursor-pointer transition-colors print:text-foreground print:underline print:px-0 print:hover:bg-transparent"
                       onClick={(e) => {
                         e.preventDefault();
                         document.getElementById(ids[idx])?.scrollIntoView({ behavior: "smooth" });
+                        window.location.hash = ids[idx];
                       }}
                       data-testid={`link-toc-${idx}`}
                     >
