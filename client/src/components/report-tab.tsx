@@ -208,13 +208,13 @@ function getWindowFraction(pre: ReportData): string {
   return "N/A";
 }
 
-const PIE_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
+const CATEGORY_COLORS: Record<string, string> = {
+  "Chauffage": "hsl(var(--chart-1))",
+  "Eau chaude": "hsl(var(--chart-2))",
+  "Charges de base": "hsl(var(--chart-3))",
+  "Ventilation": "hsl(var(--chart-4))",
+  "Climatisation": "hsl(var(--chart-5))",
+};
 
 export default function ReportTab({ project }: ReportTabProps) {
   const pre = project.preReportData as ReportData | null;
@@ -521,8 +521,8 @@ export default function ReportTab({ project }: ReportTabProps) {
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie data={prePieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
-                            {prePieData.map((_, idx) => (
-                              <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                            {prePieData.map((entry, idx) => (
+                              <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                             ))}
                           </Pie>
                           <Tooltip formatter={(value: number) => `${value} GJ`} />
@@ -687,8 +687,8 @@ export default function ReportTab({ project }: ReportTabProps) {
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie data={postPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
-                            {postPieData.map((_, idx) => (
-                              <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                            {postPieData.map((entry, idx) => (
+                              <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                             ))}
                           </Pie>
                           <Tooltip formatter={(value: number) => `${value} GJ`} />

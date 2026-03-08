@@ -55,13 +55,13 @@ export default function DashboardTab({ project }: DashboardTabProps) {
 
   if (!pre || !post || !comparison) return null;
 
-  const COLORS = [
-    "hsl(var(--chart-1))",
-    "hsl(var(--chart-2))",
-    "hsl(var(--chart-3))",
-    "hsl(var(--chart-4))",
-    "hsl(var(--chart-5))",
-  ];
+  const COLORS: Record<string, string> = {
+    "Chauffage": "hsl(var(--chart-1))",
+    "Eau chaude": "hsl(var(--chart-2))",
+    "Charges de base": "hsl(var(--chart-3))",
+    "Ventilation": "hsl(var(--chart-4))",
+    "Climatisation": "hsl(var(--chart-5))",
+  };
 
   const summaryCards = [
     {
@@ -414,8 +414,8 @@ export default function DashboardTab({ project }: DashboardTabProps) {
                     labelLine={false}
                     fontSize={10}
                   >
-                    {pieDataBefore.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    {pieDataBefore.map((entry, i) => (
+                      <Cell key={i} fill={COLORS[entry.name] || "hsl(var(--chart-1))"} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -441,8 +441,8 @@ export default function DashboardTab({ project }: DashboardTabProps) {
                     labelLine={false}
                     fontSize={10}
                   >
-                    {pieDataAfter.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    {pieDataAfter.map((entry, i) => (
+                      <Cell key={i} fill={COLORS[entry.name] || "hsl(var(--chart-1))"} />
                     ))}
                   </Pie>
                   <Tooltip />
