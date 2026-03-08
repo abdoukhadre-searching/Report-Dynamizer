@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FileText, Printer, Upload, Loader2, ImageIcon } from "lucide-react";
+import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -374,19 +375,41 @@ export default function ReportTab({ project }: ReportTabProps) {
               </p>
             </div>
 
-            <div className="relative z-10 text-center space-y-4 pb-8 border-b-2 border-slate-200">
-              <div className="inline-block mb-2">
-                <div className="w-16 h-1 bg-slate-300 mx-auto mb-6 rounded-full" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between pb-5 mb-6" style={{ borderBottom: '3px solid #1e3a5f' }}>
+                <div className="flex-shrink-0">
+                  <img
+                    src={mabLogoPath}
+                    alt="MAB - Marc André Boucher, Conseils Immobiliers"
+                    className="h-20 w-auto object-contain"
+                    data-testid="img-company-logo"
+                  />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>Programme</p>
+                  <p className="text-lg font-bold tracking-wide" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f' }}>APH SELECT</p>
+                </div>
               </div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400" style={{ fontFamily: "'Inter', sans-serif" }}>{new Date().getFullYear()}</p>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-800" style={{ fontFamily: "'Playfair Display', serif" }} data-testid="text-report-title">
-                Cahier préparatoire pour la qualification<br />au programme APH SELECT
-              </h1>
-              <div className="w-12 h-0.5 bg-slate-300 mx-auto my-2 rounded-full" />
-              <p className="text-sm text-slate-500" style={{ fontFamily: "'Inter', sans-serif" }}>
-                Évaluation réalisée par la firme d'évaluation en efficacité énergétique
-              </p>
-              <p className="text-sm font-semibold text-slate-700 mt-3" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
+
+              <div className="text-center space-y-4 py-8">
+                <div className="w-16 h-0.5 bg-slate-300 mx-auto mb-4 rounded-full" />
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400" style={{ fontFamily: "'Inter', sans-serif" }}>{new Date().getFullYear()}</p>
+                <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f' }} data-testid="text-report-title">
+                  Cahier préparatoire pour la qualification<br />au programme APH SELECT
+                </h1>
+                <div className="w-12 h-0.5 bg-slate-300 mx-auto my-2 rounded-full" />
+                <p className="text-sm text-slate-500" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  Évaluation réalisée par la firme d'évaluation en efficacité énergétique
+                </p>
+                <p className="text-sm font-semibold text-slate-700 mt-3" style={{ fontFamily: "'Inter', sans-serif" }}>{fullAddress}</p>
+              </div>
+
+              <div className="pt-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+                <div className="flex justify-between text-xs text-slate-400" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  <span>Marc André Boucher — Conseils Immobiliers</span>
+                  <span>Rapport confidentiel</span>
+                </div>
+              </div>
             </div>
 
             <section id="toc-resume" className="relative z-10">
@@ -466,6 +489,11 @@ export default function ReportTab({ project }: ReportTabProps) {
               <p className="text-[120px] font-bold tracking-widest text-slate-900 rotate-[-30deg] whitespace-nowrap" style={{ fontFamily: "'Playfair Display', serif" }}>
                 APH SELECT
               </p>
+            </div>
+
+            <div className="relative z-10 flex items-center justify-between pb-3 mb-6" style={{ borderBottom: '2px solid #1e3a5f' }}>
+              <img src={mabLogoPath} alt="MAB" className="h-10 w-auto object-contain opacity-80" />
+              <p className="text-xs text-slate-400 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>Cahier de qualification — APH SELECT</p>
             </div>
 
             <section id="toc-description" className="relative z-10">

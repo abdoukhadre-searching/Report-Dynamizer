@@ -71,8 +71,12 @@ The report tab generates a professional narrative PDF-style document with 7 sect
 5. View/print generated qualification report (Cahier de Qualification)
 
 ## Design Tokens
-- Font: Inter (sans), Merriweather (serif), JetBrains Mono (mono)
+- Font: Inter (sans), Playfair Display (serif headings), JetBrains Mono (mono)
+- Report headings: Playfair Display, color #1e3a5f
 - Color scheme: Blue-based primary (212 85%)
+- Company logo: `@assets/Logo-3_1772954007262.jpg` (MAB - Marc André Boucher, Conseils Immobiliers)
+- Report header: Logo left + "APH SELECT" right, dark blue (#1e3a5f) bottom border
+- Report pages: Smaller logo header with "Cahier de qualification — APH SELECT" subtitle
 
 ## Running
 - `npm run dev` starts Express + Vite dev server on port 5000
