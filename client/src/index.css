@@ -297,10 +297,17 @@
 }
 
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
   body, body * {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
     font-variation-settings: normal !important;
     font-optical-sizing: auto !important;
+    -webkit-font-smoothing: subpixel-antialiased !important;
   }
 
   .report-prose,
@@ -319,5 +326,14 @@
   .print\:break-before-page {
     break-before: page !important;
     page-break-before: always !important;
+  }
+
+  img {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  section {
+    break-inside: avoid !important;
   }
 }
