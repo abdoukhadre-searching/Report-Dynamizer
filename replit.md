@@ -43,15 +43,25 @@ Web application for energy efficiency qualification under the APH SELECT program
 - GES calculation: Gas = m³ × 1889.32 gCO2/m³ / 1,000,000; Electricity = kWh × 2.040 gCO2/kWh / 1,000,000 (Quebec 2019 factors)
 - When kwhSummary has both gas and electric totals, uses those directly; otherwise falls back to MJ-based conversion (1 m³ gas = 37.89 MJ)
 
-## Dynamic Strategies (Report Tab)
-Strategies in "Stratégies utilisées pour améliorer l'efficacité du bâtiment" are conditionally shown:
+## Report Format (Cahier de Qualification)
+The report tab generates a professional narrative PDF-style document with 7 sections + Annexes:
+1. **Résumé exécutif** - Dynamic summary with GJ values, improvement %, GES reduction, strategy list
+2. **Description du bâtiment** - Building info, CAH, heating system, window fraction, building photo upload
+3. **Profil de consommation énergétique actuel** - Energy breakdown with pie chart (avant travaux)
+4. **Stratégie d'optimisation énergétique** - Dynamic strategies shown based on PRE/POST comparison
+5. **Performance énergétique après optimisation** - Comparison bar chart, post pie chart, monthly area chart
+6. **Comparatif énergétique** - Table with Avant/Après GJ values per category
+7. **Conclusion** - Dynamic summary referencing applied strategies
+8. **Annexes** - Image uploads for climate zone, thermopompes, robinetterie, chauffe-eau, VRC
+
+### Dynamic Strategies (conditionally shown):
 - **Étanchéité**: Shown when PRE/POST air tightness (CAH@50Pa) differs
-- **Système de chauffage**: Shown when heating equipment changes and POST has thermopompe
+- **Thermopompes**: Shown when heating equipment changes and POST has thermopompe
 - **Pommeaux de douches**: Shown when hot water daily consumption differs
-- **Lumière LED**: Shown when PRE interior lighting kWh > POST interior lighting kWh (from SOMMAIRE DES CHARGES DE BASE)
-- **VRC (Ventilation avec récupération de chaleur)**: Shown when POST report contains "INSTALLATION DE VENTILATION CENTRALE" section; extracts sensible efficiency at 0°C and -25°C
-- **Conversion Gaz Naturel vers Électricité**: Shown when PRE has gas (heating or hot water) and POST has electricity for same
-Each strategy also gets a corresponding annex section with image upload capability (except LED which has no annex).
+- **DEL (LED)**: Shown when PRE interior lighting kWh > POST interior lighting kWh
+- **VRC**: Shown when POST has central ventilation with sensible efficiency data
+- **Chauffe-eaux Thermopompe**: Shown when POST hot water equipmentType matches /thermopompe/i
+- **Conversion fossile vers Électricité**: Shown when PRE has fossil fuel and POST has electricity
 
 ## User Flow
 1. Create a new project

@@ -13,9 +13,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Printer, Upload, CheckCircle2, Loader2, ImageIcon, X } from "lucide-react";
+import { FileText, Printer, Upload, Loader2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from "recharts";
 
 interface ReportTabProps {
   project: Project;
@@ -51,7 +66,7 @@ function AnnexImageUpload({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
-      toast({ title: "Image ajoutee avec succes" });
+      toast({ title: "Image ajoutée avec succès" });
     },
     onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -175,11 +190,30 @@ function getPreFossilFuelLabel(pre: ReportData): string {
   return types.length > 0 ? types.join(" / ") : "Combustible fossile";
 }
 
+function getNumUnitsFromOccupants(occupants?: string): number {
+  const count = getOccupantCount(occupants);
+  return count > 0 ? Math.ceil(count / 2) : 0;
+}
+
+function getWindowFraction(pre: ReportData): string {
+  if (pre.buildingInfo?.windowFraction) return pre.buildingInfo.windowFraction;
+  const zone1 = pre.zone1;
+  if (!zone1) return "N/A";
+  const wallGross = zone1.find(z => z.element.toLowerCase().includes("murs principaux"))?.grossArea ?? 0;
+  const windowAreas = zone1.filter(z => z.element.toLowerCase().includes("fenêtres") || z.element.toLowerCase().includes("fenetres"));
+  const totalWindowArea = windowAreas.reduce((sum, w) => sum + (w.grossArea ?? 0), 0);
+  if (wallGross > 0 && totalWindowArea > 0) {
+    return ((totalWindowArea / (wallGross + totalWindowArea)) * 100).toFixed(1) + " %";
+  }
+  return "N/A";
+}
+
+const PIE_COLORS = ["#3b82f6", "#f97316", "#10b981", "#8b5cf6", "#ef4444"];
+
 export default function ReportTab({ project }: ReportTabProps) {
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
   const comparison = project.comparisonData as ComparisonData | null;
-  const [gasConversionOptions, setGasConversionOptions] = useState<{ option1: boolean; option2: boolean }>({ option1: true, option2: true });
 
   if (!pre || !post || !comparison) return null;
 
@@ -195,7 +229,84 @@ export default function ReportTab({ project }: ReportTabProps) {
   const showGasConversionStrategy = hasFossilConversion(pre, post);
   const showHeatPumpWaterHeaterStrategy = !!(post.hotWater?.equipmentType && /thermopompe/i.test(post.hotWater.equipmentType));
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
-  const hasAnyStrategy = showAirTightnessStrategy || showHeatingStrategy || showHotWaterStrategy || showLedStrategy || showVrcStrategy || showGasConversionStrategy || showHeatPumpWaterHeaterStrategy;
+  const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
+
+  const address = project.address || pre.buildingInfo?.address || "N/A";
+  const city = project.city || pre.buildingInfo?.city || "N/A";
+  const province = project.province || pre.buildingInfo?.province || "N/A";
+  const postalCode = project.postalCode || pre.buildingInfo?.postalCode || "";
+  const fullAddress = `${address}, ${city} (${province}) ${postalCode}`.trim();
+
+  const totalBeforeGJ = comparison.totalBefore ?? 0;
+  const totalAfterGJ = comparison.totalAfter ?? 0;
+  const improvementPct = comparison.improvementPercent ?? 0;
+  const ghsBefore = comparison.ghsBefore ?? 0;
+  const ghsAfter = comparison.ghsAfter ?? 0;
+  const ghsImprovementPct = comparison.ghsImprovementPercent ?? 0;
+
+  const heatingBeforeGJ = comparison.heatingBefore ?? 0;
+  const hotWaterBeforeGJ = comparison.hotWaterBefore ?? 0;
+  const baseLoadsBeforeGJ = comparison.baseLoadsBefore ?? 0;
+  const ventilationBeforeGJ = comparison.ventilationBefore ?? 0;
+  const coolingBeforeGJ = comparison.coolingBefore ?? 0;
+
+  const heatingAfterGJ = comparison.heatingAfter ?? 0;
+  const hotWaterAfterGJ = comparison.hotWaterAfter ?? 0;
+  const baseLoadsAfterGJ = comparison.baseLoadsAfter ?? 0;
+  const ventilationAfterGJ = comparison.ventilationAfter ?? 0;
+  const coolingAfterGJ = comparison.coolingAfter ?? 0;
+
+  const prePieData = [
+    { name: "Chauffage", value: parseFloat(heatingBeforeGJ.toFixed(2)) },
+    { name: "Eau chaude", value: parseFloat(hotWaterBeforeGJ.toFixed(2)) },
+    { name: "Charges de base", value: parseFloat(baseLoadsBeforeGJ.toFixed(2)) },
+    { name: "Ventilation", value: parseFloat(ventilationBeforeGJ.toFixed(2)) },
+    { name: "Climatisation", value: parseFloat(coolingBeforeGJ.toFixed(2)) },
+  ].filter(d => d.value > 0);
+
+  const postPieData = [
+    { name: "Chauffage", value: parseFloat(heatingAfterGJ.toFixed(2)) },
+    { name: "Eau chaude", value: parseFloat(hotWaterAfterGJ.toFixed(2)) },
+    { name: "Charges de base", value: parseFloat(baseLoadsAfterGJ.toFixed(2)) },
+    { name: "Ventilation", value: parseFloat(ventilationAfterGJ.toFixed(2)) },
+    { name: "Climatisation", value: parseFloat(coolingAfterGJ.toFixed(2)) },
+  ].filter(d => d.value > 0);
+
+  const comparisonBarData = [
+    { name: "Chauffage", avant: parseFloat(heatingBeforeGJ.toFixed(2)), apres: parseFloat(heatingAfterGJ.toFixed(2)) },
+    { name: "Eau chaude", avant: parseFloat(hotWaterBeforeGJ.toFixed(2)), apres: parseFloat(hotWaterAfterGJ.toFixed(2)) },
+    { name: "Charges de base", avant: parseFloat(baseLoadsBeforeGJ.toFixed(2)), apres: parseFloat(baseLoadsAfterGJ.toFixed(2)) },
+    { name: "Ventilation", avant: parseFloat(ventilationBeforeGJ.toFixed(2)), apres: parseFloat(ventilationAfterGJ.toFixed(2)) },
+    { name: "Climatisation", avant: parseFloat(coolingBeforeGJ.toFixed(2)), apres: parseFloat(coolingAfterGJ.toFixed(2)) },
+  ];
+
+  const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Août", "Sep", "Oct", "Nov", "Déc"];
+  const monthlyChartData = months.map((m, idx) => {
+    const preMonth = pre.monthlyEnergy?.[idx];
+    const postMonth = post.monthlyEnergy?.[idx];
+    const preTotal = preMonth
+      ? (preMonth.heatingPrimary ?? 0) + (preMonth.heatingSecondary ?? 0) + (preMonth.hotWaterPrimary ?? 0) + (preMonth.hotWaterSecondary ?? 0) + (preMonth.lightingAppliances ?? 0) + (preMonth.ventilation ?? 0) + (preMonth.cooling ?? 0)
+      : 0;
+    const postTotal = postMonth
+      ? (postMonth.heatingPrimary ?? 0) + (postMonth.heatingSecondary ?? 0) + (postMonth.hotWaterPrimary ?? 0) + (postMonth.hotWaterSecondary ?? 0) + (postMonth.lightingAppliances ?? 0) + (postMonth.ventilation ?? 0) + (postMonth.cooling ?? 0)
+      : 0;
+    return { month: m, avant: parseFloat((preTotal / 1000).toFixed(2)), apres: parseFloat((postTotal / 1000).toFixed(2)) };
+  });
+
+  const strategies: string[] = [];
+  if (showHeatingStrategy) strategies.push("l'installation de thermopompes haute efficacité");
+  if (showAirTightnessStrategy) strategies.push("l'amélioration de l'étanchéité du bâtiment");
+  if (showHotWaterStrategy) strategies.push("la réduction de la consommation d'eau chaude domestique");
+  if (showLedStrategy) strategies.push("la conversion de l'éclairage vers la technologie DEL (LED)");
+  if (showVrcStrategy) strategies.push("l'installation de systèmes de ventilation avec récupération de chaleur (VRC)");
+  if (showGasConversionStrategy) strategies.push(`la conversion du ${getPreFossilFuelLabel(pre).toLowerCase()} vers l'électricité`);
+  if (showHeatPumpWaterHeaterStrategy) strategies.push("l'installation de chauffe-eaux thermopompe");
+
+  const preHeatingEquipment = pre.heating?.primaryEquipment || "plinthes électriques";
+  const windowFraction = getWindowFraction(pre);
+
+  const sectionNum = { current: 1 };
+  const nextSection = () => sectionNum.current++;
 
   return (
     <div className="space-y-4">
@@ -206,57 +317,143 @@ export default function ReportTab({ project }: ReportTabProps) {
         </div>
         <Button variant="secondary" size="sm" onClick={handlePrint} data-testid="button-print">
           <Printer className="w-4 h-4 mr-2" />
-          Imprimer
+          Imprimer / PDF
         </Button>
       </div>
 
       <div className="print:p-0" id="report-content">
         <Card className="print:shadow-none print:border-none">
-          <CardContent className="p-8 space-y-8">
-            <div className="text-center space-y-2 pb-6 border-b">
-              <p className="text-sm text-muted-foreground">2025</p>
-              <h1 className="text-xl font-semibold">
+          <CardContent className="p-8 space-y-8 report-prose">
+            <div className="text-center space-y-3 pb-6 border-b">
+              <p className="text-sm text-muted-foreground">{new Date().getFullYear()}</p>
+              <h1 className="text-xl font-semibold" data-testid="text-report-title">
                 Cahier préparatoire pour la qualification au programme APH SELECT
               </h1>
               <p className="text-sm text-muted-foreground">
                 Évaluation réalisée par la firme d'évaluation en efficacité énergétique
               </p>
+              <p className="text-sm font-medium mt-2">{fullAddress}</p>
             </div>
 
             <section>
-              <h2 className="text-base font-semibold mb-4">1. Information sur le projet</h2>
-              <div className="grid gap-3 sm:grid-cols-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Adresse:</span>{" "}
-                  <span className="font-medium">{project.address || pre.buildingInfo?.address || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Ville:</span>{" "}
-                  <span className="font-medium">{project.city || pre.buildingInfo?.city || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Province:</span>{" "}
-                  <span className="font-medium">{project.province || pre.buildingInfo?.province || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Annee de construction:</span>{" "}
-                  <span className="font-medium">{pre.buildingInfo?.yearBuilt || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Nombre d'etages:</span>{" "}
-                  <span className="font-medium">{pre.buildingInfo?.numFloors || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Orientation:</span>{" "}
-                  <span className="font-medium">{pre.buildingInfo?.orientation || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Donnees climatiques:</span>{" "}
-                  <span className="font-medium">{pre.buildingInfo?.climateData || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Occupants:</span>{" "}
-                  <span className="font-medium">{pre.buildingInfo?.occupants || "-"}</span>
+              <h2 className="text-base font-semibold mb-4" data-testid="text-section-resume">
+                {sectionNum.current}. Résumé exécutif
+              </h2>
+              {nextSection()}
+              <div className="space-y-3 text-sm leading-relaxed">
+                <p>
+                  Le présent rapport présente l'analyse de performance énergétique du bâtiment résidentiel situé au {fullAddress}.
+                  {numUnits > 0 && <> L'immeuble comprend {numUnits} unités résidentielles{pre.buildingInfo?.numFloors ? ` réparties sur ${pre.buildingInfo.numFloors.toLowerCase()}` : ""}.</>}
+                </p>
+                <p>
+                  Une modélisation énergétique du bâtiment a été réalisée à l'aide du logiciel Hot2000 afin d'évaluer la consommation énergétique actuelle de l'immeuble et d'identifier des mesures permettant d'améliorer son efficacité énergétique.
+                </p>
+                <p>
+                  Les résultats de la simulation démontrent qu'en appliquant les mesures d'amélioration proposées, la consommation énergétique annuelle du bâtiment pourrait être réduite de <span className="font-semibold">{totalBeforeGJ.toFixed(2)} GJ</span> par année à <span className="font-semibold">{totalAfterGJ.toFixed(2)} GJ</span> par année, soit une amélioration énergétique globale d'environ <span className="font-semibold">{improvementPct.toFixed(1)} %</span>.
+                </p>
+                {strategies.length > 0 && (
+                  <>
+                    <p>Cette amélioration est principalement attribuable :</p>
+                    <ul className="list-disc list-inside space-y-1 pl-2">
+                      {strategies.map((s, i) => (
+                        <li key={i}>à {s}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                <p>
+                  Ces mesures permettent également de réduire les émissions annuelles de gaz à effet de serre, qui passeraient de <span className="font-semibold">{ghsBefore.toFixed(3)} tonne</span> de CO₂ par année à <span className="font-semibold">{ghsAfter.toFixed(3)} tonne</span>, soit également une réduction d'environ <span className="font-semibold">{ghsImprovementPct.toFixed(1)} %</span>.
+                </p>
+                <p>
+                  L'ensemble des interventions proposées permet ainsi d'améliorer significativement la performance énergétique du bâtiment tout en contribuant à réduire ses coûts d'exploitation et son empreinte environnementale.
+                </p>
+              </div>
+            </section>
+
+            <Separator />
+
+            <section>
+              <h2 className="text-base font-semibold mb-4" data-testid="text-section-description">
+                {sectionNum.current}. Description du bâtiment
+              </h2>
+              {nextSection()}
+              <div className="space-y-3 text-sm leading-relaxed">
+                <p>
+                  Le bâtiment analysé est un immeuble résidentiel situé au {fullAddress}
+                  {numUnits > 0 && <>, comprenant {numUnits} logements locatifs</>}.
+                </p>
+                {pre.buildingInfo?.yearBuilt && (
+                  <p>
+                    Construit en {pre.buildingInfo.yearBuilt}, il s'agit d'un bâtiment typique du parc immobilier montréalais. La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
+                  </p>
+                )}
+
+                <AnnexImageUpload
+                  projectId={project.id}
+                  annexType="climateZone"
+                  label="Photo du bâtiment"
+                  currentImage={project.annexClimateZoneImage}
+                />
+
+                <p>
+                  Le bâtiment possède un toit plat et des murs extérieurs présentant une isolation limitée selon les standards actuels. Les fenêtres sont de type coulissant à double vitrage avec cadre en aluminium.
+                </p>
+                <p>
+                  L'analyse énergétique indique un taux de changement d'air de <span className="font-semibold">{pre.airLeakage?.cah50 ?? "N/A"} CAH</span> à 50 Pa, ce qui témoigne d'un niveau relativement élevé d'infiltration d'air et contribue aux pertes thermiques du bâtiment.
+                </p>
+                <p>
+                  Le système de chauffage des logements est assuré par <span className="font-semibold">{preHeatingEquipment.toLowerCase()}</span>, tandis que la production d'eau chaude domestique est réalisée par des chauffe-eau{pre.hotWater?.primaryType ? ` ${pre.hotWater.primaryType.toLowerCase() === "électricité" ? "électriques" : `au ${pre.hotWater.primaryType.toLowerCase()}`}` : ""}.
+                </p>
+                <p>
+                  La fraction de la surface des murs hors-terre occupée par les fenêtres est estimée à environ <span className="font-semibold">{windowFraction}</span>, ce qui influence également les pertes thermiques de l'enveloppe du bâtiment.
+                </p>
+                <p>
+                  Ces caractéristiques sont représentatives des bâtiments construits avant l'introduction des normes modernes d'efficacité énergétique, ce qui explique le potentiel important d'amélioration énergétique.
+                </p>
+              </div>
+            </section>
+
+            <Separator />
+
+            <section>
+              <h2 className="text-base font-semibold mb-4" data-testid="text-section-profil">
+                {sectionNum.current}. Profil de consommation énergétique actuel
+              </h2>
+              {nextSection()}
+              <div className="space-y-3 text-sm leading-relaxed">
+                <p>
+                  La consommation énergétique annuelle totale du bâtiment est estimée à <span className="font-semibold">{totalBeforeGJ.toFixed(2)} GJ</span> par année.
+                </p>
+                <p>
+                  L'analyse de la répartition de cette consommation énergétique démontre que la plus grande portion de l'énergie est utilisée pour le chauffage des locaux, qui représente environ <span className="font-semibold">{heatingBeforeGJ.toFixed(0)} GJ</span> par année{totalBeforeGJ > 0 ? <>, soit près de {((heatingBeforeGJ / totalBeforeGJ) * 100).toFixed(0)} % de la consommation énergétique totale du bâtiment</> : ""}.
+                </p>
+                <p>
+                  La deuxième source de consommation énergétique est associée aux charges électriques de base, incluant l'éclairage et les appareils utilisés par les occupants. Cette catégorie représente environ <span className="font-semibold">{baseLoadsBeforeGJ.toFixed(0)} GJ</span> par année.
+                </p>
+                <p>
+                  La production d'eau chaude domestique représente quant à elle environ <span className="font-semibold">{hotWaterBeforeGJ.toFixed(0)} GJ</span> par année.
+                </p>
+                <p>
+                  Les systèmes de ventilation et de climatisation représentent une portion plus faible de la consommation énergétique globale du bâtiment.
+                </p>
+                <p>
+                  Cette répartition démontre que les stratégies visant à améliorer l'efficacité du système de chauffage et à réduire les pertes thermiques du bâtiment constituent les interventions les plus efficaces pour diminuer la consommation énergétique globale.
+                </p>
+
+                <div className="my-6">
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Répartition de la consommation énergétique avant travaux (GJ/an)</p>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={prePieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                          {prePieData.map((_, idx) => (
+                            <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => `${value} GJ`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
             </section>
@@ -264,479 +461,283 @@ export default function ReportTab({ project }: ReportTabProps) {
             <Separator />
 
             <section>
-              <h2 className="text-base font-semibold mb-4">2. Sommaire des paramètres du bâtiment avant les travaux</h2>
-              {pre.zone1 && pre.zone1.length > 0 && (
-                <>
-                  <h3 className="text-sm font-medium mb-3 text-muted-foreground">Zone 1: Au-dessus du niveau du sol</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-xs">Elements</TableHead>
-                        <TableHead className="text-xs text-right">Superf. m2 Brute</TableHead>
-                        <TableHead className="text-xs text-right">Superf. m2 Nette</TableHead>
-                        <TableHead className="text-xs text-right">Eff. (RSI)</TableHead>
-                        <TableHead className="text-xs text-right">Chaleur perdue MJ</TableHead>
-                        <TableHead className="text-xs text-right">% Annuel</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pre.zone1.map((z, i) => (
-                        <TableRow key={i}>
-                          <TableCell className="text-xs font-medium">{z.element}</TableCell>
-                          <TableCell className="text-xs text-right">{z.grossArea?.toFixed(2) ?? "-"}</TableCell>
-                          <TableCell className="text-xs text-right">{z.netArea?.toFixed(2) ?? "-"}</TableCell>
-                          <TableCell className="text-xs text-right">{z.rsi?.toFixed(2) ?? "-"}</TableCell>
-                          <TableCell className="text-xs text-right font-mono">{z.heatLossMJ.toFixed(2)}</TableCell>
-                          <TableCell className="text-xs text-right">{z.heatLossPercent.toFixed(2)}</TableCell>
-                        </TableRow>
-                      ))}
-                      {pre.zone1Total && (
-                        <TableRow className="font-semibold">
-                          <TableCell className="text-xs" colSpan={4}>ZONE 1 Totaux</TableCell>
-                          <TableCell className="text-xs text-right font-mono">{pre.zone1Total.heatLossMJ.toFixed(2)}</TableCell>
-                          <TableCell className="text-xs text-right">{pre.zone1Total.heatLossPercent.toFixed(2)}</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </>
-              )}
-
-              {pre.ventilation && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium mb-3 text-muted-foreground">Ventilation</h3>
-                  <div className="grid gap-2 sm:grid-cols-4 text-sm">
-                    <div>
-                      <span className="text-xs text-muted-foreground">Volume</span>
-                      <p className="font-mono text-sm">{pre.ventilation.volume?.toFixed(2)} m3</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">CAH</span>
-                      <p className="font-mono text-sm">{pre.ventilation.airChange?.toFixed(3)}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Perte MJ</span>
-                      <p className="font-mono text-sm">{pre.ventilation.heatLossMJ?.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">%</span>
-                      <p className="font-mono text-sm">{pre.ventilation.heatLossPercent?.toFixed(2)}%</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {pre.totalHeatLossMJ && (
-                <div className="mt-4 p-3 rounded-md bg-muted/50">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">Total chaleur perdue</span>
-                    <span className="text-sm font-mono font-semibold">{pre.totalHeatLossMJ.toFixed(2)} MJ</span>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            <Separator />
-
-            <section>
-              <h2 className="text-base font-semibold mb-4">3. Sommaire des paramètres du bâtiment après optimisation</h2>
-              {post.zone1 && post.zone1.length > 0 && (
-                <>
-                  <h3 className="text-sm font-medium mb-3 text-muted-foreground">Zone 1: Au-dessus du niveau du sol</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-xs">Elements</TableHead>
-                        <TableHead className="text-xs text-right">Superf. m2 Brute</TableHead>
-                        <TableHead className="text-xs text-right">Superf. m2 Nette</TableHead>
-                        <TableHead className="text-xs text-right">Eff. (RSI)</TableHead>
-                        <TableHead className="text-xs text-right">Chaleur perdue MJ</TableHead>
-                        <TableHead className="text-xs text-right">% Annuel</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {post.zone1.map((z, i) => (
-                        <TableRow key={i}>
-                          <TableCell className="text-xs font-medium">{z.element}</TableCell>
-                          <TableCell className="text-xs text-right">{z.grossArea?.toFixed(2) ?? "-"}</TableCell>
-                          <TableCell className="text-xs text-right">{z.netArea?.toFixed(2) ?? "-"}</TableCell>
-                          <TableCell className="text-xs text-right">{z.rsi?.toFixed(2) ?? "-"}</TableCell>
-                          <TableCell className="text-xs text-right font-mono">{z.heatLossMJ.toFixed(2)}</TableCell>
-                          <TableCell className="text-xs text-right">{z.heatLossPercent.toFixed(2)}</TableCell>
-                        </TableRow>
-                      ))}
-                      {post.zone1Total && (
-                        <TableRow className="font-semibold">
-                          <TableCell className="text-xs" colSpan={4}>ZONE 1 Totaux</TableCell>
-                          <TableCell className="text-xs text-right font-mono">{post.zone1Total.heatLossMJ.toFixed(2)}</TableCell>
-                          <TableCell className="text-xs text-right">{post.zone1Total.heatLossPercent.toFixed(2)}</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </>
-              )}
-
-              {post.ventilation && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium mb-3 text-muted-foreground">Ventilation</h3>
-                  <div className="grid gap-2 sm:grid-cols-4 text-sm">
-                    <div>
-                      <span className="text-xs text-muted-foreground">Volume</span>
-                      <p className="font-mono text-sm">{post.ventilation.volume?.toFixed(2)} m3</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">CAH</span>
-                      <p className="font-mono text-sm">{post.ventilation.airChange?.toFixed(3)}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Perte MJ</span>
-                      <p className="font-mono text-sm">{post.ventilation.heatLossMJ?.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">%</span>
-                      <p className="font-mono text-sm">{post.ventilation.heatLossPercent?.toFixed(2)}%</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {post.totalHeatLossMJ && (
-                <div className="mt-4 p-3 rounded-md bg-muted/50">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">Total chaleur perdue</span>
-                    <span className="text-sm font-mono font-semibold">{post.totalHeatLossMJ.toFixed(2)} MJ</span>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            <Separator />
-
-            {hasAnyStrategy && (
-              <>
-                <section>
-                  <h2 className="text-base font-semibold mb-4" data-testid="text-strategies-title">
-                    4. Stratégies utilisées pour améliorer l'efficacité du bâtiment
-                  </h2>
-
-                  <div className="space-y-4">
-                    {showAirTightnessStrategy && (
-                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-air-tightness">
-                        <h3 className="text-sm font-medium mb-2">Étanchéité</h3>
-                        <p className="text-sm">
-                          Améliorer l'étanchéité du bâtiment à CAH maximum de{" "}
-                          <span className="font-semibold">{post.airLeakage?.cah50}</span> @ 50 Pa.
-                        </p>
-                      </div>
-                    )}
-
-                    {showHeatingStrategy && (
-                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-thermopompe">
-                        <h3 className="text-sm font-medium mb-2">Thermopompes</h3>
-                        <p className="text-sm">
-                          Ajout de{" "}
-                          <span className="font-semibold">{thermopompeCount}</span>{" "}
-                          Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.{" "}
-                          <a
-                            href="#annex-thermopompes"
-                            className="text-primary underline cursor-pointer print:hidden"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              document.getElementById("annex-thermopompes")?.scrollIntoView({ behavior: "smooth" });
-                            }}
-                            data-testid="link-voir-details-thermopompes"
-                          >
-                            [Voir détails]
-                          </a>
-                        </p>
-                      </div>
-                    )}
-
-                    {showHotWaterStrategy && (
-                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-hot-water">
-                        <h3 className="text-sm font-medium mb-2">Pommeaux de douches et robinets</h3>
-                        <p className="text-sm">
-                          Installation de pommeaux de douche et de robinets à faible débit afin de réduire la consommation d'eau chaude domestique et, par conséquent, la charge associée à sa production.{" "}
-                          <a
-                            href="#annex-robineterie"
-                            className="text-primary underline cursor-pointer print:hidden"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              document.getElementById("annex-robineterie")?.scrollIntoView({ behavior: "smooth" });
-                            }}
-                            data-testid="link-voir-details-robineterie"
-                          >
-                            [Voir détails]
-                          </a>
-                        </p>
-                      </div>
-                    )}
-
-                    {showLedStrategy && (
-                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-led">
-                        <h3 className="text-sm font-medium mb-2">Lumière LED</h3>
-                        <p className="text-sm">
-                          Installation d'au moins 75% de LED dans le bâtiment.
-                        </p>
-                      </div>
-                    )}
-
-                    {showVrcStrategy && (
-                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-vrc">
-                        <h3 className="text-sm font-medium mb-2">Ventilation avec récupération de chaleur (VRC)</h3>
-                        <p className="text-sm">
-                          Installation de systèmes de ventilation avec récupération de chaleur (VRC) dans chaque logement, présentant une efficacité de récupération de chaleur sensible d'environ{" "}
-                          <span className="font-semibold">{post.centralVentilation?.sensibleEfficiency0C ?? "—"} %</span> à 0 °C et{" "}
-                          <span className="font-semibold">{post.centralVentilation?.sensibleEfficiencyMinus25C ?? "—"} %</span> à -25 °C, afin d'améliorer la qualité de l'air intérieur tout en réduisant les pertes de chaleur liées au renouvellement de l'air.
-                        </p>
-                      </div>
-                    )}
-
-                    {showHeatPumpWaterHeaterStrategy && (
-                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-heat-pump-water-heater">
-                        <h3 className="text-sm font-medium mb-2">Chauffe-eaux Thermopompe</h3>
-                        <p className="text-sm">
-                          Installation de{" "}
-                          <span className="font-semibold">{thermopompeCount}</span>{" "}
-                          Chauffe-eaux Thermopompe {post.hotWater?.manufacturer || ""} Hybrid electric water {post.hotWater?.model || ""}.{" "}
-                          <a
-                            href="#annex-chauffe-eau-thermopompe"
-                            className="text-primary underline cursor-pointer print:hidden"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              document.getElementById("annex-chauffe-eau-thermopompe")?.scrollIntoView({ behavior: "smooth" });
-                            }}
-                            data-testid="link-voir-details-chauffe-eau"
-                          >
-                            [Voir détails]
-                          </a>
-                        </p>
-                      </div>
-                    )}
-
-                    {showGasConversionStrategy && (
-                      <div className="p-4 rounded-md border bg-muted/30" data-testid="strategy-gas-conversion">
-                        <h3 className="text-sm font-medium mb-2">Conversion {getPreFossilFuelLabel(pre)} vers Électricité</h3>
-                        <div className="space-y-3">
-                          {gasConversionOptions.option1 && (
-                            <div className="relative group">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
-                                onClick={() => setGasConversionOptions(prev => ({ ...prev, option1: false }))}
-                                data-testid="button-remove-gas-option1"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                              {gasConversionOptions.option2 && <p className="text-sm font-medium mb-1">Option 1 :</p>}
-                              <p className="text-sm">
-                                {isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && (
-                                  <>Le système actuel de production d'eau chaude domestique au {pre.hotWater?.primaryType?.toLowerCase()} sera converti à l'électricité. Un chauffe-eau électrique indépendant sera installé dans chaque unité afin d'assurer une production d'eau chaude autonome et plus efficace.</>
-                                )}
-                              </p>
-                            </div>
-                          )}
-                          {gasConversionOptions.option2 && (
-                            <div className="relative group">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
-                                onClick={() => setGasConversionOptions(prev => ({ ...prev, option2: false }))}
-                                data-testid="button-remove-gas-option2"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                              {gasConversionOptions.option1 && <p className="text-sm font-medium mb-1">Option 2 :</p>}
-                              <p className="text-sm">
-                                Remplacement de la chaudière au {pre.heating?.primaryType?.toLowerCase() || "combustible fossile"} existante par une chaudière électrique, permettant d'éliminer l'utilisation de combustibles fossiles et de réduire les émissions de gaz à effet de serre, tout en assurant le chauffage du bâtiment à partir d'une source d'énergie électrique.
-                              </p>
-                            </div>
-                          )}
-                          {(!gasConversionOptions.option1 || !gasConversionOptions.option2) && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="print:hidden"
-                              onClick={() => setGasConversionOptions({ option1: true, option2: true })}
-                              data-testid="button-restore-gas-options"
-                            >
-                              Restaurer les options
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                <Separator />
-              </>
-            )}
-
-            <section>
-              <h2 className="text-base font-semibold mb-4">
-                {hasAnyStrategy ? "5" : "4"}. Comparatif global en GJ/année
+              <h2 className="text-base font-semibold mb-4" data-testid="text-section-strategies">
+                {sectionNum.current}. Stratégie d'optimisation énergétique
               </h2>
+              {nextSection()}
+              <div className="space-y-3 text-sm leading-relaxed">
+                <p>
+                  À la suite de l'analyse énergétique et des relevés effectués sur le bâtiment, plusieurs mesures d'amélioration énergétique ont été identifiées afin d'optimiser la performance énergétique de l'immeuble.
+                </p>
+                <p>
+                  Ces mesures ont été sélectionnées en fonction de leur impact énergétique, de leur faisabilité technique et de leur capacité à réduire la consommation énergétique globale du bâtiment.
+                </p>
+
+                {showAirTightnessStrategy && (
+                  <div className="mt-4" data-testid="strategy-air-tightness">
+                    <h3 className="text-sm font-semibold mb-2">Amélioration de l'étanchéité du bâtiment</h3>
+                    <p>
+                      Une amélioration de l'étanchéité de l'enveloppe du bâtiment est recommandée afin de réduire les infiltrations d'air et les pertes thermiques.
+                    </p>
+                    <p className="mt-1">
+                      L'objectif est de réduire le taux de changement d'air à environ <span className="font-semibold">{post.airLeakage?.cah50 ?? "N/A"} CAH</span> à 50 Pa, ce qui permettrait d'améliorer l'efficacité du système de chauffage et de réduire les pertes énergétiques associées à l'infiltration d'air.
+                    </p>
+                  </div>
+                )}
+
+                {showHeatingStrategy && (
+                  <div className="mt-4" data-testid="strategy-thermopompe">
+                    <h3 className="text-sm font-semibold mb-2">Installation de thermopompes haute efficacité</h3>
+                    <p>
+                      L'installation de <span className="font-semibold">{thermopompeCount}</span> thermopompes murales haute efficacité est proposée afin d'améliorer la performance énergétique du système de chauffage et de climatisation.
+                    </p>
+                    <p className="mt-1">
+                      Les thermopompes recommandées possèdent une capacité minimale de 12 000 BTU, avec une efficacité d'environ 10 HSPF2 et 23 SEER2.
+                    </p>
+                    <p className="mt-1">
+                      Ces équipements permettent de produire plus d'énergie thermique qu'ils n'en consomment, ce qui contribue à réduire la consommation énergétique associée au chauffage des logements.
+                    </p>
+                  </div>
+                )}
+
+                {showHotWaterStrategy && (
+                  <div className="mt-4" data-testid="strategy-hot-water">
+                    <h3 className="text-sm font-semibold mb-2">Réduction de la consommation d'eau chaude domestique</h3>
+                    <p>
+                      L'installation de pommeaux de douche et de robinets à faible débit est recommandée afin de réduire la consommation d'eau chaude domestique.
+                    </p>
+                    <p className="mt-1">
+                      Cette mesure permet de diminuer la quantité d'énergie nécessaire pour chauffer l'eau utilisée dans les logements tout en maintenant un niveau de confort adéquat pour les occupants.
+                    </p>
+                  </div>
+                )}
+
+                {showLedStrategy && (
+                  <div className="mt-4" data-testid="strategy-led">
+                    <h3 className="text-sm font-semibold mb-2">Conversion de l'éclairage vers la technologie DEL</h3>
+                    <p>
+                      La conversion d'au moins 75 % de l'éclairage du bâtiment vers des luminaires DEL est également recommandée.
+                    </p>
+                    <p className="mt-1">
+                      Les luminaires DEL consomment significativement moins d'énergie que les ampoules traditionnelles et contribuent à réduire la consommation électrique associée aux charges de base du bâtiment.
+                    </p>
+                  </div>
+                )}
+
+                {showVrcStrategy && (
+                  <div className="mt-4" data-testid="strategy-vrc">
+                    <h3 className="text-sm font-semibold mb-2">Ventilation avec récupération de chaleur (VRC)</h3>
+                    <p>
+                      L'installation de systèmes de ventilation avec récupération de chaleur (VRC) est recommandée, présentant une efficacité de récupération de chaleur sensible d'environ <span className="font-semibold">{post.centralVentilation?.sensibleEfficiency0C ?? "—"} %</span> à 0 °C et <span className="font-semibold">{post.centralVentilation?.sensibleEfficiencyMinus25C ?? "—"} %</span> à -25 °C, afin d'améliorer la qualité de l'air intérieur tout en réduisant les pertes de chaleur liées au renouvellement de l'air.
+                    </p>
+                  </div>
+                )}
+
+                {showHeatPumpWaterHeaterStrategy && (
+                  <div className="mt-4" data-testid="strategy-heat-pump-water-heater">
+                    <h3 className="text-sm font-semibold mb-2">Chauffe-eaux Thermopompe</h3>
+                    <p>
+                      L'installation de <span className="font-semibold">{thermopompeCount}</span> chauffe-eaux thermopompe {post.hotWater?.manufacturer || ""} {post.hotWater?.model || ""} est recommandée afin d'améliorer l'efficacité de la production d'eau chaude domestique.
+                    </p>
+                  </div>
+                )}
+
+                {showGasConversionStrategy && (
+                  <div className="mt-4" data-testid="strategy-gas-conversion">
+                    <h3 className="text-sm font-semibold mb-2">Conversion {getPreFossilFuelLabel(pre)} vers Électricité</h3>
+                    {isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && (
+                      <p>
+                        Le système actuel de production d'eau chaude domestique au {pre.hotWater?.primaryType?.toLowerCase()} sera converti à l'électricité. Un chauffe-eau électrique indépendant sera installé dans chaque unité afin d'assurer une production d'eau chaude autonome et plus efficace.
+                      </p>
+                    )}
+                    {isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType) && (
+                      <p className="mt-1">
+                        Remplacement de la chaudière au {pre.heating?.primaryType?.toLowerCase() || "combustible fossile"} existante par un système électrique, permettant d'éliminer l'utilisation de combustibles fossiles et de réduire les émissions de gaz à effet de serre.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <Separator />
+
+            <section>
+              <h2 className="text-base font-semibold mb-4" data-testid="text-section-performance">
+                {sectionNum.current}. Performance énergétique après optimisation
+              </h2>
+              {nextSection()}
+              <div className="space-y-3 text-sm leading-relaxed">
+                <p>
+                  La modélisation énergétique réalisée avec l'ensemble des mesures proposées démontre une amélioration significative de la performance énergétique du bâtiment.
+                </p>
+                <p>
+                  Après l'implantation des mesures recommandées, la consommation énergétique annuelle totale du bâtiment passerait de :
+                </p>
+                <p className="text-center font-semibold text-base my-2">
+                  {totalBeforeGJ.toFixed(2)} GJ/an → {totalAfterGJ.toFixed(2)} GJ/an
+                </p>
+                <p>
+                  ce qui correspond à une amélioration énergétique globale d'environ <span className="font-semibold">{improvementPct.toFixed(1)} %</span>.
+                </p>
+                <p>
+                  La réduction la plus importante est observée au niveau du chauffage des locaux, principalement grâce à l'installation de thermopompes et à l'amélioration de l'étanchéité du bâtiment.
+                </p>
+                <p>
+                  La consommation énergétique liée à la climatisation diminue également, tandis que les charges de base et la consommation d'eau chaude domestique sont légèrement réduites grâce aux mesures d'efficacité énergétique mises en place.
+                </p>
+
+                <div className="my-6">
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Comparatif énergétique Avant / Après travaux (GJ/an)</p>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={comparisonBarData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip formatter={(value: number) => `${value} GJ`} />
+                        <Legend />
+                        <Bar dataKey="avant" name="Avant travaux" fill="#ef4444" />
+                        <Bar dataKey="apres" name="Après travaux" fill="#22c55e" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="my-6">
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Répartition de la consommation énergétique après travaux (GJ/an)</p>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={postPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                          {postPieData.map((_, idx) => (
+                            <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => `${value} GJ`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <p>
+                  Afin d'illustrer l'évolution de la consommation énergétique au cours de l'année, le graphique suivant présente le profil énergétique mensuel du bâtiment avant et après l'implantation des mesures d'efficacité énergétique.
+                </p>
+                <p>
+                  On observe que les gains énergétiques les plus importants se produisent durant la période hivernale, lorsque les besoins en chauffage sont les plus élevés. L'installation de thermopompes et l'amélioration de l'étanchéité du bâtiment permettent ainsi de réduire significativement la consommation énergétique pendant les mois les plus froids.
+                </p>
+
+                <div className="my-6">
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Évolution mensuelle de la consommation énergétique – Avant / Après travaux (GJ)</p>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={monthlyChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip formatter={(value: number) => `${value} GJ`} />
+                        <Legend />
+                        <Area type="monotone" dataKey="avant" name="Avant travaux" stroke="#ef4444" fill="#ef4444" fillOpacity={0.2} />
+                        <Area type="monotone" dataKey="apres" name="Après travaux" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <p>
+                  Cette analyse mensuelle confirme que les mesures proposées permettent d'améliorer la performance énergétique du bâtiment tout au long de l'année, avec un impact particulièrement marqué durant la saison de chauffage.
+                </p>
+              </div>
+            </section>
+
+            <Separator />
+
+            <section>
+              <h2 className="text-base font-semibold mb-4" data-testid="text-section-comparatif">
+                {sectionNum.current}. Comparatif énergétique
+              </h2>
+              {nextSection()}
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">Poste</TableHead>
-                    <TableHead className="text-xs text-right">Avant (GJ)</TableHead>
-                    <TableHead className="text-xs text-right">Après (GJ)</TableHead>
-                    <TableHead className="text-xs text-right">Réduction</TableHead>
+                    <TableHead className="text-xs">Usage énergétique</TableHead>
+                    <TableHead className="text-xs text-right">Avant travaux (GJ)</TableHead>
+                    <TableHead className="text-xs text-right">Après travaux (GJ)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow>
                     <TableCell className="text-xs">Chauffage des locaux</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.heatingBefore ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.heatingAfter ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right">
-                      {(comparison.heatingBefore ?? 0) > 0
-                        ? ((1 - (comparison.heatingAfter ?? 0) / comparison.heatingBefore) * 100).toFixed(1)
-                        : "0.0"}%
-                    </TableCell>
+                    <TableCell className="text-xs text-right font-mono">{heatingBeforeGJ.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{heatingAfterGJ.toFixed(2)}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-xs">Eau chaude domestique</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.hotWaterBefore ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.hotWaterAfter ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right">
-                      {(comparison.hotWaterBefore ?? 0) > 0
-                        ? ((1 - (comparison.hotWaterAfter ?? 0) / comparison.hotWaterBefore) * 100).toFixed(1)
-                        : "0.0"}%
-                    </TableCell>
+                    <TableCell className="text-xs text-right font-mono">{hotWaterBeforeGJ.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{hotWaterAfterGJ.toFixed(2)}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-xs">Charges électriques de base</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.baseLoadsBefore ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.baseLoadsAfter ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right">
-                      {(comparison.baseLoadsBefore ?? 0) > 0
-                        ? ((1 - (comparison.baseLoadsAfter ?? 0) / comparison.baseLoadsBefore) * 100).toFixed(1)
-                        : "0.0"}%
-                    </TableCell>
+                    <TableCell className="text-xs text-right font-mono">{baseLoadsBeforeGJ.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{baseLoadsAfterGJ.toFixed(2)}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-xs">Électricité pour ventilation</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.ventilationBefore ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.ventilationAfter ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right">
-                      {(comparison.ventilationBefore ?? 0) > 0
-                        ? ((1 - (comparison.ventilationAfter ?? 0) / comparison.ventilationBefore) * 100).toFixed(1)
-                        : "0.0"}%
-                    </TableCell>
+                    <TableCell className="text-xs">Ventilation</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{ventilationBeforeGJ.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{ventilationAfterGJ.toFixed(2)}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-xs">Climatisation des locaux</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.coolingBefore ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.coolingAfter ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right">
-                      {(comparison.coolingBefore ?? 0) > 0
-                        ? ((1 - (comparison.coolingAfter ?? 0) / comparison.coolingBefore) * 100).toFixed(1)
-                        : "0.0"}%
-                    </TableCell>
+                    <TableCell className="text-xs">Climatisation</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{coolingBeforeGJ.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{coolingAfterGJ.toFixed(2)}</TableCell>
                   </TableRow>
                   <TableRow className="font-semibold border-t-2">
-                    <TableCell className="text-xs">Depenses annuelles TOTALES</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.totalBefore ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.totalAfter ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right">
-                      <Badge variant="default">{(comparison.improvementPercent ?? 0).toFixed(1)}%</Badge>
-                    </TableCell>
+                    <TableCell className="text-xs">Consommation totale</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{totalBeforeGJ.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-right font-mono">{totalAfterGJ.toFixed(2)}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
+              <div className="mt-3 text-sm">
+                <p>Amélioration énergétique totale : <Badge variant="default">{improvementPct.toFixed(1)} %</Badge></p>
+              </div>
             </section>
 
             <Separator />
 
             <section>
-              <h2 className="text-base font-semibold mb-4">
-                {hasAnyStrategy ? "6" : "5"}. GES (Gaz à effet de serre)
+              <h2 className="text-base font-semibold mb-4" data-testid="text-section-conclusion">
+                {sectionNum.current}. Conclusion
               </h2>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Indicateur</TableHead>
-                    <TableHead className="text-xs text-right">Avant (T/A)</TableHead>
-                    <TableHead className="text-xs text-right">Après (T/A)</TableHead>
-                    <TableHead className="text-xs text-right">Amélioration</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="text-xs">GES Électricité</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.ghsElectricityBefore ?? 0).toFixed(5)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.ghsElectricityAfter ?? 0).toFixed(5)}</TableCell>
-                    <TableCell className="text-xs text-right">
-                    </TableCell>
-                  </TableRow>
-                  {((comparison.ghsGasBefore ?? 0) > 0 || (comparison.ghsGasAfter ?? 0) > 0) && (
-                    <TableRow>
-                      <TableCell className="text-xs">GES {getPreFossilFuelLabel(pre)}</TableCell>
-                      <TableCell className="text-xs text-right font-mono">{(comparison.ghsGasBefore ?? 0).toFixed(5)}</TableCell>
-                      <TableCell className="text-xs text-right font-mono">{(comparison.ghsGasAfter ?? 0).toFixed(5)}</TableCell>
-                      <TableCell className="text-xs text-right">
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  <TableRow className="font-semibold">
-                    <TableCell className="text-xs">GES TOTAL</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.ghsBefore ?? 0).toFixed(5)}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{(comparison.ghsAfter ?? 0).toFixed(5)}</TableCell>
-                    <TableCell className="text-xs text-right">
-                      <Badge variant="default">{(comparison.ghsImprovementPercent ?? 0).toFixed(1)}%</Badge>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </section>
-
-            <Separator />
-
-            <section>
-              <h2 className="text-base font-semibold mb-4">
-                {hasAnyStrategy ? "7" : "6"}. Approbation
-              </h2>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Mesure</TableHead>
-                    <TableHead className="text-xs text-right">Immeuble evalue (E)</TableHead>
-                    <TableHead className="text-xs text-right">Immeuble de reference (R)</TableHead>
-                    <TableHead className="text-xs text-right">Economie (%)</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="text-xs">Consommation d'énergie annuelle totale (GJ/A)</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.totalAfter.toFixed(3)} GJ</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.totalBefore.toFixed(3)} GJ</TableCell>
-                    <TableCell className="text-xs text-right">
-                      <Badge variant="default">{comparison.improvementPercent.toFixed(1)}%</Badge>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="text-xs">Emission de GES annuelle totale (T CO2/A)</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.ghsAfter.toFixed(5)} T/A</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{comparison.ghsBefore.toFixed(5)} T/A</TableCell>
-                    <TableCell className="text-xs text-right">
-                      <Badge variant="default">{comparison.ghsImprovementPercent.toFixed(1)}%</Badge>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              {nextSection()}
+              <div className="space-y-3 text-sm leading-relaxed">
+                <p>
+                  L'analyse énergétique réalisée démontre que l'implantation des mesures d'efficacité énergétique proposées permettrait d'améliorer significativement la performance énergétique du bâtiment.
+                </p>
+                <p>
+                  La consommation énergétique annuelle pourrait être réduite d'environ {improvementPct.toFixed(0)} %, ce qui entraînerait également une réduction importante des émissions de gaz à effet de serre.
+                </p>
+                <p>
+                  Les mesures recommandées
+                  {strategies.length > 0 && <> — notamment {strategies.slice(0, 4).map((s, i) => {
+                    const label = s.replace(/^(l'|la |le |les )/, "");
+                    if (i === 0) return label;
+                    if (i === strategies.slice(0, 4).length - 1) return ` et ${label}`;
+                    return `, ${label}`;
+                  }).join("")}</>}
+                  {" "}— constituent des interventions efficaces et techniquement réalisables.
+                </p>
+                <p>
+                  La mise en œuvre de ces stratégies permettra non seulement de réduire les coûts d'exploitation du bâtiment, mais également d'améliorer le confort des occupants et de valoriser la performance énergétique de l'immeuble à long terme.
+                </p>
+              </div>
             </section>
 
             <Separator />
 
             <section>
               <h2 className="text-base font-semibold mb-6" data-testid="text-annexes-title">
-                {hasAnyStrategy ? "8" : "7"}. Annexes
+                {sectionNum.current}. Annexes
               </h2>
 
               <div className="space-y-8">
@@ -789,14 +790,13 @@ export default function ReportTab({ project }: ReportTabProps) {
                         </div>
                       )}
 
-
                       {showHeatPumpWaterHeaterStrategy && (
                         <div id="annex-chauffe-eau-thermopompe">
                           <h3 className="text-sm font-semibold mb-2">
                             {annexNum++}. Chauffe-eaux Thermopompe
                           </h3>
                           <p className="text-xs text-muted-foreground mb-2">
-                            Installation de {thermopompeCount} Chauffe-eaux Thermopompe {post.hotWater?.manufacturer || ""} Hybrid electric water {post.hotWater?.model || ""}.
+                            Installation de {thermopompeCount} Chauffe-eaux Thermopompe {post.hotWater?.manufacturer || ""} {post.hotWater?.model || ""}.
                           </p>
                           <AnnexImageUpload
                             projectId={project.id}
@@ -831,7 +831,7 @@ export default function ReportTab({ project }: ReportTabProps) {
 
             <div className="pt-8 border-t text-center">
               <p className="text-xs text-muted-foreground">
-                Document genere automatiquement par EnergiQualif - Qualification APH SELECT
+                Document généré automatiquement par EnergiQualif — Qualification APH SELECT
               </p>
             </div>
           </CardContent>
