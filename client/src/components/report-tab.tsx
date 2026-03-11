@@ -129,42 +129,65 @@ function AnnexImageUpload({
 function MonthlyEnergyTable({ data, annual, label }: { data: MonthlyEnergy[]; annual?: MonthlyEnergy; label: string }) {
   const rows = [...data];
   if (annual) rows.push(annual);
+
+  const colGroups = [
+    { label: "Chauffage", cols: ["Primaire", "Secondaire"], color: "#dc2626" },
+    { label: "Eau chaude", cols: ["Primaire", "Secondaire"], color: "#2563eb" },
+    { label: "Charges", cols: ["Éclair. & App."], color: "#7c3aed" },
+    { label: "Ventil.", cols: [""], color: "#0d9488" },
+    { label: "Climat.", cols: [""], color: "#ea580c" },
+  ];
+
   return (
     <div className="my-6">
-      <p className="text-xs text-center text-muted-foreground mb-2 italic">{label}</p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-[10px] border-collapse">
+      <p className="text-xs text-center text-muted-foreground mb-3 italic">{label}</p>
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-sm">
+        <table className="w-full text-[10px] border-collapse" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
           <thead>
-            <tr style={{ backgroundColor: '#e8eef6', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-              <th className="text-left py-1.5 px-1.5 font-semibold border-b border-slate-300">Mois</th>
-              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Chauff. Prim.</th>
-              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Chauff. Sec.</th>
-              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Eau ch. Prim.</th>
-              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Eau ch. Sec.</th>
-              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Éclair. & App.</th>
-              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Ventil.</th>
-              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Climat.</th>
-              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Total</th>
+            <tr>
+              <th rowSpan={2} className="text-left py-2 px-2 font-semibold border-b-2 border-r border-slate-200" style={{ backgroundColor: '#1e3a5f', color: '#fff', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>Mois</th>
+              {colGroups.map((g) => (
+                <th
+                  key={g.label}
+                  colSpan={g.cols.length}
+                  className="text-center py-1.5 px-1 font-semibold border-b border-r border-white/30 text-[9px] uppercase tracking-wider text-white"
+                  style={{ backgroundColor: g.color, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}
+                >
+                  {g.label}
+                </th>
+              ))}
+              <th rowSpan={2} className="text-right py-2 px-2 font-bold border-b-2 border-l border-slate-200 text-white" style={{ backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>Total</th>
+            </tr>
+            <tr style={{ backgroundColor: '#f1f5f9', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Prim.</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Sec.</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Prim.</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Sec.</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">kWh</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">MJ</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">MJ</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row, i) => {
               const total = (row.heatingPrimary ?? 0) + (row.heatingSecondary ?? 0) + (row.hotWaterPrimary ?? 0) + (row.hotWaterSecondary ?? 0) + (row.lightingAppliances ?? 0) + (row.ventilation ?? 0) + (row.cooling ?? 0);
               const isAnnual = row.month === "Annuel";
-              const bgStyle = isAnnual
-                ? { backgroundColor: '#e8eef6', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontWeight: 700 } as React.CSSProperties
-                : i % 2 === 0 ? {} : { backgroundColor: '#f8fafc' } as React.CSSProperties;
+              const rowBg = isAnnual
+                ? { backgroundColor: '#1e3a5f', color: '#fff', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties
+                : i % 2 === 1 ? { backgroundColor: '#f8fafc', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties : {};
+              const cellBorder = isAnnual ? "border-r border-white/20" : "border-r border-slate-100";
+              const bottomBorder = isAnnual ? "" : "border-b border-slate-100";
               return (
-                <tr key={i} style={bgStyle} className={isAnnual ? "border-t-2 border-slate-300" : ""}>
-                  <td className="py-1 px-1.5 border-b border-slate-100 font-medium">{row.month}</td>
-                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.heatingPrimary ?? 0).toFixed(1)}</td>
-                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.heatingSecondary ?? 0).toFixed(1)}</td>
-                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.hotWaterPrimary ?? 0).toFixed(1)}</td>
-                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.hotWaterSecondary ?? 0).toFixed(1)}</td>
-                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.lightingAppliances ?? 0).toFixed(1)}</td>
-                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.ventilation ?? 0).toFixed(1)}</td>
-                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.cooling ?? 0).toFixed(1)}</td>
-                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono font-semibold">{total.toFixed(1)}</td>
+                <tr key={i} style={rowBg} className={isAnnual ? "border-t-2 border-slate-300" : "hover:bg-slate-50/50"}>
+                  <td className={`py-1.5 px-2 ${bottomBorder} ${cellBorder} font-semibold ${isAnnual ? "text-white" : "text-slate-700"}`}>{row.month}</td>
+                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.heatingPrimary ?? 0).toFixed(1)}</td>
+                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.heatingSecondary ?? 0).toFixed(1)}</td>
+                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.hotWaterPrimary ?? 0).toFixed(1)}</td>
+                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.hotWaterSecondary ?? 0).toFixed(1)}</td>
+                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.lightingAppliances ?? 0).toFixed(1)}</td>
+                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.ventilation ?? 0).toFixed(1)}</td>
+                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.cooling ?? 0).toFixed(1)}</td>
+                  <td className={`py-1.5 px-2 ${bottomBorder} text-right font-mono font-bold ${isAnnual ? "text-white" : "text-slate-900"}`}>{total.toFixed(1)}</td>
                 </tr>
               );
             })}
