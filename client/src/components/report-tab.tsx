@@ -939,77 +939,96 @@ export default function ReportTab({ project }: ReportTabProps) {
               <h2 className="text-base font-semibold mb-4" data-testid="text-section-comparatif">
                 6. Comparatif énergétique
               </h2>
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
+              <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
+                <table className="w-full border-collapse" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
                   <thead>
-                    <tr style={{ backgroundColor: "#e8eef6", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
-                      <th className="text-xs font-semibold py-3 px-4 text-left text-slate-700 border-r border-slate-200">Usage énergétique</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700 border-r border-slate-200">Avant travaux (GJ)</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700 border-r border-slate-200">Après travaux (GJ)</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700 border-r border-slate-200">Variation (GJ)</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-slate-700">Réduction</th>
+                    <tr>
+                      <th className="text-xs font-semibold py-3 px-4 text-left text-white border-r border-white/20" style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>Usage énergétique</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#dc2626' } as React.CSSProperties}>Avant (GJ)</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#16a34a' } as React.CSSProperties}>Après (GJ)</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>Variation</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-white" style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>Réduction</th>
                     </tr>
                   </thead>
                   <tbody>
                     {[
-                      { label: "Chauffage des locaux", avant: heatingBeforeGJ, apres: heatingAfterGJ },
-                      { label: "Eau chaude domestique", avant: hotWaterBeforeGJ, apres: hotWaterAfterGJ },
-                      { label: "Charges électriques de base", avant: baseLoadsBeforeGJ, apres: baseLoadsAfterGJ },
-                      { label: "Ventilation", avant: ventilationBeforeGJ, apres: ventilationAfterGJ },
-                      { label: "Climatisation", avant: coolingBeforeGJ, apres: coolingAfterGJ },
+                      { label: "Chauffage des locaux", icon: "flame", avant: heatingBeforeGJ, apres: heatingAfterGJ },
+                      { label: "Eau chaude domestique", icon: "droplet", avant: hotWaterBeforeGJ, apres: hotWaterAfterGJ },
+                      { label: "Charges électriques de base", icon: "zap", avant: baseLoadsBeforeGJ, apres: baseLoadsAfterGJ },
+                      { label: "Ventilation", icon: "wind", avant: ventilationBeforeGJ, apres: ventilationAfterGJ },
+                      { label: "Climatisation", icon: "snow", avant: coolingBeforeGJ, apres: coolingAfterGJ },
                     ].map((row, idx) => {
                       const variation = row.apres - row.avant;
                       const pct = row.avant > 0 ? ((row.avant - row.apres) / row.avant) * 100 : 0;
+                      const barWidth = row.avant > 0 ? Math.min(100, (row.apres / row.avant) * 100) : 0;
                       return (
-                        <tr key={idx} className={idx % 2 === 0 ? "bg-blue-50/50" : "bg-white"}>
-                          <td className="text-xs py-2.5 px-4 border-r border-gray-200">{row.label}</td>
-                          <td className="text-xs text-right py-2.5 px-4 tabular-nums border-r border-gray-200">{row.avant.toFixed(2)}</td>
-                          <td className="text-xs text-right py-2.5 px-4 tabular-nums border-r border-gray-200">{row.apres.toFixed(2)}</td>
-                          <td className={`text-xs text-right py-2.5 px-4 tabular-nums border-r border-gray-200 ${variation < 0 ? "text-green-600" : variation > 0 ? "text-red-600" : ""}`}>
+                        <tr key={idx} style={idx % 2 === 1 ? { backgroundColor: '#f8fafc' } as React.CSSProperties : {}}>
+                          <td className="text-xs py-3 px-4 border-r border-slate-100 font-medium text-slate-700">{row.label}</td>
+                          <td className="text-xs text-right py-3 px-4 font-mono border-r border-slate-100 text-slate-600">{row.avant.toFixed(2)}</td>
+                          <td className="text-xs text-right py-3 px-4 font-mono border-r border-slate-100 text-slate-600">{row.apres.toFixed(2)}</td>
+                          <td className={`text-xs text-right py-3 px-4 font-mono border-r border-slate-100 font-semibold ${variation < 0 ? "text-green-600" : variation > 0 ? "text-red-600" : "text-slate-400"}`}>
                             {variation < 0 ? "" : "+"}{variation.toFixed(2)}
                           </td>
-                          <td className="text-xs text-right py-2.5 px-4">
-                            {pct > 0 ? (
-                              <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                                {pct.toFixed(1)} %
-                              </span>
-                            ) : pct < 0 ? (
-                              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                                +{Math.abs(pct).toFixed(1)} %
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
+                          <td className="text-xs text-right py-3 px-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <div className="w-16 h-2 rounded-full bg-slate-100 overflow-hidden hidden md:block print:hidden">
+                                <div className="h-full rounded-full" style={{ width: `${100 - barWidth}%`, backgroundColor: pct > 0 ? '#16a34a' : pct < 0 ? '#dc2626' : '#94a3b8' }} />
+                              </div>
+                              {pct > 0 ? (
+                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: '#16a34a' } as React.CSSProperties}>
+                                  -{pct.toFixed(1)}%
+                                </span>
+                              ) : pct < 0 ? (
+                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: '#dc2626' } as React.CSSProperties}>
+                                  +{Math.abs(pct).toFixed(1)}%
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-[10px]">—</span>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
                     })}
-                    <tr style={{ backgroundColor: "#e8eef6", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }} className="font-semibold border-t-2 border-slate-300">
-                      <td className="text-xs py-3 px-4 text-slate-700 border-r border-slate-200">Consommation totale</td>
-                      <td className="text-xs text-right py-3 px-4 tabular-nums text-slate-700 border-r border-slate-200">{totalBeforeGJ.toFixed(2)}</td>
-                      <td className="text-xs text-right py-3 px-4 tabular-nums text-slate-700 border-r border-slate-200">{totalAfterGJ.toFixed(2)}</td>
-                      <td className={`text-xs text-right py-3 px-4 tabular-nums border-r border-slate-200 ${(totalAfterGJ - totalBeforeGJ) < 0 ? "text-green-600" : ""}`}>
+                    <tr className="border-t-2 border-slate-300" style={{ backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                      <td className="text-xs py-3 px-4 text-white font-bold border-r border-white/20">Consommation totale</td>
+                      <td className="text-xs text-right py-3 px-4 font-mono text-white font-bold border-r border-white/20">{totalBeforeGJ.toFixed(2)}</td>
+                      <td className="text-xs text-right py-3 px-4 font-mono text-white font-bold border-r border-white/20">{totalAfterGJ.toFixed(2)}</td>
+                      <td className="text-xs text-right py-3 px-4 font-mono font-bold border-r border-white/20" style={{ color: '#86efac' }}>
                         {(totalAfterGJ - totalBeforeGJ) < 0 ? "" : "+"}{(totalAfterGJ - totalBeforeGJ).toFixed(2)}
                       </td>
                       <td className="text-xs text-right py-3 px-4">
-                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{improvementPct.toFixed(1)} %</span>
+                        <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold" style={{ backgroundColor: '#fff', color: '#1e3a5f' } as React.CSSProperties}>{improvementPct.toFixed(1)}%</span>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">GES Avant</p>
-                  <p className="text-sm font-semibold tabular-nums">{ghsBefore.toFixed(3)} T CO₂</p>
+
+              <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #dc2626' } as React.CSSProperties}>
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <svg className="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-3.8 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">GES Avant</p>
+                  </div>
+                  <p className="text-lg font-bold tabular-nums text-slate-800">{ghsBefore.toFixed(3)}</p>
+                  <p className="text-[10px] text-slate-400">T CO₂/an</p>
                 </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">GES Après</p>
-                  <p className="text-sm font-semibold tabular-nums">{ghsAfter.toFixed(3)} T CO₂</p>
+                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #16a34a' } as React.CSSProperties}>
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <svg className="w-3.5 h-3.5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-3.8 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">GES Après</p>
+                  </div>
+                  <p className="text-lg font-bold tabular-nums text-slate-800">{ghsAfter.toFixed(3)}</p>
+                  <p className="text-[10px] text-slate-400">T CO₂/an</p>
                 </div>
-                <div className="rounded-lg border bg-green-50 p-3">
-                  <p className="text-xs text-muted-foreground">Réduction GES</p>
-                  <p className="text-sm font-semibold text-green-700 tabular-nums">{ghsImprovementPct.toFixed(1)} %</p>
+                <div className="rounded-lg p-4 shadow-sm" style={{ backgroundColor: '#1e3a5f', borderTop: '3px solid #16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <svg className="w-3.5 h-3.5 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-300 font-medium">Réduction</p>
+                  </div>
+                  <p className="text-lg font-bold tabular-nums text-white">{ghsImprovementPct.toFixed(1)}%</p>
+                  <p className="text-[10px] text-slate-400">Réduction GES</p>
                 </div>
               </div>
             </section>
