@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import type { Project, ReportData, ComparisonData } from "@shared/schema";
+import type { Project, ReportData, ComparisonData, MonthlyEnergy } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -122,6 +122,55 @@ function AnnexImageUpload({
           />
         </label>
       )}
+    </div>
+  );
+}
+
+function MonthlyEnergyTable({ data, annual, label }: { data: MonthlyEnergy[]; annual?: MonthlyEnergy; label: string }) {
+  const rows = [...data];
+  if (annual) rows.push(annual);
+  return (
+    <div className="my-6">
+      <p className="text-xs text-center text-muted-foreground mb-2 italic">{label}</p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[10px] border-collapse">
+          <thead>
+            <tr style={{ backgroundColor: '#e8eef6', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+              <th className="text-left py-1.5 px-1.5 font-semibold border-b border-slate-300">Mois</th>
+              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Chauff. Prim.</th>
+              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Chauff. Sec.</th>
+              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Eau ch. Prim.</th>
+              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Eau ch. Sec.</th>
+              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Éclair. & App.</th>
+              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Ventil.</th>
+              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Climat.</th>
+              <th className="text-right py-1.5 px-1.5 font-semibold border-b border-slate-300">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => {
+              const total = (row.heatingPrimary ?? 0) + (row.heatingSecondary ?? 0) + (row.hotWaterPrimary ?? 0) + (row.hotWaterSecondary ?? 0) + (row.lightingAppliances ?? 0) + (row.ventilation ?? 0) + (row.cooling ?? 0);
+              const isAnnual = row.month === "Annuel";
+              const bgStyle = isAnnual
+                ? { backgroundColor: '#e8eef6', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontWeight: 700 } as React.CSSProperties
+                : i % 2 === 0 ? {} : { backgroundColor: '#f8fafc' } as React.CSSProperties;
+              return (
+                <tr key={i} style={bgStyle} className={isAnnual ? "border-t-2 border-slate-300" : ""}>
+                  <td className="py-1 px-1.5 border-b border-slate-100 font-medium">{row.month}</td>
+                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.heatingPrimary ?? 0).toFixed(1)}</td>
+                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.heatingSecondary ?? 0).toFixed(1)}</td>
+                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.hotWaterPrimary ?? 0).toFixed(1)}</td>
+                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.hotWaterSecondary ?? 0).toFixed(1)}</td>
+                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.lightingAppliances ?? 0).toFixed(1)}</td>
+                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.ventilation ?? 0).toFixed(1)}</td>
+                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono">{(row.cooling ?? 0).toFixed(1)}</td>
+                  <td className="py-1 px-1.5 border-b border-slate-100 text-right font-mono font-semibold">{total.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -646,6 +695,14 @@ export default function ReportTab({ project }: ReportTabProps) {
                     </div>
                   </div>
                 </div>
+
+                {pre.monthlyEnergy && (
+                  <MonthlyEnergyTable
+                    data={pre.monthlyEnergy}
+                    annual={pre.annualEnergy}
+                    label="Estimation de la consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
+                  />
+                )}
               </div>
             </section>
 
@@ -842,6 +899,14 @@ export default function ReportTab({ project }: ReportTabProps) {
                 <p>
                   Cette analyse mensuelle confirme que les mesures proposées permettent d'améliorer la performance énergétique du bâtiment tout au long de l'année, avec un impact particulièrement marqué durant la saison de chauffage.
                 </p>
+
+                {post.monthlyEnergy && (
+                  <MonthlyEnergyTable
+                    data={post.monthlyEnergy}
+                    annual={post.annualEnergy}
+                    label="Estimation de la consommation mensuelle d'énergie par appareil — Après travaux (MJ)"
+                  />
+                )}
               </div>
             </section>
 
