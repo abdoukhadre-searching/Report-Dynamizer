@@ -516,6 +516,67 @@ export default function DashboardTab({ project }: DashboardTabProps) {
           </CardContent>
         </Card>
       </div>
+
+      {(pre.monthlyEnergy || post.monthlyEnergy) && (
+        <div className="space-y-6 mt-6">
+          {[
+            { label: "PRÉ-TRAVAUX", data: pre.monthlyEnergy, annual: pre.annualEnergy, testId: "pre" },
+            { label: "POST-TRAVAUX", data: post.monthlyEnergy, annual: post.annualEnergy, testId: "post" },
+          ].map(({ label, data, annual, testId }) => {
+            if (!data) return null;
+            const rows = [...data];
+            if (annual) rows.push(annual);
+            return (
+              <Card key={testId}>
+                <CardContent className="p-6">
+                  <h3 className="font-medium mb-4" data-testid={`text-monthly-energy-title-${testId}`}>
+                    Estimation de la consommation mensuelle d'énergie par appareil (MJ) — {label}
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs border-collapse" data-testid={`table-monthly-energy-${testId}`}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#e8eef6', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                          <th className="text-left py-2 px-2 font-semibold border-b border-slate-300">Mois</th>
+                          <th className="text-right py-2 px-2 font-semibold border-b border-slate-300">Chauffage Prim.</th>
+                          <th className="text-right py-2 px-2 font-semibold border-b border-slate-300">Chauffage Sec.</th>
+                          <th className="text-right py-2 px-2 font-semibold border-b border-slate-300">Eau chaude Prim.</th>
+                          <th className="text-right py-2 px-2 font-semibold border-b border-slate-300">Eau chaude Sec.</th>
+                          <th className="text-right py-2 px-2 font-semibold border-b border-slate-300">Éclairage & App.</th>
+                          <th className="text-right py-2 px-2 font-semibold border-b border-slate-300">Ventilation</th>
+                          <th className="text-right py-2 px-2 font-semibold border-b border-slate-300">Climatisation</th>
+                          <th className="text-right py-2 px-2 font-semibold border-b border-slate-300">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row, i) => {
+                          const total = (row.heatingPrimary ?? 0) + (row.heatingSecondary ?? 0) + (row.hotWaterPrimary ?? 0) + (row.hotWaterSecondary ?? 0) + (row.lightingAppliances ?? 0) + (row.ventilation ?? 0) + (row.cooling ?? 0);
+                          const isAnnual = row.month === "Annuel";
+                          const bgStyle = isAnnual
+                            ? { backgroundColor: '#e8eef6', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontWeight: 700 } as React.CSSProperties
+                            : i % 2 === 0 ? {} : { backgroundColor: '#f8fafc' } as React.CSSProperties;
+                          return (
+                            <tr key={i} style={bgStyle} className={isAnnual ? "border-t-2 border-slate-300" : ""}>
+                              <td className="py-1.5 px-2 border-b border-slate-100 font-medium">{row.month}</td>
+                              <td className="py-1.5 px-2 border-b border-slate-100 text-right font-mono">{(row.heatingPrimary ?? 0).toFixed(1)}</td>
+                              <td className="py-1.5 px-2 border-b border-slate-100 text-right font-mono">{(row.heatingSecondary ?? 0).toFixed(1)}</td>
+                              <td className="py-1.5 px-2 border-b border-slate-100 text-right font-mono">{(row.hotWaterPrimary ?? 0).toFixed(1)}</td>
+                              <td className="py-1.5 px-2 border-b border-slate-100 text-right font-mono">{(row.hotWaterSecondary ?? 0).toFixed(1)}</td>
+                              <td className="py-1.5 px-2 border-b border-slate-100 text-right font-mono">{(row.lightingAppliances ?? 0).toFixed(1)}</td>
+                              <td className="py-1.5 px-2 border-b border-slate-100 text-right font-mono">{(row.ventilation ?? 0).toFixed(1)}</td>
+                              <td className="py-1.5 px-2 border-b border-slate-100 text-right font-mono">{(row.cooling ?? 0).toFixed(1)}</td>
+                              <td className="py-1.5 px-2 border-b border-slate-100 text-right font-mono font-semibold">{total.toFixed(1)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
