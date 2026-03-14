@@ -748,16 +748,34 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Répartition de la consommation énergétique avant travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[280px] w-full max-w-[500px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={prePieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                      {exportMode ? (
+                        <PieChart width={500} height={280}>
+                          <Pie
+                            data={prePieData}
+                            cx={250}
+                            cy={140}
+                            outerRadius={100}
+                            dataKey="value"
+                            isAnimationActive={false}
+                            label={({ name, value }) => `${name}: ${value} GJ`}
+                          >
                             {prePieData.map((entry, idx) => (
                               <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value: number) => `${value} GJ`} />
                         </PieChart>
-                      </ResponsiveContainer>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={prePieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                              {prePieData.map((entry, idx) => (
+                                <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value: number) => `${value} GJ`} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -922,16 +940,34 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Répartition de la consommation énergétique après travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[280px] w-full max-w-[500px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={postPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                      {exportMode ? (
+                        <PieChart width={500} height={280}>
+                          <Pie
+                            data={postPieData}
+                            cx={250}
+                            cy={140}
+                            outerRadius={100}
+                            dataKey="value"
+                            isAnimationActive={false}
+                            label={({ name, value }) => `${name}: ${value} GJ`}
+                          >
                             {postPieData.map((entry, idx) => (
                               <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value: number) => `${value} GJ`} />
                         </PieChart>
-                      </ResponsiveContainer>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={postPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                              {postPieData.map((entry, idx) => (
+                                <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value: number) => `${value} GJ`} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      )}
                     </div>
                   </div>
                 </div>
