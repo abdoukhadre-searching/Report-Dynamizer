@@ -3,4 +3,13 @@ dist
 .DS_Store
 server/public
 vite.config.ts.*
+<<<<<<< HEAD
 *.tar.gz
+=======
+*.tar.gz
+uploads/
+.vscode/
+.env
+.env.*
+*.log
+>>>>>>> 383adb8 (Report: PDF export + image upload fixes)

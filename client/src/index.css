@@ -323,6 +323,27 @@
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .pdf-export-root,
+  .pdf-export-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
   body, body * {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
     font-variation-settings: normal !important;
@@ -364,5 +385,37 @@
   table, table tr, table td, table th {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  table {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr,
+  td,
+  th,
+  img,
+  svg,
+  .recharts-responsive-container,
+  .report-prose .rounded-lg,
+  .report-prose .shadow-sm,
+  .report-prose .shadow-lg {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .report-prose h2,
+  .report-prose h3 {
+    break-after: avoid-page;
+    page-break-after: avoid;
   }
 }

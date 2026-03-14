@@ -36,6 +36,12 @@ import {
 
 interface ReportTabProps {
   project: Project;
+  exportMode?: boolean;
+}
+
+function getAnnexImageForType(imageUrl: string | null | undefined, annexType: string): string | null {
+  if (!imageUrl) return null;
+  return imageUrl.includes(`_${annexType}_`) ? imageUrl : null;
 }
 
 function AnnexImageUpload({
@@ -52,7 +58,7 @@ function AnnexImageUpload({
   const { toast } = useToast();
 
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, annexType }: { file: File; annexType: string }) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("annexType", annexType);
@@ -95,7 +101,7 @@ function AnnexImageUpload({
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) uploadMutation.mutate(file);
+                if (file) uploadMutation.mutate({ file, annexType });
               }}
             />
           </label>
@@ -117,7 +123,7 @@ function AnnexImageUpload({
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) uploadMutation.mutate(file);
+              if (file) uploadMutation.mutate({ file, annexType });
             }}
           />
         </label>
@@ -290,15 +296,49 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Climatisation": "hsl(var(--chart-5))",
 };
 
-export default function ReportTab({ project }: ReportTabProps) {
+export default function ReportTab({ project, exportMode = false }: ReportTabProps) {
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
   const comparison = project.comparisonData as ComparisonData | null;
 
+  const annexImages = {
+    climateZone: getAnnexImageForType(project.annexClimateZoneImage, "climateZone"),
+    thermopompes: getAnnexImageForType(project.annexThermopompesImage, "thermopompes"),
+    robineterie: getAnnexImageForType(project.annexRobineterieImage, "robineterie"),
+    ledLighting: getAnnexImageForType(project.annexLedLightingImage, "ledLighting"),
+    vrc: getAnnexImageForType(project.annexVrcImage, "vrc"),
+    chauffeEauThermopompe: getAnnexImageForType(project.annexChauffeEauThermopompeImage, "chauffeEauThermopompe"),
+  };
+
   if (!pre || !post || !comparison) return null;
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (exportMode || isExporting) return;
+
+    setIsExporting(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/export-pdf`);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || "Échec de génération du PDF");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `${project.name || "cahier-qualification"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error: any) {
+      toast({ title: "Erreur export PDF", description: error.message || "Impossible d'exporter le rapport", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
@@ -433,10 +473,12 @@ export default function ReportTab({ project }: ReportTabProps) {
           <FileText className="w-4 h-4 text-muted-foreground" />
           <h2 className="font-medium">Cahier de qualification APH SELECT</h2>
         </div>
-        <Button variant="secondary" size="sm" onClick={handlePrint} data-testid="button-print">
-          <Printer className="w-4 h-4 mr-2" />
-          Imprimer / PDF
-        </Button>
+        {!exportMode && (
+          <Button variant="secondary" size="sm" onClick={handlePrint} disabled={isExporting} data-testid="button-print">
+            {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Printer className="w-4 h-4 mr-2" />}
+            Imprimer / PDF
+          </Button>
+        )}
       </div>
 
       <div className="print:p-0" id="report-content">
@@ -462,7 +504,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                 <div className="px-8 py-6 flex-1 flex items-center justify-center">
                   <div className="w-full overflow-hidden rounded-lg shadow-lg" style={{ border: '3px solid #1e3a5f' }}>
                     <img
-                      src={project.annexClimateZoneImage || buildingCoverPath}
+                      src={buildingCoverPath}
                       alt="Photo du bâtiment"
                       className="w-full object-cover cover-building-img"
                       style={{ height: '360px' }}
@@ -651,10 +693,11 @@ export default function ReportTab({ project }: ReportTabProps) {
                 )}
 
                 <AnnexImageUpload
+                  key="description-climate-zone"
                   projectId={project.id}
-                  annexType="climateZone"
+                  annexType="ledLighting"
                   label="Photo du bâtiment"
-                  currentImage={project.annexClimateZoneImage}
+                  currentImage={annexImages.ledLighting}
                 />
 
                 <p>
@@ -947,7 +990,7 @@ export default function ReportTab({ project }: ReportTabProps) {
                       <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#dc2626' } as React.CSSProperties}>Avant (GJ)</th>
                       <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#16a34a' } as React.CSSProperties}>Après (GJ)</th>
                       <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>Variation</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-white" style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>Réduction</th>
+                      <th className="text-xs font-semibold py-3 px-4 text-right text-white" style={{ backgroundColor: '#1e3a5f', color: '#fff' } as React.CSSProperties}>Réduction</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1076,10 +1119,11 @@ export default function ReportTab({ project }: ReportTabProps) {
                     Données climatiques: {pre.buildingInfo?.climateData || "-"}
                   </p>
                   <AnnexImageUpload
+                    key="annex-climate-zone"
                     projectId={project.id}
                     annexType="climateZone"
                     label="Zone climatique"
-                    currentImage={project.annexClimateZoneImage}
+                    currentImage={annexImages.climateZone}
                   />
                 </div>
 
@@ -1094,10 +1138,11 @@ export default function ReportTab({ project }: ReportTabProps) {
                             Ajout de {thermopompeCount} Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
                           </p>
                           <AnnexImageUpload
+                            key="annex-thermopompes"
                             projectId={project.id}
                             annexType="thermopompes"
                             label="Thermopompes"
-                            currentImage={project.annexThermopompesImage}
+                            currentImage={annexImages.thermopompes}
                           />
                         </div>
                       )}
@@ -1111,10 +1156,11 @@ export default function ReportTab({ project }: ReportTabProps) {
                             Installation de pommeaux de douche et de robinets à faible débit afin de réduire la consommation d'eau chaude domestique et, par conséquent, la charge associée à sa production.
                           </p>
                           <AnnexImageUpload
+                            key="annex-robineterie"
                             projectId={project.id}
                             annexType="robineterie"
                             label="Robinetterie faible débit"
-                            currentImage={project.annexRobineterieImage}
+                            currentImage={annexImages.robineterie}
                           />
                         </div>
                       )}
@@ -1128,10 +1174,11 @@ export default function ReportTab({ project }: ReportTabProps) {
                             Installation de {thermopompeCount} Chauffe-eaux Thermopompe {post.hotWater?.manufacturer || ""} {post.hotWater?.model || ""}.
                           </p>
                           <AnnexImageUpload
+                            key="annex-chauffe-eau-thermopompe"
                             projectId={project.id}
                             annexType="chauffeEauThermopompe"
                             label="Chauffe-eaux Thermopompe"
-                            currentImage={project.annexChauffeEauThermopompeImage}
+                            currentImage={annexImages.chauffeEauThermopompe}
                           />
                         </div>
                       )}
@@ -1145,10 +1192,11 @@ export default function ReportTab({ project }: ReportTabProps) {
                             Installation de systèmes de ventilation avec récupération de chaleur (VRC).
                           </p>
                           <AnnexImageUpload
+                            key="annex-vrc"
                             projectId={project.id}
                             annexType="vrc"
                             label="VRC"
-                            currentImage={project.annexVrcImage}
+                            currentImage={annexImages.vrc}
                           />
                         </div>
                       )}

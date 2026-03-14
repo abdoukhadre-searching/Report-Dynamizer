@@ -1,30 +1,44 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { type Server } from "http";
 import { storage } from "./storage";
 import { parseHot2000Report, computeComparison } from "./parser";
 import type { ReportData } from "@shared/schema";
 import multer from "multer";
-import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
-import * as os from "os";
+import { PDFParse } from "pdf-parse";
+import { renderProjectPdf } from "./pdf-export";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
-  const tmpDir = os.tmpdir();
-  const tmpFile = path.join(tmpDir, `hot2000_${Date.now()}.pdf`);
-  const outFile = path.join(tmpDir, `hot2000_${Date.now()}.txt`);
+  const parser = new PDFParse({ data: buffer });
   try {
-    fs.writeFileSync(tmpFile, buffer);
-    execSync(`pdftotext "${tmpFile}" "${outFile}"`, { timeout: 30000 });
-    return fs.readFileSync(outFile, "utf8");
+    const parsed = await parser.getText();
+    const text = (parsed.text || "").trim();
+    if (!text) {
+      throw new Error("Impossible d'extraire le texte du PDF. Vérifiez que le fichier n'est pas une image scannée uniquement.");
+    }
+    return text;
   } finally {
-    try { fs.unlinkSync(tmpFile); } catch {}
-    try { fs.unlinkSync(outFile); } catch {}
+    await parser.destroy();
   }
 }
 
+function getProjectId(param: string | string[] | undefined): string {
+  if (Array.isArray(param)) {
+    return param[0] ?? "";
+  }
+  return param ?? "";
+}
+
+function sanitizeFileName(value: string): string {
+  return value
+    .trim()
+    .replace(/[^a-zA-Z0-9-_\s]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+}
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -41,13 +55,39 @@ export async function registerRoutes(
 
   app.get("/api/projects/:id", async (req, res) => {
     try {
-      const project = await storage.getProject(req.params.id);
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
       res.json(project);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch project" });
+    }
+  });
+  app.get("/api/projects/:id/export-pdf", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      if (!project.preReportData || !project.postReportData || !project.comparisonData) {
+        return res.status(400).json({ message: "Project report is not ready for export" });
+      }
+
+      const origin = `${req.protocol}://${req.get("host")}`;
+      const reportUrl = `${origin}/project/${projectId}/print`;
+      const pdfBuffer = await renderProjectPdf(reportUrl);
+
+      const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${baseName}.pdf"`);
+      return res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error("Error exporting PDF:", error);
+      return res.status(500).json({ message: error.message || "Failed to export PDF" });
     }
   });
 
@@ -65,7 +105,8 @@ export async function registerRoutes(
 
   app.patch("/api/projects/:id", async (req, res) => {
     try {
-      const project = await storage.updateProject(req.params.id, req.body);
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.updateProject(projectId, req.body);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
@@ -77,7 +118,8 @@ export async function registerRoutes(
 
   app.delete("/api/projects/:id", async (req, res) => {
     try {
-      await storage.deleteProject(req.params.id);
+      const projectId = getProjectId(req.params.id);
+      await storage.deleteProject(projectId);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete project" });
@@ -128,11 +170,12 @@ export async function registerRoutes(
 
   app.post("/api/projects/:id/upload-pre", async (req, res) => {
     try {
+      const projectId = getProjectId(req.params.id);
       const { content } = req.body;
       if (!content || typeof content !== "string") {
         return res.status(400).json({ message: "Content is required" });
       }
-      const updated = await handleReportUpload(req.params.id, content, "pre");
+      const updated = await handleReportUpload(projectId, content, "pre");
       if (!updated) return res.status(404).json({ message: "Project not found" });
       res.json(updated);
     } catch (error: any) {
@@ -143,11 +186,12 @@ export async function registerRoutes(
 
   app.post("/api/projects/:id/upload-post", async (req, res) => {
     try {
+      const projectId = getProjectId(req.params.id);
       const { content } = req.body;
       if (!content || typeof content !== "string") {
         return res.status(400).json({ message: "Content is required" });
       }
-      const updated = await handleReportUpload(req.params.id, content, "post");
+      const updated = await handleReportUpload(projectId, content, "post");
       if (!updated) return res.status(404).json({ message: "Project not found" });
       res.json(updated);
     } catch (error: any) {
@@ -158,11 +202,12 @@ export async function registerRoutes(
 
   app.post("/api/projects/:id/upload-pre-pdf", upload.single("file"), async (req, res) => {
     try {
+      const projectId = getProjectId(req.params.id);
       if (!req.file) {
         return res.status(400).json({ message: "PDF file is required" });
       }
       const text = await extractTextFromPdf(req.file.buffer);
-      const updated = await handleReportUpload(req.params.id, text, "pre");
+      const updated = await handleReportUpload(projectId, text, "pre");
       if (!updated) return res.status(404).json({ message: "Project not found" });
       res.json(updated);
     } catch (error: any) {
@@ -173,11 +218,12 @@ export async function registerRoutes(
 
   app.post("/api/projects/:id/upload-post-pdf", upload.single("file"), async (req, res) => {
     try {
+      const projectId = getProjectId(req.params.id);
       if (!req.file) {
         return res.status(400).json({ message: "PDF file is required" });
       }
       const text = await extractTextFromPdf(req.file.buffer);
-      const updated = await handleReportUpload(req.params.id, text, "post");
+      const updated = await handleReportUpload(projectId, text, "post");
       if (!updated) return res.status(404).json({ message: "Project not found" });
       res.json(updated);
     } catch (error: any) {
@@ -202,6 +248,7 @@ export async function registerRoutes(
 
   app.post("/api/projects/:id/upload-annex-image", upload.single("file"), async (req, res) => {
     try {
+      const projectId = getProjectId(req.params.id);
       if (!req.file) {
         return res.status(400).json({ message: "Image file is required" });
       }
@@ -211,13 +258,13 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid annex type" });
       }
 
-      const project = await storage.getProject(req.params.id);
+      const project = await storage.getProject(projectId);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
 
       const ext = path.extname(req.file.originalname) || ".png";
-      const fileName = `${req.params.id}_${annexType}_${Date.now()}${ext}`;
+      const fileName = `${projectId}_${annexType}_${Date.now()}${ext}`;
       const filePath = path.join(UPLOADS_DIR, fileName);
       fs.writeFileSync(filePath, req.file.buffer);
 
@@ -230,7 +277,7 @@ export async function registerRoutes(
       else if (annexType === "vrc") updateData.annexVrcImage = imageUrl;
       else if (annexType === "chauffeEauThermopompe") updateData.annexChauffeEauThermopompeImage = imageUrl;
 
-      const updated = await storage.updateProject(req.params.id, updateData);
+      const updated = await storage.updateProject(projectId, updateData);
       res.json(updated);
     } catch (error: any) {
       console.error("Error uploading annex image:", error);

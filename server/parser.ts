@@ -42,6 +42,20 @@ function extractStringAfterLabel(text: string, label: string): string | undefine
   return lines[0] || undefined;
 }
 
+function normalizeForMatch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function extractNumericValues(value: string): number[] {
+  const matches = value.match(/-?\d+(?:[.,]\d+)?/g) || [];
+  return matches
+    .map((token) => parseFloat(token.replace(",", ".")))
+    .filter((num) => !isNaN(num));
+}
 export function parseHot2000Report(content: string): ReportData {
   const lines = getLines(content);
   const fullText = content;
@@ -51,7 +65,7 @@ export function parseHot2000Report(content: string): ReportData {
   const zone1Total = parseZoneTotal(lines, "ZONE 1 Totaux:");
   const zone3 = parseZone3(lines);
   const zone3Total = parseZoneTotal(lines, "ZONE 3 Totaux:");
-  const ventilation = parseVentilation(lines);
+  const ventilation = parseVentilation(lines, fullText);
   const totalHeatLossMJ = parseTotalHeatLoss(fullText);
   const monthlyEnergy = parseMonthlyEnergy(lines);
   const annualEnergy = parseAnnualEnergy(lines);
@@ -96,6 +110,22 @@ export function parseHot2000Report(content: string): ReportData {
 function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingInfo"] {
   const info: NonNullable<ReportData["buildingInfo"]> = {};
 
+  const addressMatch = text.match(/Adresse:\s*([^\n\r]+)/i);
+  if (addressMatch) {
+    info.address = addressMatch[1].trim();
+  }
+
+  const cityProvinceMatch = text.match(/Ville:\s*([^\n\r\t]+)\s*[\t ]+Province:\s*([^\n\r\t]+)/i);
+  if (cityProvinceMatch) {
+    info.city = cityProvinceMatch[1].trim();
+    info.province = cityProvinceMatch[2].trim();
+  }
+
+  const postalMatch = text.match(/Code\s*Postal:\s*([A-Z]\d[A-Z]\s*\d[A-Z]\d)/i)
+    || text.match(/Code\s*postal:\s*([A-Z]\d[A-Z]\s*\d[A-Z]\d)/i);
+  if (postalMatch) {
+    info.postalCode = postalMatch[1].toUpperCase().replace(/\s+/g, " ").trim();
+  }
   const clientIdx = findLineIndex(lines, "Nom du client:");
   if (clientIdx >= 0) {
     const addrIdx = findLineIndex(lines, "Adresse:", clientIdx);
@@ -119,7 +149,7 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   const fichierIdx = findLineIndex(lines, "Fichier:");
   const fileNameLine = fichierIdx >= 0 && fichierIdx + 1 < lines.length ? lines[fichierIdx + 1] : "";
 
-  if (info.address) {
+  if (info.address && !info.city) {
     const addrLineIdx = lines.indexOf(info.address);
     if (addrLineIdx >= 0) {
       for (let i = addrLineIdx + 1; i < Math.min(addrLineIdx + 3, lines.length); i++) {
@@ -132,7 +162,7 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   }
 
   const provinceIdx = findLineIndex(lines, "Province:");
-  if (provinceIdx >= 0) {
+  if (!info.province && provinceIdx >= 0) {
     for (let i = provinceIdx + 1; i < Math.min(provinceIdx + 5, lines.length); i++) {
       if (lines[i] && !lines[i].startsWith("T") && lines[i].length > 2) {
         info.province = lines[i];
@@ -235,16 +265,23 @@ function parseZone1(lines: string[]): BuildingZone[] {
   ];
 
   for (const el of elements) {
-    let elIdx = -1;
+    const candidates: number[][] = [];
     for (let i = startIdx; i < endIdx; i++) {
       if (lines[i].includes(el.search)) {
-        elIdx = i;
-        break;
+        let nums = extractNumericValues(lines[i]);
+        if (nums.length < 5) {
+          nums = collectNumbers(lines, i + 1, 5);
+        }
+        if (nums.length >= 5) {
+          candidates.push(nums);
+        }
       }
     }
-    if (elIdx < 0) continue;
+    if (candidates.length === 0) continue;
 
-    const nums = collectNumbers(lines, elIdx + 1, 5);
+    const nums = candidates.reduce((best, current) => {
+      return (current[3] ?? 0) > (best[3] ?? 0) ? current : best;
+    });
     if (nums.length >= 5) {
       zones.push({
         element: el.name,
@@ -281,16 +318,23 @@ function parseZone3(lines: string[]): BuildingZone[] {
   ];
 
   for (const el of elements) {
-    let elIdx = -1;
+    const candidates: number[][] = [];
     for (let i = startIdx; i < endIdx; i++) {
       if (lines[i].includes(el.search)) {
-        elIdx = i;
-        break;
+        let nums = extractNumericValues(lines[i]);
+        if (nums.length < 5) {
+          nums = collectNumbers(lines, i + 1, 5);
+        }
+        if (nums.length >= 5) {
+          candidates.push(nums);
+        }
       }
     }
-    if (elIdx < 0) continue;
+    if (candidates.length === 0) continue;
 
-    const nums = collectNumbers(lines, elIdx + 1, 5);
+    const nums = candidates.reduce((best, current) => {
+      return (current[3] ?? 0) > (best[3] ?? 0) ? current : best;
+    });
     if (nums.length >= 5) {
       zones.push({
         element: el.name,
@@ -361,7 +405,30 @@ function parseZoneTotal(lines: string[], marker: string): { heatLossMJ: number; 
   return undefined;
 }
 
-function parseVentilation(lines: string[]): ReportData["ventilation"] {
+function parseVentilation(lines: string[], text: string): ReportData["ventilation"] {
+  const ventilationRowMatch = text.match(/([\d.,]+)\s*m3\s*([\d.,]+)\s*CAH[^\d]+([\d.,]+)\s*([\d.,]+)/i);
+  if (ventilationRowMatch) {
+    return {
+      volume: parseFloat(ventilationRowMatch[1].replace(",", ".")),
+      airChange: parseFloat(ventilationRowMatch[2].replace(",", ".")),
+      heatLossMJ: parseFloat(ventilationRowMatch[3].replace(",", ".")),
+      heatLossPercent: parseFloat(ventilationRowMatch[4].replace(",", ".")),
+    };
+  }
+
+  for (const line of lines) {
+    if (line.includes("m3") && line.includes("CAH")) {
+      const nums = extractNumericValues(line);
+      if (nums.length >= 4) {
+        return {
+          volume: nums[0],
+          airChange: nums[1],
+          heatLossMJ: nums[2],
+          heatLossPercent: nums[3],
+        };
+      }
+    }
+  }
   const ventIdx = findLineIndex(lines, "Ventilation");
   if (ventIdx < 0) return undefined;
 
@@ -407,38 +474,66 @@ function parseTotalHeatLoss(text: string): number | undefined {
 }
 
 function parseMonthlyEnergy(lines: string[]): MonthlyEnergy[] {
-  const months: MonthlyEnergy[] = [];
   const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Août", "Sep", "Oct", "Nov", "Déc"];
+  const monthAliases: Record<string, string[]> = {
+    Jan: ["jan"],
+    "Fév": ["fev", "fevr", "fevrier"],
+    Mar: ["mar"],
+    Avr: ["avr", "avril"],
+    Mai: ["mai"],
+    Jun: ["jun", "juin"],
+    Jul: ["jul", "juil", "juillet"],
+    "Août": ["aout", "aou"],
+    Sep: ["sep", "sept", "septembre"],
+    Oct: ["oct", "octobre"],
+    Nov: ["nov", "novembre"],
+    "Déc": ["dec", "decembre"],
+  };
 
   const startIdx = findLineIndex(lines, "ESTIMATION DE LA CONSOMMATION MENSUELLE D'ÉNERGIE PAR APPAREIL");
-  if (startIdx < 0) return months;
+  if (startIdx < 0) return [];
 
-  for (const m of monthNames) {
-    let mIdx = -1;
-    for (let i = startIdx; i < lines.length; i++) {
-      if (lines[i] === m) {
-        mIdx = i;
-        break;
+  const endIdx = lines.length;
+
+  const parsedByMonth = new Map<string, MonthlyEnergy>();
+
+  for (let i = startIdx + 1; i < endIdx; i++) {
+    const line = lines[i];
+    const normalized = normalizeForMatch(line);
+
+    for (const month of monthNames) {
+      const aliases = monthAliases[month] || [];
+      const matchedAlias = aliases.find((alias) =>
+        normalized === alias || normalized.startsWith(`${alias} `)
+      );
+      if (!matchedAlias) continue;
+
+      let nums = extractNumericValues(line);
+
+      if (nums.length < 7) {
+        nums = collectNumbers(lines, i + 1, 7);
       }
-    }
-    if (mIdx < 0) continue;
 
-    const nums = collectNumbers(lines, mIdx + 1, 7);
-    if (nums.length >= 7) {
-      months.push({
-        month: m,
-        heatingPrimary: nums[0],
-        heatingSecondary: nums[1],
-        hotWaterPrimary: nums[2],
-        hotWaterSecondary: nums[3],
-        lightingAppliances: nums[4],
-        ventilation: nums[5],
-        cooling: nums[6],
-      });
+      if (nums.length >= 7) {
+        parsedByMonth.set(month, {
+          month,
+          heatingPrimary: nums[0],
+          heatingSecondary: nums[1],
+          hotWaterPrimary: nums[2],
+          hotWaterSecondary: nums[3],
+          lightingAppliances: nums[4],
+          ventilation: nums[5],
+          cooling: nums[6],
+        });
+      }
+
+      break;
     }
   }
 
-  return months;
+  return monthNames
+    .map((month) => parsedByMonth.get(month))
+    .filter((value): value is MonthlyEnergy => Boolean(value));
 }
 
 function parseAnnualEnergy(lines: string[]): MonthlyEnergy | undefined {
@@ -448,12 +543,7 @@ function parseAnnualEnergy(lines: string[]): MonthlyEnergy | undefined {
   const annuelIdx = findLineIndex(lines, "Annuel", startIdx);
   if (annuelIdx < 0) return undefined;
 
-  const allNums: number[] = [];
-  const annuelLine = lines[annuelIdx];
-  const inlineMatch = annuelLine.match(/Annuel\s+([\d.,]+)/);
-  if (inlineMatch) {
-    allNums.push(parseFloat(inlineMatch[1].replace(",", ".")));
-  }
+  const allNums: number[] = extractNumericValues(lines[annuelIdx]);
 
   for (let i = annuelIdx + 1; i < lines.length && allNums.length < 7; i++) {
     const cleaned = lines[i].replace(/,/g, ".").replace(/\s/g, "");
