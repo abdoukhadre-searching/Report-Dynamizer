@@ -6,22 +6,31 @@ import type { ReportData } from "@shared/schema";
 import multer from "multer";
 import * as fs from "fs";
 import * as path from "path";
-import { PDFParse } from "pdf-parse";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { renderProjectPdf } from "./pdf-export";
+import * as os from "os";
+import * as crypto from "crypto";
 
+const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
-  const parser = new PDFParse({ data: buffer });
+  const tmpDir = os.tmpdir();
+  const uid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  const tmpInput = path.join(tmpDir, `upload-${uid}.pdf`);
+  const tmpOutput = path.join(tmpDir, `upload-${uid}.txt`);
   try {
-    const parsed = await parser.getText();
-    const text = (parsed.text || "").trim();
+    await fs.promises.writeFile(tmpInput, buffer);
+    await execFileAsync("pdftotext", ["-layout", tmpInput, tmpOutput], { timeout: 30000 });
+    const text = (await fs.promises.readFile(tmpOutput, "utf-8")).trim();
     if (!text) {
       throw new Error("Impossible d'extraire le texte du PDF. Vérifiez que le fichier n'est pas une image scannée uniquement.");
     }
     return text;
   } finally {
-    await parser.destroy();
+    await fs.promises.unlink(tmpInput).catch(() => {});
+    await fs.promises.unlink(tmpOutput).catch(() => {});
   }
 }
 

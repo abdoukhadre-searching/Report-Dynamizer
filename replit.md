@@ -78,6 +78,19 @@ The report tab generates a professional narrative PDF-style document with 7 sect
 - Report header: Logo left + "APH SELECT" right, dark blue (#1e3a5f) bottom border
 - Report pages: Smaller logo header with "Cahier de qualification — APH SELECT" subtitle
 
+## Table of Contents (Report)
+The Table des matières page includes:
+- Main sections 1-8 with clickable navigation
+- "Liste des tableaux" (3 entries): monthly tables PRE/POST + comparatif table
+- "Liste des figures" (5 entries): pie charts, bar charts, area chart, heat loss chart
+- Numbered badges: blue (#1e3a5f) for tables, green (#16a34a) for figures
+- Section references shown in italic on the right side
+
+## PDF Extraction
+- Uses `pdftotext` CLI (poppler_utils) instead of pdf-parse library
+- Async extraction via `execFile` (non-blocking)
+- Temp files use crypto random suffix for concurrency safety
+
 ## Running
 - `npm run dev` starts Express + Vite dev server on port 5000
 - `npm run db:push` syncs database schema

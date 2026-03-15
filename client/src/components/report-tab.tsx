@@ -660,6 +660,54 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   );
                 })}
               </nav>
+
+              <div className="mt-8 pt-6" style={{ borderTop: '1px solid #e2e8f0' }}>
+                <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des tableaux</h3>
+                <nav className="space-y-1.5 text-xs">
+                  {[
+                    { id: "toc-profil", label: "Tableau 1 — Consommation mensuelle détaillée (Avant travaux)", section: "Section 3" },
+                    { id: "toc-performance", label: "Tableau 2 — Consommation mensuelle détaillée (Après travaux)", section: "Section 5" },
+                    { id: "toc-comparatif", label: "Tableau 3 — Comparatif énergétique Avant / Après", section: "Section 6" },
+                  ].map((item, idx) => (
+                    <a
+                      key={idx}
+                      href={`#${item.id}`}
+                      className="flex items-center gap-2 py-1.5 px-3 rounded text-slate-600 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0"
+                      onClick={(e) => { e.preventDefault(); document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" }); }}
+                      data-testid={`link-toc-table-${idx}`}
+                    >
+                      <span className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{idx + 1}</span>
+                      <span className="flex-1">{item.label}</span>
+                      <span className="text-[10px] text-slate-400 italic">{item.section}</span>
+                    </a>
+                  ))}
+                </nav>
+              </div>
+
+              <div className="mt-6 pt-6" style={{ borderTop: '1px solid #e2e8f0' }}>
+                <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des figures</h3>
+                <nav className="space-y-1.5 text-xs">
+                  {[
+                    { id: "toc-profil", label: "Figure 1 — Répartition énergétique par catégorie (Avant travaux)", section: "Section 3" },
+                    { id: "toc-performance", label: "Figure 2 — Comparaison Avant / Après par catégorie (GJ)", section: "Section 5" },
+                    { id: "toc-performance", label: "Figure 3 — Répartition énergétique par catégorie (Après travaux)", section: "Section 5" },
+                    { id: "toc-performance", label: "Figure 4 — Consommation mensuelle totale (Après travaux)", section: "Section 5" },
+                    { id: "toc-annexes", label: "Figure 5 — Répartition des déperditions thermiques", section: "Annexes" },
+                  ].map((item, idx) => (
+                    <a
+                      key={idx}
+                      href={`#${item.id}`}
+                      className="flex items-center gap-2 py-1.5 px-3 rounded text-slate-600 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0"
+                      onClick={(e) => { e.preventDefault(); document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" }); }}
+                      data-testid={`link-toc-figure-${idx}`}
+                    >
+                      <span className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#16a34a' }}>{idx + 1}</span>
+                      <span className="flex-1">{item.label}</span>
+                      <span className="text-[10px] text-slate-400 italic">{item.section}</span>
+                    </a>
+                  ))}
+                </nav>
+              </div>
             </section>
           </CardContent>
         </Card>
