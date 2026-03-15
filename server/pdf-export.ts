@@ -1,13 +1,41 @@
 import puppeteer, { type Browser } from "puppeteer";
+import * as fs from "fs";
+
+const PLAYWRIGHT_CHROMIUM =
+  "/nix/store/0n9rl5l9syy808xi9bk4f6dhnfrvhkww-playwright-browsers-chromium/chromium-1080/chrome-linux/chrome";
 
 let browserPromise: Promise<Browser> | null = null;
 
+function findChromiumExecutable(): string | undefined {
+  try {
+    fs.accessSync(PLAYWRIGHT_CHROMIUM, fs.constants.X_OK);
+    return PLAYWRIGHT_CHROMIUM;
+  } catch {
+    return undefined;
+  }
+}
+
 async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
-    browserPromise = puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const executablePath = findChromiumExecutable();
+    browserPromise = puppeteer
+      .launch({
+        headless: true,
+        executablePath,
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-gpu",
+          "--no-first-run",
+          "--no-zygote",
+          "--single-process",
+        ],
+      })
+      .catch((err) => {
+        browserPromise = null;
+        throw err;
+      });
   }
   return browserPromise;
 }
