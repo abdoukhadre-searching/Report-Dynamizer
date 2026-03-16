@@ -169,9 +169,9 @@ function MonthlyEnergyTable({ data, annual, label }: { data: MonthlyEnergy[]; an
               <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Sec.</th>
               <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Prim.</th>
               <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Sec.</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">kWh</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">MJ</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">MJ</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">—</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">—</th>
+              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">—</th>
             </tr>
           </thead>
           <tbody>
@@ -353,6 +353,16 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
   const showGasConversionStrategy = hasFossilConversion(pre, post);
   const showHeatPumpWaterHeaterStrategy = !!(post.hotWater?.equipmentType && /thermopompe/i.test(post.hotWater.equipmentType));
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
+
+  const activeStrategies: { key: string; label: string }[] = [];
+  if (showAirTightnessStrategy) activeStrategies.push({ key: "air", label: "Amélioration de l'étanchéité du bâtiment" });
+  if (showHeatingStrategy) activeStrategies.push({ key: "heat", label: "Installation de thermopompes haute efficacité" });
+  if (showHotWaterStrategy) activeStrategies.push({ key: "hw", label: "Réduction de la consommation d'eau chaude domestique" });
+  if (showLedStrategy) activeStrategies.push({ key: "led", label: "Conversion de l'éclairage vers la technologie DEL" });
+  if (showVrcStrategy) activeStrategies.push({ key: "vrc", label: "Ventilation avec récupération de chaleur (VRC)" });
+  if (showHeatPumpWaterHeaterStrategy) activeStrategies.push({ key: "hwt", label: "Chauffe-eaux Thermopompe" });
+  if (showGasConversionStrategy) activeStrategies.push({ key: "gas", label: `Conversion ${getPreFossilFuelLabel(pre)} vers Électricité` });
+  const stratNum = (key: string) => (activeStrategies.findIndex(s => s.key === key) + 1);
   const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
 
   const address = project.address || pre.buildingInfo?.address || "N/A";
@@ -642,25 +652,45 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               <p className="text-xs text-slate-400 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>Cahier de qualification — APH SELECT</p>
             </div>
             <section className="relative z-10">
-              <h2 className="text-base font-semibold mb-6">Table des matières</h2>
-              <nav className="space-y-2 text-sm">
+              <h2 className="text-lg font-semibold mb-6" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Table des matières</h2>
+              <nav className="space-y-1">
                 {tocItems.map((item, idx) => {
                   const ids = ["toc-resume", "toc-description", "toc-profil", "toc-strategies", "toc-performance", "toc-comparatif", "toc-conclusion", "toc-annexes"];
+                  const sectionLabels = ["Section 1", "Section 2", "Section 3", "Section 4", "Section 5", "Section 6", "Section 7", "Annexes"];
+                  const isStrategiesSection = idx === 3;
                   return (
-                    <a
-                      key={idx}
-                      href={`#${ids[idx]}`}
-                      className="flex items-center gap-3 py-2 px-3 rounded-md text-primary hover:bg-primary/5 hover:underline cursor-pointer transition-colors print:text-foreground print:underline print:px-0 print:hover:bg-transparent"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        document.getElementById(ids[idx])?.scrollIntoView({ behavior: "smooth" });
-                        window.location.hash = ids[idx];
-                      }}
-                      data-testid={`link-toc-${idx}`}
-                    >
-                      <span className="font-semibold min-w-[1.5rem]">{idx + 1}.</span>
-                      <span>{item}</span>
-                    </a>
+                    <div key={idx}>
+                      <a
+                        href={`#${ids[idx]}`}
+                        className="flex items-center gap-3 py-2 px-3 rounded-lg text-slate-800 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors group print:text-foreground print:px-0 print:hover:bg-transparent"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          document.getElementById(ids[idx])?.scrollIntoView({ behavior: "smooth" });
+                          window.location.hash = ids[idx];
+                        }}
+                        data-testid={`link-toc-${idx}`}
+                        style={{ borderBottom: idx < tocItems.length - 1 ? '1px solid #f1f5f9' : 'none' }}
+                      >
+                        <span className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{idx + 1}</span>
+                        <span className="flex-1 font-medium text-sm">{item}</span>
+                        <span className="text-xs text-slate-400 italic">{sectionLabels[idx]}</span>
+                      </a>
+                      {isStrategiesSection && activeStrategies.length > 0 && (
+                        <div className="ml-10 mt-1 mb-1 space-y-0.5">
+                          {activeStrategies.map((s, si) => (
+                            <a
+                              key={si}
+                              href="#toc-strategies"
+                              className="flex items-center gap-2 py-1 px-2 rounded text-slate-500 hover:text-primary hover:bg-slate-50 cursor-pointer transition-colors text-xs print:text-foreground print:px-0"
+                              onClick={(e) => { e.preventDefault(); document.getElementById("toc-strategies")?.scrollIntoView({ behavior: "smooth" }); }}
+                            >
+                              <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f', opacity: 0.7 }}>{si + 1}</span>
+                              <span>{s.label}</span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </nav>
@@ -857,8 +887,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 {showAirTightnessStrategy && (
-                  <div className="mt-4" data-testid="strategy-air-tightness">
-                    <h3 className="text-sm font-semibold mb-2">Amélioration de l'étanchéité du bâtiment</h3>
+                  <div className="mt-5" data-testid="strategy-air-tightness">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("air")}</span>
+                      Amélioration de l'étanchéité du bâtiment
+                    </h3>
                     <p>
                       Une amélioration de l'étanchéité de l'enveloppe du bâtiment est recommandée afin de réduire les infiltrations d'air et les pertes thermiques.
                     </p>
@@ -869,8 +902,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHeatingStrategy && (
-                  <div className="mt-4" data-testid="strategy-thermopompe">
-                    <h3 className="text-sm font-semibold mb-2">Installation de thermopompes haute efficacité</h3>
+                  <div className="mt-5" data-testid="strategy-thermopompe">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("heat")}</span>
+                      Installation de thermopompes haute efficacité
+                    </h3>
                     <p>
                       L'installation de <span className="font-semibold">{thermopompeCount}</span> thermopompes murales haute efficacité est proposée afin d'améliorer la performance énergétique du système de chauffage et de climatisation.
                     </p>
@@ -884,8 +920,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHotWaterStrategy && (
-                  <div className="mt-4" data-testid="strategy-hot-water">
-                    <h3 className="text-sm font-semibold mb-2">Réduction de la consommation d'eau chaude domestique</h3>
+                  <div className="mt-5" data-testid="strategy-hot-water">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("hw")}</span>
+                      Réduction de la consommation d'eau chaude domestique
+                    </h3>
                     <p>
                       L'installation de pommeaux de douche et de robinets à faible débit est recommandée afin de réduire la consommation d'eau chaude domestique.
                     </p>
@@ -896,8 +935,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showLedStrategy && (
-                  <div className="mt-4" data-testid="strategy-led">
-                    <h3 className="text-sm font-semibold mb-2">Conversion de l'éclairage vers la technologie DEL</h3>
+                  <div className="mt-5" data-testid="strategy-led">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("led")}</span>
+                      Conversion de l'éclairage vers la technologie DEL
+                    </h3>
                     <p>
                       La conversion d'au moins 75 % de l'éclairage du bâtiment vers des luminaires DEL est également recommandée.
                     </p>
@@ -908,8 +950,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showVrcStrategy && (
-                  <div className="mt-4" data-testid="strategy-vrc">
-                    <h3 className="text-sm font-semibold mb-2">Ventilation avec récupération de chaleur (VRC)</h3>
+                  <div className="mt-5" data-testid="strategy-vrc">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("vrc")}</span>
+                      Ventilation avec récupération de chaleur (VRC)
+                    </h3>
                     <p>
                       L'installation de systèmes de ventilation avec récupération de chaleur (VRC) est recommandée, présentant une efficacité de récupération de chaleur sensible d'environ <span className="font-semibold">{post.centralVentilation?.sensibleEfficiency0C ?? "—"} %</span> à 0 °C et <span className="font-semibold">{post.centralVentilation?.sensibleEfficiencyMinus25C ?? "—"} %</span> à -25 °C, afin d'améliorer la qualité de l'air intérieur tout en réduisant les pertes de chaleur liées au renouvellement de l'air.
                     </p>
@@ -917,8 +962,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHeatPumpWaterHeaterStrategy && (
-                  <div className="mt-4" data-testid="strategy-heat-pump-water-heater">
-                    <h3 className="text-sm font-semibold mb-2">Chauffe-eaux Thermopompe</h3>
+                  <div className="mt-5" data-testid="strategy-heat-pump-water-heater">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("hwt")}</span>
+                      Chauffe-eaux Thermopompe
+                    </h3>
                     <p>
                       L'installation de <span className="font-semibold">{thermopompeCount}</span> chauffe-eaux thermopompe {post.hotWater?.manufacturer || ""} {post.hotWater?.model || ""} est recommandée afin d'améliorer l'efficacité de la production d'eau chaude domestique.
                     </p>
@@ -926,11 +974,14 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showGasConversionStrategy && (
-                  <div className="mt-4" data-testid="strategy-gas-conversion">
-                    <h3 className="text-sm font-semibold mb-2">Conversion {getPreFossilFuelLabel(pre)} vers Électricité</h3>
+                  <div className="mt-5" data-testid="strategy-gas-conversion">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("gas")}</span>
+                      Conversion {getPreFossilFuelLabel(pre)} vers Électricité
+                    </h3>
                     {isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && (
                       <p>
-                        Le système actuel de production d'eau chaude domestique au {pre.hotWater?.primaryType?.toLowerCase()} sera converti à l'électricité. Un chauffe-eau électrique indépendant sera installé dans chaque unité afin d'assurer une production d'eau chaude autonome et plus efficace.
+                        Le système actuel de production d'eau chaude domestique, alimenté au gaz naturel, sera converti à l'électricité. Deux options peuvent être envisagées : soit l'installation d'un chauffe-eau électrique indépendant dans chaque unité afin d'assurer une production d'eau chaude autonome et efficace, soit l'installation d'une chaudière électrique commune desservant l'ensemble du bâtiment.
                       </p>
                     )}
                     {isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType) && (
