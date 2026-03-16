@@ -605,57 +605,77 @@ function parseHeating(text: string): ReportData["heating"] {
   const effMatch = text.match(/Efficacité saisonnière[^:]*:\s*\n?\s*([\d.,]+)\s*%/);
   if (effMatch) result.primaryEfficiency = effMatch[1].replace(",", ".") + "%";
 
+  // Helper: strips a label prefix like "Chauffage des espaces:   " or "Equipment:   " from a line
+  function stripHeatingLabel(line: string): string {
+    return line
+      .replace(/^(?:Chauffage des espaces|Equipment|Énergie PRIMAIRE pour chauffage)\s*:\s*/i, "")
+      .trim();
+  }
+
   const installIdx = lines.findIndex(l => l.trim() === "INSTALLATION DE CHAUFFAGE");
   if (installIdx >= 0) {
-    const labelLines: string[] = [];
-    const valueLines: string[] = [];
-    let phase = "labels";
+    const sectionEnd = Math.min(installIdx + 30, lines.length);
 
-    for (let i = installIdx + 1; i < Math.min(installIdx + 20, lines.length); i++) {
-      const l = lines[i].trim();
+    for (let i = installIdx + 1; i < sectionEnd; i++) {
+      const raw = lines[i];
+      const l = raw.trim();
       if (!l) continue;
+      if (l.startsWith("SECONDAIRE") || l.startsWith("INSTALLATION DE CLIMATISATION") || l.startsWith("INSTALLATION DU CHAUFFE")) break;
 
-      if (l === "Efficacité:" || l.startsWith("Mode de la ventil") || l.startsWith("Puissance à")) break;
+      // Format A: label and value on the SAME line (e.g. "Chauffage des espaces:    Électricité")
+      const sameLineLabel = l.match(/^(?:Chauffage des espaces|Equipment)\s*:\s+(.+)$/i);
+      if (sameLineLabel) {
+        result.primaryEquipment = sameLineLabel[1].trim();
+        continue;
+      }
 
-      const isLabel = l.endsWith(":") || l.includes("PRIMAIRE") || l.includes("SECONDAIRE");
-      if (phase === "labels" && isLabel) {
-        labelLines.push(l);
-      } else if (phase === "labels" && !isLabel) {
-        phase = "values";
-        valueLines.push(l);
-      } else if (phase === "values" && !isLabel) {
-        valueLines.push(l);
-      } else {
-        break;
+      // Format B: energy type label + next non-label line is the fuel type
+      if (!result.primaryType && (l === "Énergie PRIMAIRE pour chauffage:" || l.match(/^nergie PRIMAIRE/i))) {
+        for (let j = i + 1; j < Math.min(i + 5, sectionEnd); j++) {
+          const next = lines[j].trim();
+          if (!next) continue;
+          if (next.endsWith(":") || next.includes("PRIMAIRE") || next.includes("Chauffage des espaces")) break;
+          result.primaryType = next;
+          break;
+        }
+        continue;
+      }
+
+      // Format B: standalone "Equipment:" or "Chauffage des espaces:" label => next non-empty non-label line is value
+      if (l === "Equipment:" || l === "Chauffage des espaces:") {
+        for (let j = i + 1; j < Math.min(i + 5, sectionEnd); j++) {
+          const next = lines[j].trim();
+          if (!next) continue;
+          if (next.endsWith(":")) break;
+          result.primaryEquipment = next;
+          break;
+        }
+        continue;
       }
     }
 
-    const energyLabelIdx = labelLines.findIndex(l =>
-      l.includes("nergie") && l.includes("chauffage")
-    );
-    const equipLabelIdx = labelLines.findIndex(l =>
-      l === "Equipment:" || l === "Chauffage des espaces:"
-    );
-
-    if (energyLabelIdx >= 0 && energyLabelIdx < valueLines.length) {
-      result.primaryType = valueLines[energyLabelIdx];
-    }
-    if (equipLabelIdx >= 0 && equipLabelIdx < valueLines.length) {
-      result.primaryEquipment = valueLines[equipLabelIdx];
-    }
-
+    // Fallback: scan section for known equipment keywords
     if (!result.primaryEquipment) {
-      for (let i = installIdx; i < Math.min(installIdx + 20, lines.length); i++) {
+      for (let i = installIdx + 1; i < sectionEnd; i++) {
         const l = lines[i].trim();
-        if (l.includes("Thermopompe") && !l.includes("Temp") && !l.includes("COP") && !l.includes("arrêt") && !l.includes("annuel")) {
-          result.primaryEquipment = l;
-          break;
+        if (!l || l.startsWith("SECONDAIRE") || l.startsWith("INSTALLATION")) break;
+        const cleaned = stripHeatingLabel(l);
+        if (cleaned.includes("Source d'air") || cleaned.toLowerCase().includes("thermopompe")) {
+          if (!cleaned.includes("Temp") && !cleaned.includes("COP") && !cleaned.includes("arrêt") && !cleaned.includes("annuel")) {
+            result.primaryEquipment = cleaned;
+            break;
+          }
         }
-        if (l.includes("Plinthes") || l.includes("hydronique") || l.includes("plénum")) {
-          result.primaryEquipment = l;
+        if (cleaned.includes("Plinthes") || cleaned.includes("hydronique") || cleaned.includes("plénum")) {
+          result.primaryEquipment = cleaned;
           break;
         }
       }
+    }
+
+    // Clean up any remaining label prefix that snuck into primaryEquipment
+    if (result.primaryEquipment) {
+      result.primaryEquipment = stripHeatingLabel(result.primaryEquipment);
     }
   }
 

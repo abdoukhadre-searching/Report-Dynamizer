@@ -221,9 +221,13 @@ function hasHeatingChanged(pre: ReportData, post: ReportData): boolean {
   return preEquip !== postEquip && preEquip.length > 0 && postEquip.length > 0;
 }
 
+function hasThermopompe(data: ReportData): boolean {
+  const equip = (data.heating?.primaryEquipment || "").toLowerCase();
+  return equip.includes("thermopompe") || equip.includes("source d'air");
+}
+
 function isThermopompeAdded(post: ReportData): boolean {
-  const equip = post.heating?.primaryEquipment || "";
-  return equip.toLowerCase().includes("thermopompe") || equip.toLowerCase().includes("source d'air");
+  return hasThermopompe(post);
 }
 
 function hasAirTightnessChanged(pre: ReportData, post: ReportData): boolean {
@@ -342,7 +346,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
   };
 
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
-  const showHeatingStrategy = hasHeatingChanged(pre, post) && isThermopompeAdded(post);
+  const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post);
