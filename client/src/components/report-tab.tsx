@@ -760,7 +760,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     { id: "figure-2", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)" },
                     { id: "figure-3", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)" },
                     { id: "figure-4", label: "Figure 4 : Consommation mensuelle totale (Après travaux)" },
-                    { id: "toc-strategies", label: "Figure 5 : Répartition des déperditions thermiques" },
+                    { id: "figure-pre-monthly", label: "Figure 5 : Consommation mensuelle PRÉ-travaux par catégorie (GJ/mois)" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -803,11 +803,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   ? `${floorsDisplay} étage${(floorsDisplay.toLowerCase() === "un" || floorsDisplay === "1") ? "" : "s"}`
                   : "N/A";
                 const cah50 = pre.airLeakage?.cah50 ?? null;
-                const cahLevel = cah50 !== null
-                  ? cah50 >= 7 ? "indiquant un niveau élevé d'infiltration d'air"
-                    : cah50 >= 4 ? "indiquant un niveau modéré d'infiltration d'air"
-                    : "indiquant un niveau faible d'infiltration d'air"
-                  : "";
                 const heatingLabel = (() => {
                   const eq = (pre.heating?.primaryEquipment || "").toLowerCase();
                   const fuel = (pre.heating?.primaryType || "").toLowerCase();
@@ -824,11 +819,13 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   if (/gaz/i.test(type)) return "chauffe-eau au gaz naturel";
                   return equip || "N/A";
                 })();
+                const roofRsi = pre.zone1?.find(z => /plafond/i.test(z.element))?.rsi;
+                const roofThermal = roofRsi ? `RSI ${roofRsi.toFixed(2)}` : "N/A";
                 const chars = [
                   { label: "Nombre d'étages", value: floorsLabel || "N/A" },
-                  { label: "Valeur thermique du toit (R)", value: "N/A" },
+                  { label: "Valeur thermique du toit (R)", value: roofThermal },
                   { label: "Valeur thermique des murs extérieurs (R)", value: "N/A" },
-                  { label: "Taux de renouvellement d'air", value: cah50 !== null ? `${cah50} CAH à 50 Pa, ${cahLevel}` : "N/A" },
+                  { label: "Taux de renouvellement d'air", value: cah50 !== null ? `${cah50} CAH à 50 Pa` : "N/A" },
                   { label: "Système de chauffage", value: heatingLabel },
                   { label: "Système de production d'eau chaude domestique", value: hotWaterLabel },
                   { label: "Ratio de fenestration (murs hors-terre)", value: windowFraction },

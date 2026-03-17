@@ -269,6 +269,11 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     info.occupants = `${occupantMatch[1]} adultes pour ${occupantMatch[2]}% du temps`;
   }
 
+  const winFracMatch = text.match(/fraction de la surface du mur hors-terre[^:\n]*:\s*([\d.]+)\s*%/i);
+  if (winFracMatch) {
+    info.windowFraction = `${winFracMatch[1]} %`;
+  }
+
   return info;
 }
 
