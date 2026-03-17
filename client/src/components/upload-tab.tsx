@@ -15,9 +15,10 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
-  File,
   Building2,
   HardHat,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 
 interface UploadTabProps {
@@ -26,6 +27,7 @@ interface UploadTabProps {
 
 export default function UploadTab({ project }: UploadTabProps) {
   const { toast } = useToast();
+  const [step, setStep] = useState<1 | 2>(1);
   const [preText, setPreText] = useState("");
   const [postText, setPostText] = useState("");
   const [projectName, setProjectName] = useState(project.name);
@@ -65,9 +67,13 @@ export default function UploadTab({ project }: UploadTabProps) {
     },
   });
 
-  const handleBuildingTypeChange = (type: "existing" | "new") => {
+  const handleBuildingTypeSelect = (type: "existing" | "new") => {
     setBuildingType(type);
     updateBuildingTypeMutation.mutate(type);
+  };
+
+  const handleContinue = () => {
+    setStep(2);
   };
 
   const uploadPreMutation = useMutation({
@@ -190,48 +196,126 @@ export default function UploadTab({ project }: UploadTabProps) {
     }
   };
 
+  if (step === 1) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 py-8">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>
+            Type de bâtiment
+          </h2>
+          <p className="text-muted-foreground text-sm max-w-md">
+            Sélectionnez le type de bâtiment pour ce projet de qualification APH SELECT.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+          <button
+            type="button"
+            data-testid="button-building-type-existing"
+            onClick={() => handleBuildingTypeSelect("existing")}
+            className={`flex flex-col items-center gap-5 rounded-2xl border-2 p-8 transition-all cursor-pointer group ${
+              buildingType === "existing"
+                ? "border-[#1e3a5f] bg-[#1e3a5f]/5 shadow-md"
+                : "border-border hover:border-[#1e3a5f]/50 hover:shadow-sm"
+            }`}
+          >
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
+              buildingType === "existing" ? "bg-[#1e3a5f] text-white" : "bg-muted text-muted-foreground group-hover:bg-[#1e3a5f]/10 group-hover:text-[#1e3a5f]"
+            }`}>
+              <Building2 className="w-8 h-8" />
+            </div>
+            <div className="text-center">
+              <p className={`font-semibold text-base mb-1 ${buildingType === "existing" ? "text-[#1e3a5f]" : ""}`}>
+                Bâtiment existant
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Immeuble déjà construit<br />Analyse avant / après travaux
+              </p>
+            </div>
+            {buildingType === "existing" && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-[#1e3a5f]">
+                <CheckCircle2 className="w-4 h-4" />
+                Sélectionné
+              </div>
+            )}
+          </button>
+
+          <button
+            type="button"
+            data-testid="button-building-type-new"
+            onClick={() => handleBuildingTypeSelect("new")}
+            className={`flex flex-col items-center gap-5 rounded-2xl border-2 p-8 transition-all cursor-pointer group ${
+              buildingType === "new"
+                ? "border-[#1e3a5f] bg-[#1e3a5f]/5 shadow-md"
+                : "border-border hover:border-[#1e3a5f]/50 hover:shadow-sm"
+            }`}
+          >
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
+              buildingType === "new" ? "bg-[#1e3a5f] text-white" : "bg-muted text-muted-foreground group-hover:bg-[#1e3a5f]/10 group-hover:text-[#1e3a5f]"
+            }`}>
+              <HardHat className="w-8 h-8" />
+            </div>
+            <div className="text-center">
+              <p className={`font-semibold text-base mb-1 ${buildingType === "new" ? "text-[#1e3a5f]" : ""}`}>
+                Construction neuve
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Projet à construire<br />Bâtiment de référence CNEB 2017
+              </p>
+            </div>
+            {buildingType === "new" && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-[#1e3a5f]">
+                <CheckCircle2 className="w-4 h-4" />
+                Sélectionné
+              </div>
+            )}
+          </button>
+        </div>
+
+        <Button
+          onClick={handleContinue}
+          size="lg"
+          className="px-10"
+          data-testid="button-continue-to-upload"
+          style={{ backgroundColor: '#1e3a5f' }}
+        >
+          Continuer
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="w-6 h-1.5 rounded-full bg-[#1e3a5f]" />
+          <div className="w-6 h-1.5 rounded-full bg-muted" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="font-medium mb-1">Type de bâtiment</h3>
-          <p className="text-sm text-muted-foreground mb-4">Sélectionnez si le bâtiment est existant ou en construction neuve.</p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              data-testid="button-building-type-existing"
-              onClick={() => handleBuildingTypeChange("existing")}
-              className={`flex flex-col items-center gap-3 rounded-lg border-2 p-5 transition-all text-left cursor-pointer ${
-                buildingType === "existing"
-                  ? "border-[#1e3a5f] bg-[#1e3a5f]/5"
-                  : "border-border hover:border-[#1e3a5f]/40"
-              }`}
-            >
-              <Building2 className={`w-7 h-7 ${buildingType === "existing" ? "text-[#1e3a5f]" : "text-muted-foreground"}`} />
-              <div>
-                <p className={`font-semibold text-sm ${buildingType === "existing" ? "text-[#1e3a5f]" : ""}`}>Bâtiment existant</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Immeuble déjà construit — avant/après travaux</p>
-              </div>
-            </button>
-            <button
-              type="button"
-              data-testid="button-building-type-new"
-              onClick={() => handleBuildingTypeChange("new")}
-              className={`flex flex-col items-center gap-3 rounded-lg border-2 p-5 transition-all text-left cursor-pointer ${
-                buildingType === "new"
-                  ? "border-[#1e3a5f] bg-[#1e3a5f]/5"
-                  : "border-border hover:border-[#1e3a5f]/40"
-              }`}
-            >
-              <HardHat className={`w-7 h-7 ${buildingType === "new" ? "text-[#1e3a5f]" : "text-muted-foreground"}`} />
-              <div>
-                <p className={`font-semibold text-sm ${buildingType === "new" ? "text-[#1e3a5f]" : ""}`}>Construction neuve</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Projet à construire — bâtiment de référence CNEB 2017</p>
-              </div>
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setStep(1)}
+          data-testid="button-back-to-type"
+          className="gap-1.5 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour
+        </Button>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="w-6 h-1.5 rounded-full bg-muted" />
+          <div className="w-6 h-1.5 rounded-full bg-[#1e3a5f]" />
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {buildingType === "existing" ? (
+            <><Building2 className="w-4 h-4" /> Bâtiment existant</>
+          ) : (
+            <><HardHat className="w-4 h-4" /> Construction neuve</>
+          )}
+        </div>
+      </div>
 
       <Card>
         <CardContent className="p-6">
@@ -287,9 +371,7 @@ export default function UploadTab({ project }: UploadTabProps) {
                   Charge
                 </Badge>
               ) : (
-                <Badge variant="secondary">
-                  En attente
-                </Badge>
+                <Badge variant="secondary">En attente</Badge>
               )}
             </div>
 
@@ -369,9 +451,7 @@ export default function UploadTab({ project }: UploadTabProps) {
                   Charge
                 </Badge>
               ) : (
-                <Badge variant="secondary">
-                  En attente
-                </Badge>
+                <Badge variant="secondary">En attente</Badge>
               )}
             </div>
 
