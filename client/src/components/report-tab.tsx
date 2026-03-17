@@ -1348,22 +1348,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
                 <div className="mt-8 pt-6" style={{ borderTop: '1px solid #e2e8f0' }}>
                   <p className="text-sm font-bold mb-4">Document approuvé par :</p>
-                  <div className="flex items-start gap-6">
-                    <div className="flex-shrink-0">
-                      <p className="text-4xl font-light mb-1" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f', lineHeight: 1.15 }}>
-                        Marc-André<br/>Boucher
-                      </p>
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1 pt-1 border-l border-slate-200 pl-4">
-                      <p className="font-medium text-slate-700">Signature numérique de</p>
-                      <p className="font-medium text-slate-700">Marc-André Boucher</p>
-                      <p className="mt-1">Date : {new Date().toISOString().slice(0, 10).replace(/-/g, ".")} {new Date().toLocaleTimeString("fr-CA", { hour12: false })} -05'00'</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 pt-4" style={{ borderTop: '1px solid #cbd5e1' }}>
-                    <p className="text-sm font-bold text-slate-800">Marc-André Boucher</p>
-                    <p className="text-xs text-slate-500">Évaluateur en efficacité énergétique agréé</p>
-                  </div>
                 </div>
               </div>
             </section>
