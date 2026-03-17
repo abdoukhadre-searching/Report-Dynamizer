@@ -1313,7 +1313,40 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 8. Approbation de l'évaluateur et signature
               </h2>
               <div className="space-y-6 text-sm">
-                <div>
+                <table className="w-full border-collapse text-xs" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>
+                      <th className="py-3 px-4 text-left text-white font-semibold border-r border-white/20 w-[45%]"></th>
+                      <th className="py-3 px-4 text-center text-white font-semibold border-r border-white/20">Immeuble évalué (E)</th>
+                      <th className="py-3 px-4 text-center text-white font-semibold border-r border-white/20">Immeuble de référence (R)</th>
+                      <th className="py-3 px-4 text-center text-white font-semibold">Économie d'énergie (en%)<br/>(R−E) / R×100</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-slate-200">
+                      <td className="py-3 px-4 font-medium text-slate-700 border-r border-slate-100">Consommation d'énergie annuelle totale (GJ/A)</td>
+                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{totalAfterGJ.toFixed(3)} GJ</td>
+                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{totalBeforeGJ.toFixed(3)} GJ</td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-block px-3 py-1 rounded text-white text-xs font-bold" style={{ backgroundColor: '#16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                          {improvementPct.toFixed(1)}%
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-medium text-slate-700 border-r border-slate-100">Émission de gaz à effet de serre annuelle totale (nombre de tonnes équivalent CO₂ par année)</td>
+                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{ghsAfter.toFixed(5)} T/A</td>
+                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{ghsBefore.toFixed(5)} T/A</td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-block px-3 py-1 rounded text-white text-xs font-bold" style={{ backgroundColor: '#16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                          {ghsImprovementPct.toFixed(1)}%
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="mt-8 pt-6" style={{ borderTop: '1px solid #e2e8f0' }}>
                   <p className="text-sm font-bold mb-4">Document approuvé par :</p>
                   <div className="flex items-start gap-6">
                     <div className="flex-shrink-0">
