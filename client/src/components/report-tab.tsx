@@ -642,7 +642,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
             </div>
             <section className="relative z-10">
               <h2 className="text-lg font-semibold mb-6" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Table des matières</h2>
-              <nav className="space-y-1">
+              <nav className="space-y-1.5 text-xs">
                 {tocItems.map((item, idx) => {
                   const ids = ["toc-resume", "toc-description", "toc-profil", "toc-strategies", "toc-performance", "toc-comparatif", "toc-conclusion", "toc-annexes"];
                   const sectionLabels = ["Section 1", "Section 2", "Section 3", "Section 4", "Section 5", "Section 6", "Section 7", "Annexes"];
@@ -651,30 +651,29 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     <div key={idx}>
                       <a
                         href={`#${ids[idx]}`}
-                        className="flex items-center gap-3 py-2 px-3 rounded-lg text-slate-800 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors group print:text-foreground print:px-0 print:hover:bg-transparent"
+                        className="flex items-center gap-2 py-1.5 px-3 rounded text-slate-700 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0 print:hover:bg-transparent"
                         onClick={(e) => {
                           e.preventDefault();
                           document.getElementById(ids[idx])?.scrollIntoView({ behavior: "smooth" });
                           window.location.hash = ids[idx];
                         }}
                         data-testid={`link-toc-${idx}`}
-                        style={{ borderBottom: idx < tocItems.length - 1 ? '1px solid #f1f5f9' : 'none' }}
                       >
-                        <span className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{idx + 1}</span>
-                        <span className="flex-1 font-medium text-sm">{item}</span>
-                        <span className="text-xs text-slate-400 italic">{sectionLabels[idx]}</span>
+                        <span className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{idx + 1}</span>
+                        <span className="flex-1">{item}</span>
+                        <span className="text-[10px] text-slate-400 italic">{sectionLabels[idx]}</span>
                       </a>
                       {isStrategiesSection && activeStrategies.length > 0 && (
-                        <div className="ml-10 mt-1 mb-1 space-y-0.5">
+                        <div className="ml-6 mt-0.5 mb-0.5 space-y-0.5">
                           {activeStrategies.map((s, si) => (
                             <a
                               key={si}
                               href="#toc-strategies"
-                              className="flex items-center gap-2 py-1 px-2 rounded text-slate-500 hover:text-primary hover:bg-slate-50 cursor-pointer transition-colors text-xs print:text-foreground print:px-0"
+                              className="flex items-center gap-2 py-1 px-2 rounded text-slate-500 hover:text-primary hover:bg-slate-50 cursor-pointer transition-colors text-[11px] print:text-foreground print:px-0"
                               onClick={(e) => { e.preventDefault(); document.getElementById("toc-strategies")?.scrollIntoView({ behavior: "smooth" }); }}
                             >
-                              <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f', opacity: 0.7 }}>{si + 1}</span>
-                              <span>{s.label}</span>
+                              <span className="w-3.5 h-3.5 rounded flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#475569' }}>{si + 1}</span>
+                              <span className="text-slate-500">{s.label}</span>
                             </a>
                           ))}
                         </div>
@@ -752,41 +751,43 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               <h2 className="" data-testid="text-section-description">
                 2. Description du bâtiment
               </h2>
-              <div className="space-y-3 text-sm leading-relaxed">
-                <p>
-                  Le bâtiment analysé est un immeuble résidentiel situé au {fullAddress}
-                  {numUnits > 0 && <>, comprenant {numUnits} logements locatifs</>}.
-                </p>
-                {pre.buildingInfo?.yearBuilt && (
-                  <p>
-                    Construit en {pre.buildingInfo.yearBuilt}, il s'agit d'un bâtiment typique du parc immobilier montréalais. La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
-                  </p>
-                )}
+              {(() => {
+                const numFloors = pre.buildingInfo?.numFloors || post.buildingInfo?.numFloors || "";
+                const floorsMatch = numFloors.match(/(\d+(?:[.,]\d+)?(?:\s*(?:et\s*demi|½|1\/2))?)/i);
+                const floorsDisplay = floorsMatch ? floorsMatch[0].trim() : numFloors || "?";
+                return (
+                  <div className="space-y-3 text-sm leading-relaxed">
+                    <p>
+                      Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}.
+                    </p>
+                    <p>
+                      Construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>, il s'agit d'un bâtiment représentatif des constructions résidentielles de cette période.
+                      {numFloors && <> Le bâtiment comporte <span className="font-semibold">{floorsDisplay} étage{floorsDisplay !== "1" ? "s" : ""}</span>.</>} La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
+                    </p>
 
-                <AnnexImageUpload
-                  key="description-climate-zone"
-                  projectId={project.id}
-                  annexType="ledLighting"
-                  label="Photo du bâtiment"
-                  currentImage={annexImages.ledLighting}
-                />
+                    <AnnexImageUpload
+                      key="description-climate-zone"
+                      projectId={project.id}
+                      annexType="ledLighting"
+                      label="Photo du bâtiment"
+                      currentImage={annexImages.ledLighting}
+                    />
 
-                <p>
-                  Le bâtiment possède un toit plat et des murs extérieurs présentant une isolation limitée selon les standards actuels. Les fenêtres sont de type coulissant à double vitrage avec cadre en aluminium.
-                </p>
-                <p>
-                  L'analyse énergétique indique un taux de changement d'air de <span className="font-semibold">{pre.airLeakage?.cah50 ?? "N/A"} CAH</span> à 50 Pa, ce qui témoigne d'un niveau relativement élevé d'infiltration d'air et contribue aux pertes thermiques du bâtiment.
-                </p>
-                <p>
-                  Le système de chauffage des logements est assuré par <span className="font-semibold">{preHeatingEquipment.toLowerCase()}</span>, tandis que la production d'eau chaude domestique est réalisée par des chauffe-eau{pre.hotWater?.primaryType ? ` ${pre.hotWater.primaryType.toLowerCase() === "électricité" ? "électriques" : `au ${pre.hotWater.primaryType.toLowerCase()}`}` : ""}.
-                </p>
-                <p>
-                  La fraction de la surface des murs hors-terre occupée par les fenêtres est estimée à environ <span className="font-semibold">{windowFraction}</span>, ce qui influence également les pertes thermiques de l'enveloppe du bâtiment.
-                </p>
-                <p>
-                  Ces caractéristiques sont représentatives des bâtiments construits avant l'introduction des normes modernes d'efficacité énergétique, ce qui explique le potentiel important d'amélioration énergétique.
-                </p>
-              </div>
+                    <p>
+                      L'analyse énergétique indique un taux de changement d'air de <span className="font-semibold">{pre.airLeakage?.cah50 ?? "N/A"} CAH</span> à 50 Pa, ce qui témoigne d'un niveau relativement élevé d'infiltration d'air et contribue aux pertes thermiques du bâtiment.
+                    </p>
+                    <p>
+                      Le système de chauffage des logements est assuré par <span className="font-semibold">{preHeatingEquipment.toLowerCase()}</span>, tandis que la production d'eau chaude domestique est réalisée par des chauffe-eau{pre.hotWater?.primaryType ? ` ${pre.hotWater.primaryType.toLowerCase() === "électricité" ? "électriques" : `au ${pre.hotWater.primaryType.toLowerCase()}`}` : ""}.
+                    </p>
+                    <p>
+                      La fraction de la surface des murs hors-terre occupée par les fenêtres est estimée à environ <span className="font-semibold">{windowFraction}</span>, ce qui influence également les pertes thermiques de l'enveloppe du bâtiment.
+                    </p>
+                    <p>
+                      Ces caractéristiques sont représentatives des bâtiments construits avant l'introduction des normes modernes d'efficacité énergétique, ce qui explique le potentiel important d'amélioration énergétique.
+                    </p>
+                  </div>
+                );
+              })()}
             </section>
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
@@ -816,34 +817,35 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 <div className="my-6">
-                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Répartition de la consommation énergétique avant travaux (GJ/an)</p>
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 1 — Répartition de la consommation énergétique avant travaux (GJ/an)</p>
                   <div className="flex justify-center">
-                    <div className="h-[280px] w-full max-w-[500px]">
+                    <div className="h-[320px] w-full max-w-[560px]">
                       {exportMode ? (
-                        <PieChart width={500} height={280}>
+                        <PieChart width={560} height={320}>
                           <Pie
                             data={prePieData}
-                            cx={250}
-                            cy={140}
-                            outerRadius={100}
+                            cx={280}
+                            cy={130}
+                            outerRadius={95}
                             dataKey="value"
                             isAnimationActive={false}
-                            label={({ name, value }) => `${name}: ${value} GJ`}
                           >
                             {prePieData.map((entry, idx) => (
                               <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                             ))}
                           </Pie>
+                          <Legend iconType="circle" iconSize={8} formatter={(value: string, entry: any) => `${value}: ${entry.payload?.value ?? ""} GJ`} />
                         </PieChart>
                       ) : (
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={prePieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                            <Pie data={prePieData} cx="50%" cy="42%" outerRadius={95} dataKey="value">
                               {prePieData.map((entry, idx) => (
                                 <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                               ))}
                             </Pie>
                             <Tooltip formatter={(value: number) => `${value} GJ`} />
+                            <Legend iconType="circle" iconSize={9} formatter={(value: string, entry: any) => `${value} : ${entry.payload?.value ?? ""} GJ`} />
                           </PieChart>
                         </ResponsiveContainer>
                       )}
@@ -1010,18 +1012,18 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 <div className="my-6">
-                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Comparatif énergétique Avant / Après travaux (GJ/an)</p>
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 2 — Comparatif énergétique Avant / Après travaux (GJ/an)</p>
                   <div className="flex justify-center">
-                    <div className="h-[300px] w-full max-w-[600px]">
+                    <div className="h-[320px] w-full max-w-[620px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={comparisonBarData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                        <BarChart data={comparisonBarData} margin={{ top: 10, right: 20, left: 10, bottom: 30 }}>
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                          <YAxis tick={{ fontSize: 11 }} />
+                          <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+                          <YAxis tick={{ fontSize: 11 }} label={{ value: "GJ/an", angle: -90, position: "insideLeft", offset: 5, style: { fontSize: 10 } }} />
                           <Tooltip formatter={(value: number) => `${value} GJ`} />
-                          <Legend />
-                          <Bar dataKey="avant" name="Avant travaux" fill="hsl(var(--chart-1))" />
-                          <Bar dataKey="apres" name="Après travaux" fill="hsl(var(--chart-4))" />
+                          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                          <Bar dataKey="avant" name="Avant travaux" fill="hsl(var(--chart-1))" radius={[2,2,0,0]} />
+                          <Bar dataKey="apres" name="Après travaux" fill="hsl(var(--chart-4))" radius={[2,2,0,0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -1029,34 +1031,35 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </div>
 
                 <div className="my-6">
-                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Répartition de la consommation énergétique après travaux (GJ/an)</p>
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 3 — Répartition de la consommation énergétique après travaux (GJ/an)</p>
                   <div className="flex justify-center">
-                    <div className="h-[280px] w-full max-w-[500px]">
+                    <div className="h-[320px] w-full max-w-[560px]">
                       {exportMode ? (
-                        <PieChart width={500} height={280}>
+                        <PieChart width={560} height={320}>
                           <Pie
                             data={postPieData}
-                            cx={250}
-                            cy={140}
-                            outerRadius={100}
+                            cx={280}
+                            cy={130}
+                            outerRadius={95}
                             dataKey="value"
                             isAnimationActive={false}
-                            label={({ name, value }) => `${name}: ${value} GJ`}
                           >
                             {postPieData.map((entry, idx) => (
                               <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                             ))}
                           </Pie>
+                          <Legend iconType="circle" iconSize={8} formatter={(value: string, entry: any) => `${value}: ${entry.payload?.value ?? ""} GJ`} />
                         </PieChart>
                       ) : (
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={postPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value} GJ`}>
+                            <Pie data={postPieData} cx="50%" cy="42%" outerRadius={95} dataKey="value">
                               {postPieData.map((entry, idx) => (
                                 <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                               ))}
                             </Pie>
                             <Tooltip formatter={(value: number) => `${value} GJ`} />
+                            <Legend iconType="circle" iconSize={9} formatter={(value: string, entry: any) => `${value} : ${entry.payload?.value ?? ""} GJ`} />
                           </PieChart>
                         </ResponsiveContainer>
                       )}
@@ -1072,7 +1075,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 <div className="my-6">
-                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Évolution mensuelle de la consommation énergétique – Avant / Après travaux (GJ)</p>
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 4 — Évolution mensuelle de la consommation énergétique – Avant / Après travaux (GJ)</p>
                   <div className="flex justify-center">
                     <div className="h-[300px] w-full max-w-[600px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1129,7 +1132,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                       { label: "Ventilation", avant: ventilationBeforeGJ, apres: ventilationAfterGJ },
                       { label: "Climatisation", avant: coolingBeforeGJ, apres: coolingAfterGJ },
                     ].map((row, idx) => {
-                      const variation = row.apres - row.avant;
+                      const variation = row.avant - row.apres;
                       const pct = row.avant > 0 ? ((row.avant - row.apres) / row.avant) * 100 : 0;
                       return (
                         <tr key={idx}
@@ -1138,8 +1141,8 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                           <td className="py-3 px-4 border-r border-slate-100 font-medium text-slate-700">{row.label}</td>
                           <td className="py-3 px-4 text-right font-mono border-r border-slate-100 text-slate-500">{row.avant.toFixed(1)}</td>
                           <td className="py-3 px-4 text-right font-mono border-r border-slate-100 text-slate-500">{row.apres.toFixed(1)}</td>
-                          <td className={`py-3 px-4 text-right font-mono border-r border-slate-100 font-semibold ${variation < 0 ? "text-emerald-600" : variation > 0 ? "text-red-500" : "text-slate-400"}`}>
-                            {variation < 0 ? "" : "+"}{variation.toFixed(1)}
+                          <td className={`py-3 px-4 text-right font-mono border-r border-slate-100 font-semibold ${variation > 0 ? "text-emerald-600" : variation < 0 ? "text-red-500" : "text-slate-400"}`}>
+                            {variation > 0 ? "+" : ""}{variation.toFixed(1)}
                           </td>
                           <td className="py-3 px-4 text-right">
                             {pct > 0 ? (
@@ -1162,7 +1165,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                       <td className="py-3.5 px-4 text-right font-mono text-white font-bold border-r border-white/10">{totalBeforeGJ.toFixed(1)}</td>
                       <td className="py-3.5 px-4 text-right font-mono text-white font-bold border-r border-white/10">{totalAfterGJ.toFixed(1)}</td>
                       <td className="py-3.5 px-4 text-right font-mono font-bold border-r border-white/10" style={{ color: '#86efac' }}>
-                        {(totalAfterGJ - totalBeforeGJ).toFixed(1)}
+                        +{(totalBeforeGJ - totalAfterGJ).toFixed(1)}
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold" style={{ backgroundColor: '#fff', color: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>↓ {improvementPct.toFixed(1)}%</span>
@@ -1172,8 +1175,8 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </table>
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #dc2626' } as React.CSSProperties}>
+              <div className="mt-5 grid grid-cols-3 gap-3 text-center not-prose" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #dc2626', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <svg className="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-3.8 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
                     <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">GES Avant</p>
@@ -1181,7 +1184,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   <p className="text-lg font-bold tabular-nums text-slate-800">{ghsBefore.toFixed(3)}</p>
                   <p className="text-[10px] text-slate-400">T CO₂/an</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #16a34a' } as React.CSSProperties}>
+                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <svg className="w-3.5 h-3.5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-3.8 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
                     <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">GES Après</p>
@@ -1189,13 +1192,13 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   <p className="text-lg font-bold tabular-nums text-slate-800">{ghsAfter.toFixed(3)}</p>
                   <p className="text-[10px] text-slate-400">T CO₂/an</p>
                 </div>
-                <div className="rounded-lg p-4 shadow-sm" style={{ backgroundColor: '#1e3a5f', borderTop: '3px solid #16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
                   <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <svg className="w-3.5 h-3.5 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-300 font-medium">Réduction</p>
+                    <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Réduction GES</p>
                   </div>
-                  <p className="text-lg font-bold tabular-nums text-white">{ghsImprovementPct.toFixed(1)}%</p>
-                  <p className="text-[10px] text-slate-400">Réduction GES</p>
+                  <p className="text-lg font-bold tabular-nums text-slate-800">{ghsImprovementPct.toFixed(1)}%</p>
+                  <p className="text-[10px] text-slate-400">{(ghsBefore - ghsAfter).toFixed(3)} T CO₂/an</p>
                 </div>
               </div>
             </section>
