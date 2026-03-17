@@ -757,10 +757,10 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 <nav className="space-y-1.5 text-xs">
                   {[
                     { id: "figure-1", label: "Figure 1 : Répartition énergétique par catégorie (Avant travaux)" },
-                    { id: "figure-2", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)" },
-                    { id: "figure-3", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)" },
-                    { id: "figure-4", label: "Figure 4 : Consommation mensuelle totale (Après travaux)" },
-                    { id: "figure-pre-monthly", label: "Figure 5 : Consommation mensuelle PRÉ-travaux par catégorie (GJ/mois)" },
+                    { id: "figure-pre-monthly", label: "Figure 2 : Consommation mensuelle PRÉ-travaux par catégorie (GJ/mois)" },
+                    { id: "figure-2", label: "Figure 3 : Comparaison Avant / Après par catégorie (GJ)" },
+                    { id: "figure-3", label: "Figure 4 : Répartition énergétique par catégorie (Après travaux)" },
+                    { id: "figure-4", label: "Figure 5 : Consommation mensuelle totale (Après travaux)" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -815,15 +815,15 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   const type = (pre.hotWater?.primaryType || "").toLowerCase();
                   const equip = (pre.hotWater?.equipmentType || "").toLowerCase();
                   if (/thermopompe/i.test(equip)) return "chauffe-eau thermopompe";
-                  if (type === "électricité" || type === "electricite") return "chauffe-eau électrique";
+                  if (/réser/i.test(equip) || type.includes("électr") || type.includes("electr")) return "chauffe-eau électrique";
                   if (/gaz/i.test(type)) return "chauffe-eau au gaz naturel";
                   return equip || "N/A";
                 })();
                 const roofRsi = pre.zone1?.find(z => /plafond/i.test(z.element))?.rsi;
-                const roofThermal = roofRsi ? `RSI ${roofRsi.toFixed(2)}` : "N/A";
+                const roofThermal = roofRsi ? `${roofRsi.toFixed(2)}` : "N/A";
                 const chars = [
                   { label: "Nombre d'étages", value: floorsLabel || "N/A" },
-                  { label: "Valeur thermique du toit (R)", value: roofThermal },
+                  { label: "Valeur thermique du toit (RSI)", value: roofThermal },
                   { label: "Valeur thermique des murs extérieurs (R)", value: "N/A" },
                   { label: "Taux de renouvellement d'air", value: cah50 !== null ? `${cah50} CAH à 50 Pa` : "N/A" },
                   { label: "Système de chauffage", value: heatingLabel },
