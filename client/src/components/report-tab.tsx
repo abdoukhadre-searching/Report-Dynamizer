@@ -6,6 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Printer, Upload, Loader2, ImageIcon } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import buildingCoverPath from "@assets/building-cover.png";
+import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
+import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
+import faibleDebitPath from "@assets/ECD_Faible_Débit_page-0001_1773707805841.jpg";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -39,13 +42,13 @@ function AnnexImageUpload({
   annexType,
   label,
   currentImage,
-  defaultPdfUrl,
+  defaultImageUrl,
 }: {
   projectId: string;
   annexType: string;
   label: string;
   currentImage: string | null;
-  defaultPdfUrl?: string;
+  defaultImageUrl?: string;
 }) {
   const { toast } = useToast();
 
@@ -100,25 +103,18 @@ function AnnexImageUpload({
     );
   }
 
-  if (defaultPdfUrl) {
+  if (defaultImageUrl) {
     return (
       <div className="mt-3">
-        <div className="border rounded-md overflow-hidden" style={{ height: "500px" }}>
-          <object
-            data={defaultPdfUrl}
-            type="application/pdf"
-            width="100%"
-            height="100%"
-            data-testid={`pdf-annex-${annexType}`}
-          >
-            <a href={defaultPdfUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline p-4 block">
-              Ouvrir le document PDF
-            </a>
-          </object>
-        </div>
+        <img
+          src={defaultImageUrl}
+          alt={label}
+          className="w-full rounded-md border"
+          data-testid={`img-annex-default-${annexType}`}
+        />
         <label className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
           <Upload className="w-3 h-3" />
-          Remplacer par une image
+          Remplacer par une image personnalisée
           <input
             type="file"
             accept="image/*"
@@ -319,11 +315,11 @@ function getWindowFraction(pre: ReportData): string {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "Chauffage": "hsl(var(--chart-1))",
-  "Eau chaude": "hsl(var(--chart-2))",
-  "Charges de base": "hsl(var(--chart-3))",
-  "Ventilation": "hsl(var(--chart-4))",
-  "Climatisation": "hsl(var(--chart-5))",
+  "Chauffage":       "#dc2626",
+  "Eau chaude":      "#2563eb",
+  "Charges de base": "#16a34a",
+  "Ventilation":     "#d97706",
+  "Climatisation":   "#7c3aed",
 };
 
 export default function ReportTab({ project, exportMode = false }: ReportTabProps) {
@@ -706,11 +702,12 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                             <a
                               key={si}
                               href="#toc-strategies"
-                              className="flex items-center gap-2 py-1 px-2 rounded text-slate-500 hover:text-primary hover:bg-slate-50 cursor-pointer transition-colors text-[11px] print:text-foreground print:px-0"
+                              className="flex items-center gap-2 py-1.5 px-3 rounded text-slate-700 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0 print:hover:bg-transparent"
                               onClick={(e) => { e.preventDefault(); document.getElementById("toc-strategies")?.scrollIntoView({ behavior: "smooth" }); }}
                             >
-                              <span className="w-3.5 h-3.5 rounded flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#475569' }}>{si + 1}</span>
-                              <span className="text-slate-500">{s.label}</span>
+                              <span className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{si + 1}</span>
+                              <span className="flex-1">{s.label}</span>
+                              <span className="text-[10px] text-slate-400 italic">Section 4.{si + 1}</span>
                             </a>
                           ))}
                         </div>
@@ -724,9 +721,9 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des tableaux</h3>
                 <nav className="space-y-1.5 text-xs">
                   {[
-                    { id: "toc-profil", label: "Tableau 1 — Consommation mensuelle détaillée (Avant travaux)", section: "Section 3" },
-                    { id: "toc-performance", label: "Tableau 2 — Consommation mensuelle détaillée (Après travaux)", section: "Section 5" },
-                    { id: "toc-comparatif", label: "Tableau 3 — Comparatif énergétique Avant / Après", section: "Section 6" },
+                    { id: "toc-profil", label: "Tableau 1 : Consommation mensuelle détaillée (Avant travaux)", section: "Section 3" },
+                    { id: "toc-performance", label: "Tableau 2 : Consommation mensuelle détaillée (Après travaux)", section: "Section 5" },
+                    { id: "toc-comparatif", label: "Tableau 3 : Comparatif énergétique Avant / Après", section: "Section 6" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -747,11 +744,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des figures</h3>
                 <nav className="space-y-1.5 text-xs">
                   {[
-                    { id: "toc-profil", label: "Figure 1 — Répartition énergétique par catégorie (Avant travaux)", section: "Section 3" },
-                    { id: "toc-performance", label: "Figure 2 — Comparaison Avant / Après par catégorie (GJ)", section: "Section 5" },
-                    { id: "toc-performance", label: "Figure 3 — Répartition énergétique par catégorie (Après travaux)", section: "Section 5" },
-                    { id: "toc-performance", label: "Figure 4 — Consommation mensuelle totale (Après travaux)", section: "Section 5" },
-                    { id: "toc-annexes", label: "Figure 5 — Répartition des déperditions thermiques", section: "Annexes" },
+                    { id: "toc-profil", label: "Figure 1 : Répartition énergétique par catégorie (Avant travaux)", section: "Section 3" },
+                    { id: "toc-performance", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)", section: "Section 5" },
+                    { id: "toc-performance", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)", section: "Section 5" },
+                    { id: "toc-performance", label: "Figure 4 : Consommation mensuelle totale (Après travaux)", section: "Section 5" },
+                    { id: "toc-annexes", label: "Figure 5 : Répartition des déperditions thermiques", section: "Annexes" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -790,16 +787,14 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </h2>
               {(() => {
                 const numFloors = pre.buildingInfo?.numFloors || post.buildingInfo?.numFloors || "";
-                const floorsMatch = numFloors.match(/(\d+(?:[.,]\d+)?(?:\s*(?:et\s*demi|½|1\/2))?)/i);
-                const floorsDisplay = floorsMatch ? floorsMatch[0].trim() : numFloors || "?";
+                const floorsDisplay = numFloors.replace(/\s*étages?\s*$/i, "").trim() || numFloors;
                 return (
                   <div className="space-y-3 text-sm leading-relaxed">
                     <p>
                       Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}.
                     </p>
                     <p>
-                      Construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>, il s'agit d'un bâtiment représentatif des constructions résidentielles de cette période.
-                      {numFloors && <> Le bâtiment comporte <span className="font-semibold">{floorsDisplay} étage{floorsDisplay !== "1" ? "s" : ""}</span>.</>} La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
+                      Construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>, il s'agit d'un bâtiment représentatif des constructions résidentielles de cette période.{floorsDisplay && <> Le bâtiment comporte <span className="font-semibold">{floorsDisplay} étage{floorsDisplay.toLowerCase() === "un" || floorsDisplay === "1" ? "" : "s"}</span>.</>} La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
                     </p>
 
                     <AnnexImageUpload
@@ -854,7 +849,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 <div className="my-6">
-                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 1 — Répartition de la consommation énergétique avant travaux (GJ/an)</p>
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 1 : Répartition de la consommation énergétique avant travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[560px]">
                       {exportMode ? (
@@ -894,7 +889,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   <MonthlyEnergyTable
                     data={pre.monthlyEnergy}
                     annual={pre.annualEnergy}
-                    label="Estimation de la consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
+                    label="Tableau 1 : Consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
                   />
                 )}
               </div>
@@ -917,7 +912,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 {showAirTightnessStrategy && (
                   <div className="mt-5" data-testid="strategy-air-tightness">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("air")}</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("air")}</span>
                       Amélioration de l'étanchéité du bâtiment
                     </h3>
                     <p>
@@ -932,7 +927,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 {showHeatingStrategy && (
                   <div className="mt-5" data-testid="strategy-thermopompe">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("heat")}</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("heat")}</span>
                       Installation de thermopompes haute efficacité
                     </h3>
                     <p>
@@ -950,7 +945,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 {showHotWaterStrategy && (
                   <div className="mt-5" data-testid="strategy-hot-water">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("hw")}</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("hw")}</span>
                       Réduction de la consommation d'eau chaude domestique
                     </h3>
                     <p>
@@ -965,7 +960,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 {showLedStrategy && (
                   <div className="mt-5" data-testid="strategy-led">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("led")}</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("led")}</span>
                       Conversion de l'éclairage vers la technologie DEL
                     </h3>
                     <p>
@@ -980,7 +975,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 {showVrcStrategy && (
                   <div className="mt-5" data-testid="strategy-vrc">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("vrc")}</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("vrc")}</span>
                       Ventilation avec récupération de chaleur (VRC)
                     </h3>
                     <p>
@@ -992,7 +987,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 {showHeatPumpWaterHeaterStrategy && (
                   <div className="mt-5" data-testid="strategy-heat-pump-water-heater">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("hwt")}</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("hwt")}</span>
                       Chauffe-eaux Thermopompe
                     </h3>
                     <p>
@@ -1004,7 +999,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 {showGasConversionStrategy && (
                   <div className="mt-5" data-testid="strategy-gas-conversion">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{stratNum("gas")}</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("gas")}</span>
                       Conversion {getPreFossilFuelLabel(pre)} vers Électricité
                     </h3>
                     {isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && (
@@ -1049,7 +1044,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 <div className="my-6">
-                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 2 — Comparatif énergétique Avant / Après travaux (GJ/an)</p>
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 2 : Comparatif énergétique Avant / Après travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[620px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1068,7 +1063,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </div>
 
                 <div className="my-6">
-                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 3 — Répartition de la consommation énergétique après travaux (GJ/an)</p>
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 3 : Répartition de la consommation énergétique après travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[560px]">
                       {exportMode ? (
@@ -1112,7 +1107,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 <div className="my-6">
-                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 4 — Évolution mensuelle de la consommation énergétique – Avant / Après travaux (GJ)</p>
+                  <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 4 : Évolution mensuelle de la consommation énergétique – Avant / Après travaux (GJ)</p>
                   <div className="flex justify-center">
                     <div className="h-[300px] w-full max-w-[600px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1138,7 +1133,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   <MonthlyEnergyTable
                     data={post.monthlyEnergy}
                     annual={post.annualEnergy}
-                    label="Estimation de la consommation mensuelle d'énergie par appareil — Après travaux (MJ)"
+                    label="Tableau 2 : Consommation mensuelle d'énergie par appareil — Après travaux (MJ)"
                   />
                 )}
               </div>
@@ -1296,23 +1291,34 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   return (
                     <>
                       {showHeatingStrategy && (
-                        <div id="annex-thermopompes">
-                          <h3 className="text-sm font-semibold mb-2">{annexNum++}. Thermopompes</h3>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Ajout de {thermopompeCount} Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
-                          </p>
-                          <AnnexImageUpload
-                            key="annex-thermopompes"
-                            projectId={project.id}
-                            annexType="thermopompes"
-                            label="Thermopompes"
-                            currentImage={annexImages.thermopompes}
-                            defaultPdfUrl="/defaults/thermopompe-innovair.pdf"
-                          />
-                        </div>
+                        <>
+                          <div id="annex-thermopompes" className="print:break-after-page">
+                            <h3 className="text-sm font-semibold mb-2">{annexNum++}. Thermopompes — Caractéristiques (page 1)</h3>
+                            <p className="text-xs text-muted-foreground mb-2">
+                              Ajout de {thermopompeCount} Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.
+                            </p>
+                            <AnnexImageUpload
+                              key="annex-thermopompes"
+                              projectId={project.id}
+                              annexType="thermopompes"
+                              label="Thermopompes – page 1"
+                              currentImage={annexImages.thermopompes}
+                              defaultImageUrl={innovairPage1Path}
+                            />
+                          </div>
+                          <div className="print:break-after-page">
+                            <h3 className="text-sm font-semibold mb-2">(suite) Thermopompes — Spécifications techniques (page 2)</h3>
+                            <img
+                              src={innovairPage2Path}
+                              alt="Innovair Q4 — Spécifications techniques"
+                              className="w-full rounded-md border"
+                              data-testid="img-annex-thermopompes-p2"
+                            />
+                          </div>
+                        </>
                       )}
 
-                      <div id="annex-robineterie">
+                      <div id="annex-robineterie" className="print:break-after-page">
                         <h3 className="text-sm font-semibold mb-2">
                           {annexNum++}. Robinetterie faible débit
                         </h3>
@@ -1325,7 +1331,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                           annexType="robineterie"
                           label="Robinetterie faible débit"
                           currentImage={annexImages.robineterie}
-                          defaultPdfUrl="/defaults/faible-debit.pdf"
+                          defaultImageUrl={faibleDebitPath}
                         />
                       </div>
 
