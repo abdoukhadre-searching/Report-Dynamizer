@@ -343,6 +343,19 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
   const handlePrint = async () => {
     if (exportMode || isExporting) return;
 
+    const missingImages: string[] = [];
+    if (!annexImages.climateZone) missingImages.push("Photo de la zone climatique (Annexe 1)");
+    if (!annexImages.ledLighting) missingImages.push("Photo de la façade du bâtiment (Section 2)");
+
+    if (missingImages.length > 0) {
+      toast({
+        title: "Images manquantes avant impression",
+        description: `Veuillez charger les images suivantes avant d'imprimer :\n• ${missingImages.join("\n• ")}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsExporting(true);
     try {
       const response = await fetch(`/api/projects/${project.id}/export-pdf`);
@@ -734,7 +747,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     >
                       <span className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{idx + 1}</span>
                       <span className="flex-1">{item.label}</span>
-                      <span className="text-[10px] text-slate-400 italic">{item.page}</span>
                     </a>
                   ))}
                 </nav>
@@ -744,11 +756,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des figures</h3>
                 <nav className="space-y-1.5 text-xs">
                   {[
-                    { id: "figure-1", label: "Figure 1 : Répartition énergétique par catégorie (Avant travaux)", page: "p. 5" },
-                    { id: "figure-2", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)", page: "p. 7" },
-                    { id: "figure-3", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)", page: "p. 7" },
-                    { id: "figure-4", label: "Figure 4 : Consommation mensuelle totale (Après travaux)", page: "p. 7" },
-                    { id: "toc-strategies", label: "Figure 5 : Répartition des déperditions thermiques", page: "p. 6" },
+                    { id: "figure-1", label: "Figure 1 : Répartition énergétique par catégorie (Avant travaux)" },
+                    { id: "figure-2", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)" },
+                    { id: "figure-3", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)" },
+                    { id: "figure-4", label: "Figure 4 : Consommation mensuelle totale (Après travaux)" },
+                    { id: "toc-strategies", label: "Figure 5 : Répartition des déperditions thermiques" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -759,7 +771,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     >
                       <span className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#16a34a' }}>{idx + 1}</span>
                       <span className="flex-1">{item.label}</span>
-                      <span className="text-[10px] text-slate-400 italic">{item.page}</span>
                     </a>
                   ))}
                 </nav>
@@ -836,12 +847,12 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                       currentImage={annexImages.ledLighting}
                     />
 
-                    <p className="font-medium mt-2">Caractéristiques générales :</p>
-                    <ul className="space-y-1.5 ml-2">
+                    <p className="font-bold mt-4 mb-2">Caractéristiques générales :</p>
+                    <ul className="space-y-1.5 ml-1">
                       {chars.map(({ label, value }) => (
-                        <li key={label} className="flex gap-1">
-                          <span className="text-muted-foreground shrink-0">{label} :</span>
-                          <span className="font-medium">{value}</span>
+                        <li key={label} className="flex items-start gap-2">
+                          <span className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }} />
+                          <span><span className="text-muted-foreground">{label} :</span> <span className="font-medium">{value}</span></span>
                         </li>
                       ))}
                     </ul>
