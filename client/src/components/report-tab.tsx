@@ -1304,30 +1304,30 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </table>
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-3 text-center not-prose" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #dc2626', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <svg className="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-3.8 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">GES Avant</p>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center not-prose" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                <div className="rounded-md border border-slate-200 px-2 py-1.5 shadow-sm" style={{ borderTop: '2px solid #dc2626', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                  <div className="flex items-center justify-center gap-1 mb-0.5">
+                    <svg className="w-3 h-3 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-3.8 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                    <p className="text-[9px] uppercase tracking-wider text-slate-500 font-medium">GES Avant</p>
                   </div>
-                  <p className="text-lg font-bold tabular-nums text-slate-800">{ghsBefore.toFixed(3)}</p>
-                  <p className="text-[10px] text-slate-400">T CO₂/an</p>
+                  <p className="text-sm font-bold tabular-nums text-slate-800">{ghsBefore.toFixed(3)}</p>
+                  <p className="text-[9px] text-slate-400">T CO₂/an</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <svg className="w-3.5 h-3.5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-3.8 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">GES Après</p>
+                <div className="rounded-md border border-slate-200 px-2 py-1.5 shadow-sm" style={{ borderTop: '2px solid #16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                  <div className="flex items-center justify-center gap-1 mb-0.5">
+                    <svg className="w-3 h-3 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-3.8 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                    <p className="text-[9px] uppercase tracking-wider text-slate-500 font-medium">GES Après</p>
                   </div>
-                  <p className="text-lg font-bold tabular-nums text-slate-800">{ghsAfter.toFixed(3)}</p>
-                  <p className="text-[10px] text-slate-400">T CO₂/an</p>
+                  <p className="text-sm font-bold tabular-nums text-slate-800">{ghsAfter.toFixed(3)}</p>
+                  <p className="text-[9px] text-slate-400">T CO₂/an</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 p-4 shadow-sm" style={{ borderTop: '3px solid #059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Réduction GES</p>
+                <div className="rounded-md border border-slate-200 px-2 py-1.5 shadow-sm" style={{ borderTop: '2px solid #059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                  <div className="flex items-center justify-center gap-1 mb-0.5">
+                    <svg className="w-3 h-3 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    <p className="text-[9px] uppercase tracking-wider text-slate-500 font-medium">Réduction GES</p>
                   </div>
-                  <p className="text-lg font-bold tabular-nums text-slate-800">{ghsImprovementPct.toFixed(1)}%</p>
-                  <p className="text-[10px] text-slate-400">{(ghsBefore - ghsAfter).toFixed(3)} T CO₂/an</p>
+                  <p className="text-sm font-bold tabular-nums text-slate-800">{ghsImprovementPct.toFixed(1)}%</p>
+                  <p className="text-[9px] text-slate-400">{(ghsBefore - ghsAfter).toFixed(3)} T CO₂/an</p>
                 </div>
               </div>
             </section>
@@ -1409,7 +1409,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
-            <section id="toc-annexes" className="relative z-10">
+            <section id="toc-annexes" className="relative z-10 print:break-before-page">
               <h2 className="" data-testid="text-annexes-title">
                 9. Annexes
               </h2>
