@@ -9,6 +9,8 @@ import buildingCoverPath from "@assets/building-cover.png";
 import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
 import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
 import faibleDebitPath from "@assets/ECD_Faible_Débit_page-0001_1773707805841.jpg";
+import rheemProductPath from "@assets/RHEEM_2_page-0001_1773727074851.jpg";
+import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1773727074852.jpg";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -1113,7 +1115,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                       Chauffe-eaux Thermopompe
                     </h3>
                     <p>
-                      L'installation de <span className="font-semibold">{thermopompeCount}</span> chauffe-eaux thermopompe {post.hotWater?.manufacturer || ""} {post.hotWater?.model || ""} est recommandée afin d'améliorer l'efficacité de la production d'eau chaude domestique.
+                      Installation de <span className="font-semibold">16</span> Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.
                     </p>
                   </div>
                 )}
@@ -1512,38 +1514,33 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                       </div>
 
                       {showHeatPumpWaterHeaterStrategy && (
-                        <div id="annex-chauffe-eau-thermopompe">
+                        <div id="annex-chauffe-eau-thermopompe" className="print:break-before-page">
                           <h3 className="text-sm font-semibold mb-2">
-                            {annexNum++}. Chauffe-eaux Thermopompe
+                            {annexNum++}. Chauffe-eaux Thermopompe Rheem PROPH40 T2 RH375-30
                           </h3>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Installation de {thermopompeCount} Chauffe-eaux Thermopompe {post.hotWater?.manufacturer || ""} {post.hotWater?.model || ""}.
+                          <p className="text-xs text-muted-foreground mb-4">
+                            Installation de 16 Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.
                           </p>
-                          <AnnexImageUpload
-                            key="annex-chauffe-eau-thermopompe"
-                            projectId={project.id}
-                            annexType="chauffeEauThermopompe"
-                            label="Chauffe-eaux Thermopompe"
-                            currentImage={annexImages.chauffeEauThermopompe}
-                          />
-                        </div>
-                      )}
-
-                      {showVrcStrategy && (
-                        <div>
-                          <h3 className="text-sm font-semibold mb-2">
-                            {annexNum++}. Ventilation avec récupération de chaleur (VRC)
-                          </h3>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Installation de systèmes de ventilation avec récupération de chaleur (VRC).
-                          </p>
-                          <AnnexImageUpload
-                            key="annex-vrc"
-                            projectId={project.id}
-                            annexType="vrc"
-                            label="VRC"
-                            currentImage={annexImages.vrc}
-                          />
+                          <div className="flex flex-col gap-4">
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground mb-2">Appareil — Rheem ProTerra</p>
+                              <img
+                                src={rheemProductPath}
+                                alt="Chauffe-eau thermopompe Rheem ProTerra"
+                                className="max-h-[320px] w-auto object-contain rounded border mx-auto block"
+                                data-testid="img-annex-rheem-product"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground mb-2">Fiche technique — ENERGY STAR</p>
+                              <img
+                                src={rheemSpecPath}
+                                alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star"
+                                className="max-w-full w-full object-contain rounded border"
+                                data-testid="img-annex-rheem-spec"
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
 
