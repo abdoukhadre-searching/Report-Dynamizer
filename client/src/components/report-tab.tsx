@@ -830,33 +830,69 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   { label: "Système de production d'eau chaude domestique", value: hotWaterLabel },
                   { label: "Ratio de fenestration (murs hors-terre)", value: windowFraction },
                 ];
+                const isNew = project.buildingType === "new";
                 return (
                   <div className="space-y-4 text-sm leading-relaxed">
-                    <p>
-                      Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}, construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>.{floorsDisplay && <> Le bâtiment comporte <span className="font-semibold">{floorsLabel}</span>.</>} La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
-                    </p>
+                    {isNew ? (
+                      <>
+                        <p>
+                          Le bâtiment analysé correspond à un immeuble résidentiel multifamilial qui sera construit au{" "}
+                          <span className="font-semibold">{fullAddress}</span>.{" "}
+                          {numUnits > 0 && <>Il comprendra <span className="font-semibold">{numUnits} logements locatifs</span>{floorsDisplay && <> répartis sur <span className="font-semibold">{floorsLabel}</span></>}. </>}
+                          La façade principale du bâtiment est présentée ci-dessous à partir des plans architecturaux du projet.
+                        </p>
 
-                    <AnnexImageUpload
-                      key="description-building-photo"
-                      projectId={project.id}
-                      annexType="ledLighting"
-                      label="Photo du bâtiment"
-                      currentImage={annexImages.ledLighting}
-                    />
+                        <AnnexImageUpload
+                          key="description-building-photo"
+                          projectId={project.id}
+                          annexType="ledLighting"
+                          label="Plans architecturaux / façade du bâtiment"
+                          currentImage={annexImages.ledLighting}
+                        />
 
-                    <p className="font-bold mt-4 mb-2">Caractéristiques générales :</p>
-                    <ul className="space-y-1.5 ml-1">
-                      {chars.map(({ label, value }) => (
-                        <li key={label} className="flex items-start gap-2">
-                          <span className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }} />
-                          <span><span className="text-muted-foreground">{label} :</span> <span className="font-medium">{value}</span></span>
-                        </li>
-                      ))}
-                    </ul>
+                        <p>
+                          Le bâtiment de référence est défini conformément aux exigences du Code national de l'énergie pour les bâtiments 2017 (CNEB 2017). Il représente un bâtiment type établi selon les normes en vigueur, servant de base de comparaison pour l'évaluation de la performance énergétique du bâtiment proposé.
+                        </p>
 
-                    <p>
-                      Ces caractéristiques sont représentatives des bâtiments construits avant l'introduction des normes modernes d'efficacité énergétique, ce qui explique le potentiel important d'amélioration énergétique.
-                    </p>
+                        <p className="font-bold mt-4 mb-2">Caractéristiques générales du bâtiment de référence :</p>
+                        <ul className="space-y-1.5 ml-1">
+                          {chars.map(({ label, value }) => (
+                            <li key={label} className="flex items-start gap-2">
+                              <span className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }} />
+                              <span><span className="text-muted-foreground">{label} :</span> <span className="font-medium">{value}</span></span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <>
+                        <p>
+                          Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}, construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>.{floorsDisplay && <> Le bâtiment comporte <span className="font-semibold">{floorsLabel}</span>.</>} La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
+                        </p>
+
+                        <AnnexImageUpload
+                          key="description-building-photo"
+                          projectId={project.id}
+                          annexType="ledLighting"
+                          label="Photo du bâtiment"
+                          currentImage={annexImages.ledLighting}
+                        />
+
+                        <p className="font-bold mt-4 mb-2">Caractéristiques générales :</p>
+                        <ul className="space-y-1.5 ml-1">
+                          {chars.map(({ label, value }) => (
+                            <li key={label} className="flex items-start gap-2">
+                              <span className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }} />
+                              <span><span className="text-muted-foreground">{label} :</span> <span className="font-medium">{value}</span></span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        <p>
+                          Ces caractéristiques sont représentatives des bâtiments construits avant l'introduction des normes modernes d'efficacité énergétique, ce qui explique le potentiel important d'amélioration énergétique.
+                        </p>
+                      </>
+                    )}
                   </div>
                 );
               })()}

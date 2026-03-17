@@ -16,6 +16,8 @@ import {
   Loader2,
   AlertCircle,
   File,
+  Building2,
+  HardHat,
 } from "lucide-react";
 
 interface UploadTabProps {
@@ -28,11 +30,26 @@ export default function UploadTab({ project }: UploadTabProps) {
   const [postText, setPostText] = useState("");
   const [projectName, setProjectName] = useState(project.name);
   const [projectAddress, setProjectAddress] = useState(project.address || "");
+  const [buildingType, setBuildingType] = useState<"existing" | "new">(
+    (project.buildingType as "existing" | "new") || "existing"
+  );
   const [prePdfFile, setPrePdfFile] = useState<File | null>(null);
   const [postPdfFile, setPostPdfFile] = useState<File | null>(null);
 
   const hasPreReport = !!project.preReportData;
   const hasPostReport = !!project.postReportData;
+
+  const updateBuildingTypeMutation = useMutation({
+    mutationFn: async (type: "existing" | "new") => {
+      const res = await apiRequest("PATCH", `/api/projects/${project.id}`, {
+        buildingType: type,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    },
+  });
 
   const updateInfoMutation = useMutation({
     mutationFn: async () => {
@@ -47,6 +64,11 @@ export default function UploadTab({ project }: UploadTabProps) {
       toast({ title: "Informations mises a jour" });
     },
   });
+
+  const handleBuildingTypeChange = (type: "existing" | "new") => {
+    setBuildingType(type);
+    updateBuildingTypeMutation.mutate(type);
+  };
 
   const uploadPreMutation = useMutation({
     mutationFn: async (text: string) => {
@@ -170,6 +192,47 @@ export default function UploadTab({ project }: UploadTabProps) {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="font-medium mb-1">Type de bâtiment</h3>
+          <p className="text-sm text-muted-foreground mb-4">Sélectionnez si le bâtiment est existant ou en construction neuve.</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              data-testid="button-building-type-existing"
+              onClick={() => handleBuildingTypeChange("existing")}
+              className={`flex flex-col items-center gap-3 rounded-lg border-2 p-5 transition-all text-left cursor-pointer ${
+                buildingType === "existing"
+                  ? "border-[#1e3a5f] bg-[#1e3a5f]/5"
+                  : "border-border hover:border-[#1e3a5f]/40"
+              }`}
+            >
+              <Building2 className={`w-7 h-7 ${buildingType === "existing" ? "text-[#1e3a5f]" : "text-muted-foreground"}`} />
+              <div>
+                <p className={`font-semibold text-sm ${buildingType === "existing" ? "text-[#1e3a5f]" : ""}`}>Bâtiment existant</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Immeuble déjà construit — avant/après travaux</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              data-testid="button-building-type-new"
+              onClick={() => handleBuildingTypeChange("new")}
+              className={`flex flex-col items-center gap-3 rounded-lg border-2 p-5 transition-all text-left cursor-pointer ${
+                buildingType === "new"
+                  ? "border-[#1e3a5f] bg-[#1e3a5f]/5"
+                  : "border-border hover:border-[#1e3a5f]/40"
+              }`}
+            >
+              <HardHat className={`w-7 h-7 ${buildingType === "new" ? "text-[#1e3a5f]" : "text-muted-foreground"}`} />
+              <div>
+                <p className={`font-semibold text-sm ${buildingType === "new" ? "text-[#1e3a5f]" : ""}`}>Construction neuve</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Projet à construire — bâtiment de référence CNEB 2017</p>
+              </div>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardContent className="p-6">
           <h3 className="font-medium mb-4">Informations du projet</h3>

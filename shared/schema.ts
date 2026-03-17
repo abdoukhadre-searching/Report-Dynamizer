@@ -16,6 +16,7 @@ export const projects = pgTable("projects", {
   clientName: text("client_name"),
   evaluator: text("evaluator"),
   evaluationDate: text("evaluation_date"),
+  buildingType: text("building_type").notNull().default("existing"),
   status: text("status").notNull().default("draft"),
   preReportRaw: text("pre_report_raw"),
   postReportRaw: text("post_report_raw"),
