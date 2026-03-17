@@ -1,10 +1,44 @@
 import { useState } from "react";
 import type { Project, ComparisonData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, AlertCircle, FileText } from "lucide-react";
+import { Download, ExternalLink, AlertCircle, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 
 interface CollectiveBuildingTabProps {
   project: Project;
+}
+
+function PdfPageImage({ projectId, page }: { projectId: string; page: number }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const src = `/api/projects/${projectId}/collective-pdf-image?page=${page}`;
+
+  return (
+    <div className="relative w-full" style={{ background: "#f5f5f5", minHeight: "200px" }}>
+      {!loaded && !error && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+      {error ? (
+        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground gap-2">
+          <AlertCircle className="w-4 h-4" />
+          Erreur de chargement de la page {page}
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={`Page ${page} du formulaire`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+          style={{
+            width: "100%",
+            display: loaded ? "block" : "none",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
 export default function CollectiveBuildingTab({ project }: CollectiveBuildingTabProps) {
@@ -43,7 +77,7 @@ export default function CollectiveBuildingTab({ project }: CollectiveBuildingTab
             Formulaire APH SELECT — Immeubles collectifs
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Valeurs remplies automatiquement dans le formulaire officiel
+            Valeurs calculées et insérées automatiquement dans le formulaire officiel
           </p>
         </div>
         <div className="flex gap-2">
@@ -94,39 +128,30 @@ export default function CollectiveBuildingTab({ project }: CollectiveBuildingTab
       </div>
 
       <div className="border rounded-lg overflow-hidden">
-        <div
-          className="flex items-center justify-between px-4 py-3 cursor-pointer select-none"
+        <button
+          type="button"
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
           style={{ backgroundColor: "#f0f4f8" }}
           onClick={() => setShowPreview(!showPreview)}
         >
-          <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#1e3a5f" }}>
-            <FileText className="w-4 h-4" />
-            Aperçu du PDF rempli
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {showPreview ? "Masquer ▲" : "Afficher ▼"}
+          <span className="text-sm font-medium" style={{ color: "#1e3a5f" }}>
+            Aperçu du formulaire complet (4 pages)
           </span>
-        </div>
+          {showPreview ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          )}
+        </button>
 
         {showPreview && (
-          <div className="relative" style={{ height: "900px" }}>
-            <iframe
-              src={pdfUrl}
-              style={{ width: "100%", height: "100%", border: "none" }}
-              title="Formulaire APH SELECT — Immeubles collectifs"
-            />
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none"
-              style={{ background: "rgba(255,255,255,0)", zIndex: 0 }}
-            />
-          </div>
-        )}
-
-        {showPreview && (
-          <div className="px-4 py-2 bg-amber-50 border-t text-xs text-amber-700 flex items-center gap-1.5">
-            <span>⚠️</span>
-            Si le PDF n'apparaît pas, utilisez le bouton{" "}
-            <strong>Ouvrir</strong> pour le visualiser dans un nouvel onglet.
+          <div className="divide-y bg-gray-100 p-4 space-y-4">
+            {[1, 2, 3, 4].map((pageNum) => (
+              <div key={pageNum}>
+                <div className="text-xs text-muted-foreground mb-2 font-medium">Page {pageNum}</div>
+                <PdfPageImage projectId={project.id} page={pageNum} />
+              </div>
+            ))}
           </div>
         )}
       </div>

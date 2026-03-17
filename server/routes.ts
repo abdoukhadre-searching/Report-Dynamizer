@@ -295,75 +295,121 @@ export async function registerRoutes(
     }
   });
 
+  async function buildCollectivePdf(cmp: ComparisonData): Promise<Buffer> {
+    const templatePath = path.join(process.cwd(), "server/templates/immeubles-collectifs-template.pdf");
+    const templateBytes = fs.readFileSync(templatePath);
+    const pdfDoc = await PDFDocument.load(templateBytes);
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    const pages = pdfDoc.getPages();
+    const page = pages[1];
+    const { height } = page.getSize();
+
+    const energyE = cmp.totalAfter;
+    const energyR = cmp.totalBefore;
+    const energySavings = energyR > 0 ? ((energyR - energyE) / energyR) * 100 : 0;
+    const ghgE = cmp.ghsAfter;
+    const ghgR = cmp.ghsBefore;
+    const ghgSavings = ghgR > 0 ? ((ghgR - ghgE) / ghgR) * 100 : 0;
+
+    const fmt = (n: number, d: number) => n.toFixed(d);
+    const WHITE = rgb(1, 1, 1);
+    const DARK = rgb(0.1, 0.1, 0.1);
+    const TEAL = rgb(0.16, 0.49, 0.43);
+    const FONT_SIZE = 10;
+
+    const toPdfY = (ytop: number) => height - ytop;
+    const ENERGY_ROW_Y_TOP = 115, ENERGY_ROW_Y_BOT = 145;
+    const GES_ROW_Y_TOP = 148, GES_ROW_Y_BOT = 205;
+    const COL_E_X1 = 248, COL_E_X2 = 360;
+    const COL_R_X1 = 360, COL_R_X2 = 470;
+    const COL_S_X1 = 470, COL_S_X2 = 600;
+
+    const drawCell = (x1: number, x2: number, yTop: number, yBot: number, text: string, color = DARK) => {
+      const pdfYBot = toPdfY(yBot);
+      const pdfYTop = toPdfY(yTop);
+      const cellH = pdfYTop - pdfYBot;
+      page.drawRectangle({ x: x1, y: pdfYBot, width: x2 - x1, height: cellH, color: WHITE });
+      const textW = font.widthOfTextAtSize(text, FONT_SIZE);
+      const textX = x1 + (x2 - x1 - textW) / 2;
+      const textY = pdfYBot + (cellH - FONT_SIZE) / 2;
+      page.drawText(text, { x: textX, y: textY, size: FONT_SIZE, font, color });
+    };
+
+    drawCell(COL_E_X1, COL_E_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energyE, 3)} GJ`, DARK);
+    drawCell(COL_R_X1, COL_R_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energyR, 3)} GJ`, DARK);
+    drawCell(COL_S_X1, COL_S_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energySavings, 1)} %`, TEAL);
+    drawCell(COL_E_X1, COL_E_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgE, 5)} T/A`, DARK);
+    drawCell(COL_R_X1, COL_R_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgR, 5)} T/A`, DARK);
+    drawCell(COL_S_X1, COL_S_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgSavings, 1)} %`, TEAL);
+
+    return Buffer.from(await pdfDoc.save());
+  }
+
   app.get("/api/projects/:id/collective-pdf", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);
       const project = await storage.getProject(projectId);
       if (!project) return res.status(404).json({ message: "Project not found" });
-
       const cmp = project.comparisonData as ComparisonData | null;
       if (!cmp) return res.status(422).json({ message: "Comparison data not available" });
 
-      const templatePath = path.join(process.cwd(), "server/templates/immeubles-collectifs-template.pdf");
-      const templateBytes = fs.readFileSync(templatePath);
-      const pdfDoc = await PDFDocument.load(templateBytes);
-      const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-      const pages = pdfDoc.getPages();
-      const page = pages[1];
-      const { height } = page.getSize();
-
-      const energyE = cmp.totalAfter;
-      const energyR = cmp.totalBefore;
-      const energySavings = energyR > 0 ? ((energyR - energyE) / energyR) * 100 : 0;
-      const ghgE = cmp.ghsAfter;
-      const ghgR = cmp.ghsBefore;
-      const ghgSavings = ghgR > 0 ? ((ghgR - ghgE) / ghgR) * 100 : 0;
-
-      const fmt = (n: number, d: number) => n.toFixed(d);
-
-      const WHITE = rgb(1, 1, 1);
-      const DARK = rgb(0.1, 0.1, 0.1);
-      const TEAL = rgb(0.16, 0.49, 0.43);
-      const FONT_SIZE = 10;
-
-      const toPdfY = (ytop: number) => height - ytop;
-
-      const ENERGY_ROW_Y_TOP = 115;
-      const ENERGY_ROW_Y_BOT = 145;
-      const GES_ROW_Y_TOP = 148;
-      const GES_ROW_Y_BOT = 205;
-
-      const COL_E_X1 = 248, COL_E_X2 = 360;
-      const COL_R_X1 = 360, COL_R_X2 = 470;
-      const COL_S_X1 = 470, COL_S_X2 = 600;
-
-      const drawCell = (x1: number, x2: number, yTop: number, yBot: number, text: string, color = DARK) => {
-        const pdfYBot = toPdfY(yBot);
-        const pdfYTop = toPdfY(yTop);
-        const cellH = pdfYTop - pdfYBot;
-        page.drawRectangle({ x: x1, y: pdfYBot, width: x2 - x1, height: cellH, color: WHITE });
-        const textW = font.widthOfTextAtSize(text, FONT_SIZE);
-        const textX = x1 + (x2 - x1 - textW) / 2;
-        const textY = pdfYBot + (cellH - FONT_SIZE) / 2;
-        page.drawText(text, { x: textX, y: textY, size: FONT_SIZE, font, color });
-      };
-
-      drawCell(COL_E_X1, COL_E_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energyE, 3)} GJ`, DARK);
-      drawCell(COL_R_X1, COL_R_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energyR, 3)} GJ`, DARK);
-      drawCell(COL_S_X1, COL_S_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energySavings, 1)} %`, TEAL);
-
-      drawCell(COL_E_X1, COL_E_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgE, 5)} T/A`, DARK);
-      drawCell(COL_R_X1, COL_R_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgR, 5)} T/A`, DARK);
-      drawCell(COL_S_X1, COL_S_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgSavings, 1)} %`, TEAL);
-
-      const filledBytes = await pdfDoc.save();
+      const pdfBuffer = await buildCollectivePdf(cmp);
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `inline; filename="immeubles-collectifs-${project.id}.pdf"`);
-      res.send(Buffer.from(filledBytes));
+      res.setHeader("Content-Disposition", `attachment; filename="immeubles-collectifs-${project.id}.pdf"`);
+      res.send(pdfBuffer);
     } catch (error: any) {
       console.error("Error generating collective PDF:", error);
       res.status(500).json({ message: error.message || "Failed to generate PDF" });
+    }
+  });
+
+  app.get("/api/projects/:id/collective-pdf-image", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const cmp = project.comparisonData as ComparisonData | null;
+      if (!cmp) return res.status(422).json({ message: "Comparison data not available" });
+
+      const pageNum = parseInt((req.query.page as string) || "1", 10);
+      const pdfBuffer = await buildCollectivePdf(cmp);
+
+      const tmpId = crypto.randomBytes(8).toString("hex");
+      const tmpPdf = path.join(os.tmpdir(), `collective-${tmpId}.pdf`);
+      const tmpImgPrefix = path.join(os.tmpdir(), `collective-${tmpId}-page`);
+
+      fs.writeFileSync(tmpPdf, pdfBuffer);
+      try {
+        await execFileAsync("pdftoppm", [
+          "-png", "-r", "150",
+          "-f", String(pageNum), "-l", String(pageNum),
+          tmpPdf, tmpImgPrefix,
+        ]);
+
+        const paddedPage = String(pageNum).padStart(pageNum >= 10 ? 2 : 1, "0");
+        const possibleNames = [
+          `${tmpImgPrefix}-${paddedPage}.png`,
+          `${tmpImgPrefix}-${pageNum}.png`,
+          `${tmpImgPrefix}-0${pageNum}.png`,
+        ];
+        const imgPath = possibleNames.find(p => fs.existsSync(p));
+        if (!imgPath) throw new Error("PNG output not found");
+
+        const imgBuf = fs.readFileSync(imgPath);
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Cache-Control", "no-store");
+        res.send(imgBuf);
+
+        fs.unlinkSync(tmpPdf);
+        fs.unlinkSync(imgPath);
+      } catch (e) {
+        if (fs.existsSync(tmpPdf)) fs.unlinkSync(tmpPdf);
+        throw e;
+      }
+    } catch (error: any) {
+      console.error("Error generating collective PDF image:", error);
+      res.status(500).json({ message: error.message || "Failed to render PDF page" });
     }
   });
 
