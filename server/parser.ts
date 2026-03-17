@@ -830,23 +830,39 @@ function parseHotWater(text: string): ReportData["hotWater"] {
         }
       }
 
-      if (!equipmentType && lLower.match(/^type\s*:?\s*$/)) {
-        for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
-          const val = lines[j].trim();
-          if (!val || val.match(/^(page\s+\d|\\f|H2K)/i)) continue;
-          if (val.match(/^(fabricant|mod[eè]le|capacit|emplacement)/i)) break;
-          if (!primaryType && !equipmentType) {
+      if (!equipmentType) {
+        const typeInlineMatch = l.match(/^type\s*:\s+(.+)/i);
+        if (typeInlineMatch) {
+          const inlineVal = typeInlineMatch[1].trim();
+          if (inlineVal && !inlineVal.match(/^(fabricant|mod[eè]le|capacit|emplacement)/i)) {
+            let isFuel = false;
             for (const key of Object.keys(EMISSION_FACTORS)) {
-              if (val.toLowerCase().includes(key)) {
-                primaryType = val;
+              if (inlineVal.toLowerCase().includes(key)) {
+                if (!primaryType) primaryType = inlineVal;
+                isFuel = true;
                 break;
               }
             }
-            if (primaryType) continue;
+            if (!isFuel) equipmentType = inlineVal;
           }
-          if (!equipmentType && !val.match(/^(fabricant|mod[eè]le|capacit)/i)) {
-            equipmentType = val;
-            break;
+        } else if (lLower.match(/^type\s*:?\s*$/)) {
+          for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+            const val = lines[j].trim();
+            if (!val || val.match(/^(page\s+\d|\\f|H2K)/i)) continue;
+            if (val.match(/^(fabricant|mod[eè]le|capacit|emplacement)/i)) break;
+            if (!primaryType && !equipmentType) {
+              for (const key of Object.keys(EMISSION_FACTORS)) {
+                if (val.toLowerCase().includes(key)) {
+                  primaryType = val;
+                  break;
+                }
+              }
+              if (primaryType) continue;
+            }
+            if (!equipmentType && !val.match(/^(fabricant|mod[eè]le|capacit)/i)) {
+              equipmentType = val;
+              break;
+            }
           }
         }
       }

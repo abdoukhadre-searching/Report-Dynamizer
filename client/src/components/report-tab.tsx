@@ -1115,7 +1115,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                       Chauffe-eaux Thermopompe
                     </h3>
                     <p>
-                      Installation de <span className="font-semibold">16</span> Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.
+                      Installation de <span className="font-semibold">{numUnits > 0 ? numUnits : "—"}</span> Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.
                     </p>
                   </div>
                 )}
@@ -1519,7 +1519,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                             {annexNum++}. Chauffe-eaux Thermopompe Rheem PROPH40 T2 RH375-30
                           </h3>
                           <p className="text-xs text-muted-foreground mb-4">
-                            Installation de 16 Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.
+                            Installation de {numUnits > 0 ? numUnits : "—"} Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.
                           </p>
                           <div className="flex flex-col gap-4">
                             <div>
