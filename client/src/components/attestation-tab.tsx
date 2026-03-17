@@ -1,44 +1,9 @@
-import { useState } from "react";
 import type { Project, ComparisonData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, AlertCircle, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Download, ExternalLink, AlertCircle } from "lucide-react";
 
 interface AttestationTabProps {
   project: Project;
-}
-
-function PdfPageImage({ projectId, page }: { projectId: string; page: number }) {
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
-  const src = `/api/projects/${projectId}/attestation-pdf-image?page=${page}`;
-
-  return (
-    <div className="relative w-full" style={{ background: "#f5f5f5", minHeight: "200px" }}>
-      {!loaded && !error && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
-      {error ? (
-        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground gap-2">
-          <AlertCircle className="w-4 h-4" />
-          Erreur de chargement de la page {page}
-        </div>
-      ) : (
-        <img
-          src={src}
-          alt={`Page ${page} de l'attestation`}
-          onLoad={() => setLoaded(true)}
-          onError={() => setError(true)}
-          style={{
-            width: "100%",
-            display: loaded ? "block" : "none",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
-          }}
-        />
-      )}
-    </div>
-  );
 }
 
 function getNiveau(impPct: number, isNew: boolean): { niveau: 1 | 2 | 3; label: string; range: string } {
@@ -55,7 +20,6 @@ function getNiveau(impPct: number, isNew: boolean): { niveau: 1 | 2 | 3; label: 
 
 export default function AttestationTab({ project }: AttestationTabProps) {
   const cmp = project.comparisonData as ComparisonData | null;
-  const [showPreview, setShowPreview] = useState(false);
 
   const pdfUrl = `/api/projects/${project.id}/attestation-pdf`;
   const isNew = project.buildingType === "new";
@@ -138,35 +102,6 @@ export default function AttestationTab({ project }: AttestationTabProps) {
             {niveauLabel} — {niveauRange}
           </div>
         </div>
-      </div>
-
-      <div className="border rounded-lg overflow-hidden">
-        <button
-          type="button"
-          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
-          style={{ backgroundColor: "#f0f4f8" }}
-          onClick={() => setShowPreview(!showPreview)}
-        >
-          <span className="text-sm font-medium" style={{ color: "#1e3a5f" }}>
-            Aperçu de l'attestation (2 pages)
-          </span>
-          {showPreview ? (
-            <ChevronUp className="w-4 h-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          )}
-        </button>
-
-        {showPreview && (
-          <div className="bg-gray-100 p-4 space-y-4">
-            {[1, 2].map((pageNum) => (
-              <div key={pageNum}>
-                <div className="text-xs text-muted-foreground mb-2 font-medium">Page {pageNum}</div>
-                <PdfPageImage projectId={project.id} page={pageNum} />
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

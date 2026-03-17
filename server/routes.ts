@@ -443,21 +443,27 @@ export async function registerRoutes(
       ptopYMin: number,
       ptopYMax: number,
       text: string,
-      opts?: { bold?: boolean; wide?: number }
+      opts?: { bold?: boolean; wide?: number; fontSize?: number }
     ) => {
       const rectBottom = toPdfY(ptopYMax) - 1;
       const rectH = (ptopYMax - ptopYMin) + 4;
       const wide = opts?.wide ?? 180;
       page.drawRectangle({ x: ptopX - 1, y: rectBottom, width: wide + 2, height: rectH, color: WHITE });
       const f = opts?.bold ? fontBold : font;
-      page.drawText(text, { x: ptopX, y: rectBottom + 3, size: FSIZE, font: f, color: BLACK });
+      const fsize = opts?.fontSize ?? FSIZE;
+      page.drawText(text, { x: ptopX, y: rectBottom + 3, size: fsize, font: f, color: BLACK });
     };
 
     const [p1, p2] = pages;
 
     // ── Page 1: address ──────────────────────────────────────────────
-    // <adresse municipale> at pdftotext x=402, yMin=225.354, yMax=235.427
-    if (address) fill(p1, 402, 225.354, 235.427, address, { wide: 175 });
+    // The OBJET line continues: "…construire au <adresse municipale> (« l'immeuble »)"
+    // Placeholder xMin=402, yMin=225.354, yMax=235.427
+    // «l'immeuble» ends at xMax≈539 — cover full zone to page edge, use compact font
+    if (address) {
+      // Cover from x=399 to x=566 (placeholder + brackets) in one white rect
+      fill(p1, 402, 223.929, 236, address, { wide: 164, fontSize: 8 });
+    }
 
     // ── Page 1: date in body text ────────────────────────────────────
     // <date du rapport> at pdftotext x=45, yMin=374.456, yMax=384.529
