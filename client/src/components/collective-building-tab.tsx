@@ -1,4 +1,6 @@
 import type { Project, ComparisonData } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Download, AlertCircle } from "lucide-react";
 
 interface CollectiveBuildingTabProps {
   project: Project;
@@ -7,161 +9,93 @@ interface CollectiveBuildingTabProps {
 export default function CollectiveBuildingTab({ project }: CollectiveBuildingTabProps) {
   const cmp = project.comparisonData as ComparisonData | null;
 
+  const pdfUrl = `/api/projects/${project.id}/collective-pdf`;
+
   const energyE = cmp?.totalAfter;
   const energyR = cmp?.totalBefore;
-  const energySavingsPct =
+  const energySavings =
     energyR && energyE != null && energyR > 0
       ? ((energyR - energyE) / energyR) * 100
       : null;
-
   const ghgE = cmp?.ghsAfter;
   const ghgR = cmp?.ghsBefore;
-  const ghgSavingsPct =
+  const ghgSavings =
     ghgR && ghgE != null && ghgR > 0
       ? ((ghgR - ghgE) / ghgR) * 100
       : null;
 
-  const TEAL = "#2a7d6e";
-  const TEAL_LIGHT = "#e8f5f2";
+  if (!cmp) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+        <AlertCircle className="w-8 h-8" />
+        <p className="text-sm">Chargez les rapports PRE et POST pour générer ce formulaire.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-base font-semibold mb-1" style={{ color: "#1e3a5f" }}>
-          Immeuble collectif — Tableau à remplir dans le formulaire
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Valeurs calculées automatiquement depuis les rapports HOT2000. Reportez-les dans le tableau du PDF ci-dessous.
-        </p>
-      </div>
-
-      <div className="border rounded-lg overflow-hidden">
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-          <thead>
-            <tr>
-              <th
-                style={{
-                  backgroundColor: TEAL,
-                  color: "white",
-                  padding: "10px 14px",
-                  textAlign: "left",
-                  fontWeight: 600,
-                  width: "38%",
-                }}
-              />
-              <th
-                style={{
-                  backgroundColor: TEAL,
-                  color: "white",
-                  padding: "10px 14px",
-                  textAlign: "center",
-                  fontWeight: 600,
-                }}
-              >
-                Immeuble évalué (E)
-              </th>
-              <th
-                style={{
-                  backgroundColor: TEAL,
-                  color: "white",
-                  padding: "10px 14px",
-                  textAlign: "center",
-                  fontWeight: 600,
-                }}
-              >
-                Immeuble de référence (R)*
-              </th>
-              <th
-                style={{
-                  backgroundColor: "#1e5c4f",
-                  color: "white",
-                  padding: "10px 14px",
-                  textAlign: "center",
-                  fontWeight: 600,
-                  lineHeight: "1.3",
-                }}
-              >
-                Économies d'énergie (en %)
-                <br />
-                (R-E)/R × 100
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style={{ backgroundColor: "white", borderBottom: "1px solid #e2e8f0" }}>
-              <td style={{ padding: "12px 14px", fontWeight: 600 }}>
-                Consommation d'énergie annuelle totale
-                <div style={{ fontWeight: "normal", fontSize: "11px", color: "#666", marginTop: "2px" }}>
-                  (GJ/année)
-                </div>
-              </td>
-              <td style={{ padding: "12px 14px", textAlign: "center", fontWeight: 700, fontSize: "15px" }}>
-                {energyE != null ? `${energyE.toFixed(3)} GJ` : <span style={{ color: "#aaa" }}>—</span>}
-              </td>
-              <td style={{ padding: "12px 14px", textAlign: "center", fontWeight: 700, fontSize: "15px" }}>
-                {energyR != null ? `${energyR.toFixed(3)} GJ` : <span style={{ color: "#aaa" }}>—</span>}
-              </td>
-              <td
-                style={{
-                  padding: "12px 14px",
-                  textAlign: "center",
-                  fontWeight: 700,
-                  fontSize: "16px",
-                  color: TEAL,
-                }}
-              >
-                {energySavingsPct != null ? `${energySavingsPct.toFixed(1)} %` : "—"}
-              </td>
-            </tr>
-            <tr style={{ backgroundColor: TEAL_LIGHT }}>
-              <td style={{ padding: "12px 14px", fontWeight: 600 }}>
-                Émissions de gaz à effet de serre annuelles totales
-                <div style={{ fontWeight: "normal", fontSize: "11px", color: "#555", marginTop: "2px" }}>
-                  (nombre de tonnes d'équivalent CO₂ par année)
-                </div>
-              </td>
-              <td style={{ padding: "12px 14px", textAlign: "center", fontWeight: 700, fontSize: "15px" }}>
-                {ghgE != null ? `${ghgE.toFixed(5)} T/A` : <span style={{ color: "#aaa" }}>—</span>}
-              </td>
-              <td style={{ padding: "12px 14px", textAlign: "center", fontWeight: 700, fontSize: "15px" }}>
-                {ghgR != null ? `${ghgR.toFixed(5)} T/A` : <span style={{ color: "#aaa" }}>—</span>}
-              </td>
-              <td
-                style={{
-                  padding: "12px 14px",
-                  textAlign: "center",
-                  fontWeight: 700,
-                  fontSize: "16px",
-                  color: TEAL,
-                }}
-              >
-                {ghgSavingsPct != null ? `${ghgSavingsPct.toFixed(1)} %` : "—"}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p style={{ fontSize: "11px", color: "#555", fontStyle: "italic", padding: "8px 14px", borderTop: "1px solid #e2e8f0" }}>
-          *Dans le cas des immeubles existants, l'immeuble de référence (R) est pris en compte dans son état avant rénovation.
-        </p>
-      </div>
-
-      {!cmp && (
-        <div className="p-3 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800">
-          Chargez les rapports PRE et POST pour calculer automatiquement les valeurs.
+    <div className="space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-base font-semibold" style={{ color: "#1e3a5f" }}>
+            Formulaire APH SELECT — Immeubles collectifs
+          </h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Valeurs remplies automatiquement dans le formulaire officiel
+          </p>
         </div>
-      )}
+        <a href={pdfUrl} download={`immeubles-collectifs-${project.id}.pdf`}>
+          <Button size="sm" style={{ backgroundColor: "#1e3a5f" }} className="gap-1.5">
+            <Download className="w-3.5 h-3.5" />
+            Télécharger PDF rempli
+          </Button>
+        </a>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 text-sm">
+        <div className="border rounded p-3 bg-slate-50">
+          <div className="text-xs text-muted-foreground mb-1">Consommation — Immeuble évalué (E)</div>
+          <div className="font-bold text-base">{energyE != null ? `${energyE.toFixed(3)} GJ` : "—"}</div>
+        </div>
+        <div className="border rounded p-3 bg-slate-50">
+          <div className="text-xs text-muted-foreground mb-1">Consommation — Référence (R)</div>
+          <div className="font-bold text-base">{energyR != null ? `${energyR.toFixed(3)} GJ` : "—"}</div>
+        </div>
+        <div className="border rounded p-3" style={{ backgroundColor: "#e8f5f2" }}>
+          <div className="text-xs text-muted-foreground mb-1">Économies d'énergie</div>
+          <div className="font-bold text-base" style={{ color: "#2a7d6e" }}>
+            {energySavings != null ? `${energySavings.toFixed(1)} %` : "—"}
+          </div>
+        </div>
+        <div className="border rounded p-3 bg-slate-50">
+          <div className="text-xs text-muted-foreground mb-1">GES — Immeuble évalué (E)</div>
+          <div className="font-bold text-base">{ghgE != null ? `${ghgE.toFixed(5)} T/A` : "—"}</div>
+        </div>
+        <div className="border rounded p-3 bg-slate-50">
+          <div className="text-xs text-muted-foreground mb-1">GES — Référence (R)</div>
+          <div className="font-bold text-base">{ghgR != null ? `${ghgR.toFixed(5)} T/A` : "—"}</div>
+        </div>
+        <div className="border rounded p-3" style={{ backgroundColor: "#e8f5f2" }}>
+          <div className="text-xs text-muted-foreground mb-1">Réduction GES</div>
+          <div className="font-bold text-base" style={{ color: "#2a7d6e" }}>
+            {ghgSavings != null ? `${ghgSavings.toFixed(1)} %` : "—"}
+          </div>
+        </div>
+      </div>
 
       <div>
-        <h3 className="text-sm font-medium mb-2 text-muted-foreground">Formulaire APH SELECT — Immeubles collectifs</h3>
+        <h3 className="text-xs font-medium text-muted-foreground mb-2">
+          Aperçu du formulaire (valeurs insérées dans le PDF original)
+        </h3>
         <object
-          data="/defaults/immeubles-collectifs-template.pdf"
+          data={pdfUrl}
           type="application/pdf"
-          style={{ width: "100%", height: "900px", border: "1px solid #e2e8f0", borderRadius: "8px" }}
+          style={{ width: "100%", height: "920px", border: "1px solid #e2e8f0", borderRadius: "8px" }}
         >
-          <div className="p-4 text-sm text-muted-foreground border rounded">
+          <div className="p-4 text-sm text-muted-foreground border rounded text-center">
             Votre navigateur ne supporte pas l'affichage PDF intégré.{" "}
-            <a href="/defaults/immeubles-collectifs-template.pdf" target="_blank" className="underline text-primary">
-              Télécharger le PDF
+            <a href={pdfUrl} target="_blank" className="underline text-primary">
+              Ouvrir le PDF
             </a>
           </div>
         </object>

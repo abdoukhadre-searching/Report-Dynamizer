@@ -31,6 +31,7 @@ Web application for energy efficiency qualification under the APH SELECT program
 - `POST /api/projects/:id/upload-post` - Upload and parse POST report text
 - `POST /api/projects/:id/upload-pre-pdf` - Upload and parse PRE report PDF (multipart)
 - `POST /api/projects/:id/upload-post-pdf` - Upload and parse POST report PDF (multipart)
+- `GET /api/projects/:id/collective-pdf` - Generate filled APH SELECT immeubles collectifs form PDF
 
 ## Parser Details
 - Handles French-language HOT2000 reports from Quebec
@@ -62,6 +63,15 @@ The report tab generates a professional narrative PDF-style document with 7 sect
 - **VRC**: Shown when POST has central ventilation with sensible efficiency data
 - **Chauffe-eaux Thermopompe**: Shown when POST hot water equipmentType matches /thermopompe/i
 - **Conversion fossile vers Électricité**: Shown when PRE has fossil fuel and POST has electricity
+
+## Immeubles Collectifs PDF
+- Template: `server/templates/immeubles-collectifs-template.pdf` (A3, 4 pages)
+- Endpoint draws white rectangles over sample values on page 2, then writes computed values:
+  - E column (POST/evaluated): x=248–360, R column (PRE/reference): x=360–470, Savings: x=470–600
+  - Energy row (Consommation): pdftotext y=115–145; GES row: y=148–205
+  - Coordinate conversion: `pdf-lib_y = pageHeight(1191) - pdftotext_y`
+- Values: E = POST totalGJ, R = PRE totalGJ, Savings = (R-E)/R × 100; same for GES (T/A)
+- Uses `pdf-lib` (StandardFonts.HelveticaBold, 10pt) for overlay text
 
 ## Default Annex PDFs
 - `client/public/defaults/thermopompe-innovair.pdf` — Innovair Q4 spec sheet; default for Thermopompes annex (when showHeatingStrategy)

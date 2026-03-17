@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import { parseHot2000Report, computeComparison } from "./parser";
-import type { ReportData } from "@shared/schema";
+import type { ReportData, ComparisonData } from "@shared/schema";
 import multer from "multer";
 import * as fs from "fs";
 import * as path from "path";
@@ -11,6 +11,7 @@ import { promisify } from "util";
 import { renderProjectPdf } from "./pdf-export";
 import * as os from "os";
 import * as crypto from "crypto";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -291,6 +292,78 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Error uploading annex image:", error);
       res.status(500).json({ message: error.message || "Failed to upload image" });
+    }
+  });
+
+  app.get("/api/projects/:id/collective-pdf", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+
+      const cmp = project.comparisonData as ComparisonData | null;
+      if (!cmp) return res.status(422).json({ message: "Comparison data not available" });
+
+      const templatePath = path.join(process.cwd(), "server/templates/immeubles-collectifs-template.pdf");
+      const templateBytes = fs.readFileSync(templatePath);
+      const pdfDoc = await PDFDocument.load(templateBytes);
+      const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+      const pages = pdfDoc.getPages();
+      const page = pages[1];
+      const { height } = page.getSize();
+
+      const energyE = cmp.totalAfter;
+      const energyR = cmp.totalBefore;
+      const energySavings = energyR > 0 ? ((energyR - energyE) / energyR) * 100 : 0;
+      const ghgE = cmp.ghsAfter;
+      const ghgR = cmp.ghsBefore;
+      const ghgSavings = ghgR > 0 ? ((ghgR - ghgE) / ghgR) * 100 : 0;
+
+      const fmt = (n: number, d: number) => n.toFixed(d);
+
+      const WHITE = rgb(1, 1, 1);
+      const DARK = rgb(0.1, 0.1, 0.1);
+      const TEAL = rgb(0.16, 0.49, 0.43);
+      const FONT_SIZE = 10;
+
+      const toPdfY = (ytop: number) => height - ytop;
+
+      const ENERGY_ROW_Y_TOP = 115;
+      const ENERGY_ROW_Y_BOT = 145;
+      const GES_ROW_Y_TOP = 148;
+      const GES_ROW_Y_BOT = 205;
+
+      const COL_E_X1 = 248, COL_E_X2 = 360;
+      const COL_R_X1 = 360, COL_R_X2 = 470;
+      const COL_S_X1 = 470, COL_S_X2 = 600;
+
+      const drawCell = (x1: number, x2: number, yTop: number, yBot: number, text: string, color = DARK) => {
+        const pdfYBot = toPdfY(yBot);
+        const pdfYTop = toPdfY(yTop);
+        const cellH = pdfYTop - pdfYBot;
+        page.drawRectangle({ x: x1, y: pdfYBot, width: x2 - x1, height: cellH, color: WHITE });
+        const textW = font.widthOfTextAtSize(text, FONT_SIZE);
+        const textX = x1 + (x2 - x1 - textW) / 2;
+        const textY = pdfYBot + (cellH - FONT_SIZE) / 2;
+        page.drawText(text, { x: textX, y: textY, size: FONT_SIZE, font, color });
+      };
+
+      drawCell(COL_E_X1, COL_E_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energyE, 3)} GJ`, DARK);
+      drawCell(COL_R_X1, COL_R_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energyR, 3)} GJ`, DARK);
+      drawCell(COL_S_X1, COL_S_X2, ENERGY_ROW_Y_TOP, ENERGY_ROW_Y_BOT, `${fmt(energySavings, 1)} %`, TEAL);
+
+      drawCell(COL_E_X1, COL_E_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgE, 5)} T/A`, DARK);
+      drawCell(COL_R_X1, COL_R_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgR, 5)} T/A`, DARK);
+      drawCell(COL_S_X1, COL_S_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgSavings, 1)} %`, TEAL);
+
+      const filledBytes = await pdfDoc.save();
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="immeubles-collectifs-${project.id}.pdf"`);
+      res.send(Buffer.from(filledBytes));
+    } catch (error: any) {
+      console.error("Error generating collective PDF:", error);
+      res.status(500).json({ message: error.message || "Failed to generate PDF" });
     }
   });
 
