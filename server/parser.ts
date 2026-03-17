@@ -187,7 +187,7 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   const caracIdx = findLineIndex(lines, "CARACTÉRISTIQUES GÉNÉRALES DE LA MAISON");
   if (caracIdx >= 0) {
     const lastKnownLabel = findLineIndex(lines, "Niveau phréatique:", caracIdx);
-    const searchEnd = lastKnownLabel >= 0 ? lastKnownLabel + 20 : caracIdx + 30;
+    const searchEnd = lastKnownLabel >= 0 ? lastKnownLabel + 30 : caracIdx + 60;
 
     for (let i = caracIdx; i < Math.min(searchEnd, lines.length); i++) {
       const l = lines[i];
@@ -214,32 +214,38 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   }
 
   if (!info.numFloors) {
-    // Try regex first: handles "Nombre d'étages: Trois étages" on same line
-    const sameLine = text.match(/Nombre d['']étages[:\s]+([^\n\r]+)/i);
-    if (sameLine) {
-      const val = sameLine[1].trim();
-      if (/étage/i.test(val)) {
+    // Try regex: any apostrophe variant, same-line or next-line value
+    const floorRegex = /Nombre\s+d.{0,3}tages?\s*:?\s*([^\n\r:]+)/i;
+    const floorMatch = text.match(floorRegex);
+    if (floorMatch) {
+      const val = floorMatch[1].trim();
+      if (/[éeÉE]tage/i.test(val)) {
         info.numFloors = val;
       }
     }
-    if (!info.numFloors) {
-      const floorsIdx = findLineIndex(lines, "Nombre d'étages:");
-      if (floorsIdx >= 0) {
-        // Check same line for inline value
-        const sameLineVal = lines[floorsIdx].replace(/Nombre d['']étages[:\s]*/i, "").trim();
-        if (sameLineVal && /étage/i.test(sameLineVal)) {
-          info.numFloors = sameLineVal;
-        } else {
-          for (let i = floorsIdx + 1; i < Math.min(floorsIdx + 10, lines.length); i++) {
-            const l = lines[i].toLowerCase();
-            if (l.includes("étage") && !l.includes("nombre")) {
-              info.numFloors = lines[i];
-              break;
-            }
+  }
+  if (!info.numFloors) {
+    // Fallback: search line-by-line near "Nombre" label
+    const floorsIdx = lines.findIndex(l => /Nombre\s+d.{0,3}tages?/i.test(l));
+    if (floorsIdx >= 0) {
+      const sameLineVal = lines[floorsIdx].replace(/Nombre\s+d.{0,3}tages?\s*:?\s*/i, "").trim();
+      if (sameLineVal && /[éeÉE]tage/i.test(sameLineVal)) {
+        info.numFloors = sameLineVal;
+      } else {
+        for (let i = floorsIdx + 1; i < Math.min(floorsIdx + 10, lines.length); i++) {
+          const l = lines[i].toLowerCase();
+          if (/[éeÉE]tage/i.test(l) && !/nombre/i.test(l)) {
+            info.numFloors = lines[i];
+            break;
           }
         }
       }
     }
+  }
+  if (!info.numFloors) {
+    // Last resort: any line in the document with a French floor count word
+    const floorWordMatch = text.match(/(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|\d+)\s+[éÉ]tage[s]?/i);
+    if (floorWordMatch) info.numFloors = floorWordMatch[0].trim();
   }
 
   if (!info.orientation) {

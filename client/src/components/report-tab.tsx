@@ -676,7 +676,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
             </div>
             <section className="relative z-10">
               <h2 className="text-lg font-semibold mb-6" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Table des matières</h2>
-              <nav className="space-y-1.5 text-xs">
+              <nav className="space-y-2.5 text-xs">
                 {tocItems.map((item, idx) => {
                   const ids = ["toc-resume", "toc-description", "toc-profil", "toc-strategies", "toc-performance", "toc-comparatif", "toc-conclusion", "toc-approbation", "toc-annexes"];
                   const sectionLabels = ["p. 3", "p. 4", "p. 5", "p. 6", "p. 7", "p. 8", "p. 9", "p. 10", "p. 11"];
@@ -722,9 +722,9 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des tableaux</h3>
                 <nav className="space-y-1.5 text-xs">
                   {[
-                    { id: "toc-profil", label: "Tableau 1 : Consommation mensuelle détaillée (Avant travaux)", page: "p. 5" },
-                    { id: "toc-performance", label: "Tableau 2 : Consommation mensuelle détaillée (Après travaux)", page: "p. 7" },
-                    { id: "toc-comparatif", label: "Tableau 3 : Comparatif énergétique Avant / Après", page: "p. 8" },
+                    { id: "tableau-1", label: "Tableau 1 : Consommation mensuelle détaillée (Avant travaux)", page: "p. 5" },
+                    { id: "tableau-2", label: "Tableau 2 : Consommation mensuelle détaillée (Après travaux)", page: "p. 7" },
+                    { id: "tableau-3", label: "Tableau 3 : Comparatif énergétique Avant / Après", page: "p. 8" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -745,11 +745,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des figures</h3>
                 <nav className="space-y-1.5 text-xs">
                   {[
-                    { id: "toc-profil", label: "Figure 1 : Répartition énergétique par catégorie (Avant travaux)", page: "p. 5" },
-                    { id: "toc-performance", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)", page: "p. 7" },
-                    { id: "toc-performance", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)", page: "p. 7" },
-                    { id: "toc-performance", label: "Figure 4 : Consommation mensuelle totale (Après travaux)", page: "p. 7" },
-                    { id: "toc-annexes", label: "Figure 5 : Répartition des déperditions thermiques", page: "p. 11" },
+                    { id: "figure-1", label: "Figure 1 : Répartition énergétique par catégorie (Avant travaux)", page: "p. 5" },
+                    { id: "figure-2", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)", page: "p. 7" },
+                    { id: "figure-3", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)", page: "p. 7" },
+                    { id: "figure-4", label: "Figure 4 : Consommation mensuelle totale (Après travaux)", page: "p. 7" },
+                    { id: "toc-strategies", label: "Figure 5 : Répartition des déperditions thermiques", page: "p. 6" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -880,7 +880,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   Cette répartition démontre que les stratégies visant à améliorer l'efficacité du système de chauffage et à réduire les pertes thermiques du bâtiment constituent les interventions les plus efficaces pour diminuer la consommation énergétique globale.
                 </p>
 
-                <div className="my-6">
+                <div id="figure-1" className="my-6">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 1 : Répartition de la consommation énergétique avant travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[560px]">
@@ -918,11 +918,13 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </div>
 
                 {pre.monthlyEnergy && (
-                  <MonthlyEnergyTable
-                    data={pre.monthlyEnergy}
-                    annual={pre.annualEnergy}
-                    label="Tableau 1 : Consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
-                  />
+                  <div id="tableau-1">
+                    <MonthlyEnergyTable
+                      data={pre.monthlyEnergy}
+                      annual={pre.annualEnergy}
+                      label="Tableau 1 : Consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
+                    />
+                  </div>
                 )}
               </div>
             </section>
@@ -1075,7 +1077,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   La consommation énergétique liée à la climatisation diminue également, tandis que les charges de base et la consommation d'eau chaude domestique sont légèrement réduites grâce aux mesures d'efficacité énergétique mises en place.
                 </p>
 
-                <div className="my-6">
+                <div id="figure-2" className="my-6">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 2 : Comparatif énergétique Avant / Après travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[620px]">
@@ -1094,7 +1096,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   </div>
                 </div>
 
-                <div className="my-6">
+                <div id="figure-3" className="my-6">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 3 : Répartition de la consommation énergétique après travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[560px]">
@@ -1123,19 +1125,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                               cy="42%"
                               outerRadius={95}
                               dataKey="value"
-                              labelLine={false}
-                              label={({ cx: pcx, cy: pcy, midAngle, innerRadius, outerRadius: or, value }: any) => {
-                                if (!value || value < 3) return null;
-                                const RADIAN = Math.PI / 180;
-                                const r = innerRadius + (or - innerRadius) * 0.55;
-                                const x = pcx + r * Math.cos(-midAngle * RADIAN);
-                                const y = pcy + r * Math.sin(-midAngle * RADIAN);
-                                return (
-                                  <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="bold">
-                                    {value} GJ
-                                  </text>
-                                );
-                              }}
                             >
                               {postPieData.map((entry, idx) => (
                                 <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
@@ -1157,12 +1146,12 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   On observe que les gains énergétiques les plus importants se produisent durant la période hivernale, lorsque les besoins en chauffage sont les plus élevés. L'installation de thermopompes et l'amélioration de l'étanchéité du bâtiment permettent ainsi de réduire significativement la consommation énergétique pendant les mois les plus froids.
                 </p>
 
-                <div className="my-6">
+                <div id="figure-4" className="my-6">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 4 : Évolution mensuelle de la consommation énergétique – Avant / Après travaux (GJ)</p>
                   <div className="flex justify-center">
-                    <div className="h-[300px] w-full max-w-[600px]">
+                    <div className="h-[380px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={monthlyChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                        <AreaChart data={monthlyChartData} margin={{ top: 10, right: 30, left: 20, bottom: 30 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                           <YAxis tick={{ fontSize: 11 }} />
@@ -1181,11 +1170,13 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 {post.monthlyEnergy && (
-                  <MonthlyEnergyTable
-                    data={post.monthlyEnergy}
-                    annual={post.annualEnergy}
-                    label="Tableau 2 : Consommation mensuelle d'énergie par appareil — Après travaux (MJ)"
-                  />
+                  <div id="tableau-2">
+                    <MonthlyEnergyTable
+                      data={post.monthlyEnergy}
+                      annual={post.annualEnergy}
+                      label="Tableau 2 : Consommation mensuelle d'énergie par appareil — Après travaux (MJ)"
+                    />
+                  </div>
                 )}
               </div>
             </section>
@@ -1196,7 +1187,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               <h2 className="" data-testid="text-section-comparatif">
                 6. Comparatif énergétique
               </h2>
-              <div className="overflow-hidden rounded-xl border border-slate-200/80 shadow-sm">
+              <div id="tableau-3" className="overflow-hidden rounded-xl border border-slate-200/80 shadow-sm">
                 <table className="w-full border-collapse text-[11px]" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
                   <thead>
                     <tr style={{ backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
