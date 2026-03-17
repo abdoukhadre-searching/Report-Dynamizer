@@ -959,7 +959,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     { key: "Climatisation", color: CATEGORY_COLORS["Climatisation"] || "hsl(var(--chart-5))" },
                   ];
                   return (
-                    <div className="mt-14" id="figure-pre-monthly">
+                    <div className="mt-20" id="figure-pre-monthly">
                       <p className="text-xs text-center text-muted-foreground mb-2 italic">Consommation mensuelle PRÉ-travaux par catégorie (GJ/mois)</p>
                       <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -999,7 +999,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 {showAirTightnessStrategy && (
-                  <div className="mt-10" data-testid="strategy-air-tightness">
+                  <div className="mt-12" data-testid="strategy-air-tightness">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("air")}</span>
                       Amélioration de l'étanchéité du bâtiment
@@ -1014,7 +1014,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHeatingStrategy && (
-                  <div className="mt-10" data-testid="strategy-thermopompe">
+                  <div className="mt-12" data-testid="strategy-thermopompe">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("heat")}</span>
                       Installation de thermopompes haute efficacité
@@ -1032,7 +1032,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHotWaterStrategy && (
-                  <div className="mt-10" data-testid="strategy-hot-water">
+                  <div className="mt-12" data-testid="strategy-hot-water">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("hw")}</span>
                       Réduction de la consommation d'eau chaude domestique
@@ -1047,7 +1047,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showLedStrategy && (
-                  <div className="mt-10" data-testid="strategy-led">
+                  <div className="mt-12" data-testid="strategy-led">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("led")}</span>
                       Conversion de l'éclairage vers la technologie DEL
@@ -1062,7 +1062,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showVrcStrategy && (
-                  <div className="mt-10" data-testid="strategy-vrc">
+                  <div className="mt-12" data-testid="strategy-vrc">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("vrc")}</span>
                       Ventilation avec récupération de chaleur (VRC)
@@ -1074,7 +1074,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHeatPumpWaterHeaterStrategy && (
-                  <div className="mt-10" data-testid="strategy-heat-pump-water-heater">
+                  <div className="mt-12" data-testid="strategy-heat-pump-water-heater">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("hwt")}</span>
                       Chauffe-eaux Thermopompe
@@ -1086,7 +1086,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showGasConversionStrategy && (
-                  <div className="mt-10" data-testid="strategy-gas-conversion">
+                  <div className="mt-12" data-testid="strategy-gas-conversion">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("gas")}</span>
                       Conversion {getPreFossilFuelLabel(pre)} vers Électricité
