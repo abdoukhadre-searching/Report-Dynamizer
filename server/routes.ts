@@ -364,6 +364,205 @@ export async function registerRoutes(
     }
   });
 
+  // ─── ATTESTATION APH PDF ────────────────────────────────────────────────────
+
+  const FRENCH_MONTHS = [
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+  ];
+
+  // Renders template pages as PNG backgrounds and overlays fill text
+  async function buildAttestationPdf(project: any): Promise<Buffer> {
+    const cmp = project.comparisonData as ComparisonData | null;
+    const impPct = cmp?.improvementPercent ?? 0;
+    const isNew = project.buildingType === "new";
+
+    let niveau: 1 | 2 | 3;
+    niveau = impPct >= 40 ? 3 : impPct >= 25 ? 2 : 1;
+
+    const pctText = `${impPct.toFixed(1)} %`;
+    const address = [project.address, project.city, project.province, project.postalCode]
+      .filter(Boolean).join(", ");
+
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, "0");
+    const monthName = FRENCH_MONTHS[now.getMonth()];
+    const year2 = String(now.getFullYear()).slice(-2);
+    const fullDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+    const templatePath = path.join(process.cwd(), "server/templates/attestation-aph-template.pdf");
+    const tmpId = crypto.randomBytes(6).toString("hex");
+    const tmpDir = os.tmpdir();
+
+    // Render each template page as a high-res PNG
+    const pngPaths: string[] = [];
+    for (let pageNum = 1; pageNum <= 2; pageNum++) {
+      const prefix = path.join(tmpDir, `aph-bg-${tmpId}-p${pageNum}`);
+      await execFileAsync("pdftoppm", [
+        "-png", "-r", "150",
+        "-f", String(pageNum), "-l", String(pageNum),
+        templatePath, prefix,
+      ]);
+      const candidates = [
+        `${prefix}-1.png`, `${prefix}-01.png`,
+        `${prefix}-${pageNum}.png`, `${prefix}-0${pageNum}.png`,
+      ];
+      const found = candidates.find((p) => fs.existsSync(p));
+      if (!found) throw new Error(`PNG not found for page ${pageNum}`);
+      pngPaths.push(found);
+    }
+
+    // Build new PDF with template images as backgrounds
+    const pdfDoc = await PDFDocument.create();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const BLACK = rgb(0.05, 0.05, 0.05);
+    const WHITE = rgb(1, 1, 1);
+    const PAGE_W = 612;
+    const PAGE_H = 792;
+
+    const pages: ReturnType<typeof pdfDoc.addPage>[] = [];
+    for (let i = 0; i < 2; i++) {
+      const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+      const pngBytes = fs.readFileSync(pngPaths[i]);
+      const pngImg = await pdfDoc.embedPng(pngBytes);
+      page.drawImage(pngImg, { x: 0, y: 0, width: PAGE_W, height: PAGE_H });
+      pages.push(page);
+    }
+
+    // Clean up tmp PNGs
+    pngPaths.forEach((p) => { try { fs.unlinkSync(p); } catch {} });
+
+    const FSIZE = 9;
+    const toPdfY = (ptopY: number) => PAGE_H - ptopY;
+
+    // Fill helper: white rect + text overlay
+    const fill = (
+      page: (typeof pages)[0],
+      ptopX: number,
+      ptopYMin: number,
+      ptopYMax: number,
+      text: string,
+      opts?: { bold?: boolean; wide?: number }
+    ) => {
+      const rectBottom = toPdfY(ptopYMax) - 1;
+      const rectH = (ptopYMax - ptopYMin) + 4;
+      const wide = opts?.wide ?? 180;
+      page.drawRectangle({ x: ptopX - 1, y: rectBottom, width: wide + 2, height: rectH, color: WHITE });
+      const f = opts?.bold ? fontBold : font;
+      page.drawText(text, { x: ptopX, y: rectBottom + 3, size: FSIZE, font: f, color: BLACK });
+    };
+
+    const [p1, p2] = pages;
+
+    // ── Page 1: address ──────────────────────────────────────────────
+    // <adresse municipale> at pdftotext x=402, yMin=225.354, yMax=235.427
+    if (address) fill(p1, 402, 225.354, 235.427, address, { wide: 175 });
+
+    // ── Page 1: date in body text ────────────────────────────────────
+    // <date du rapport> at pdftotext x=45, yMin=374.456, yMax=384.529
+    fill(p1, 45, 374.456, 384.529, fullDate, { wide: 75 });
+
+    // ── Page 1: new construction table % ────────────────────────────
+    // "<%>" at pdftotext y≈650 for each niveau column
+    if (isNew) {
+      const Y1 = 642, Y2 = 655;
+      const xByNiveau = [87, 267, 449] as const;
+      fill(p1, xByNiveau[niveau - 1], Y1, Y2, pctText, { bold: true, wide: 65 });
+    }
+
+    // ── Page 2: existing properties table % ─────────────────────────
+    // "de <%>" at pdftotext y≈214 for each niveau column
+    if (!isNew) {
+      const Y1 = 214, Y2 = 227;
+      const xByNiveau = [82, 268, 455] as const;
+      fill(p2, xByNiveau[niveau - 1], Y1, Y2, pctText, { bold: true, wide: 55 });
+    }
+
+    // ── Page 2: DATÉ du <jour> de <mois>, 20<an> ────────────────────
+    // "DATÉ" line: pdftotext yMin=362.931, yMax=374.941
+    fill(p2, 111, 362.931, 374.941, day, { wide: 50 });
+    fill(p2, 262, 362.931, 374.941, monthName, { wide: 85 });
+    fill(p2, 398, 362.931, 374.941, year2, { wide: 28 });
+
+    // ── Page 2: Nom ──────────────────────────────────────────────────
+    fill(p2, 67, 432.171, 444.181, "Marc-André Boucher", { wide: 220 });
+
+    // ── Page 2: Titre professionnel ──────────────────────────────────
+    fill(p2, 36, 465.171, 477, "Évaluateur en efficacité énergétique", { wide: 310 });
+
+    // ── Page 2: Coordonnées ──────────────────────────────────────────
+    fill(p2, 120, 490.671, 502.681, "438 521-9645", { wide: 150 });
+
+    return Buffer.from(await pdfDoc.save());
+  }
+
+  app.get("/api/projects/:id/attestation-pdf", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      if (!project.comparisonData) return res.status(422).json({ message: "Données manquantes" });
+
+      const pdfBuffer = await buildAttestationPdf(project);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="attestation-aph-${project.id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error("Error generating attestation PDF:", error);
+      res.status(500).json({ message: error.message || "Failed to generate PDF" });
+    }
+  });
+
+  app.get("/api/projects/:id/attestation-pdf-image", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      if (!project.comparisonData) return res.status(422).json({ message: "Données manquantes" });
+
+      const pageNum = parseInt((req.query.page as string) || "1", 10);
+      const pdfBuffer = await buildAttestationPdf(project);
+
+      const tmpId = crypto.randomBytes(8).toString("hex");
+      const tmpPdf = path.join(os.tmpdir(), `attestation-${tmpId}.pdf`);
+      const tmpImgPrefix = path.join(os.tmpdir(), `attestation-${tmpId}-page`);
+
+      fs.writeFileSync(tmpPdf, pdfBuffer);
+      try {
+        await execFileAsync("pdftoppm", [
+          "-png", "-r", "150",
+          "-f", String(pageNum), "-l", String(pageNum),
+          tmpPdf, tmpImgPrefix,
+        ]);
+
+        const possibleNames = [
+          `${tmpImgPrefix}-${String(pageNum).padStart(pageNum >= 10 ? 2 : 1, "0")}.png`,
+          `${tmpImgPrefix}-${pageNum}.png`,
+          `${tmpImgPrefix}-0${pageNum}.png`,
+        ];
+        const imgPath = possibleNames.find((p) => fs.existsSync(p));
+        if (!imgPath) throw new Error("PNG output not found");
+
+        const imgBuf = fs.readFileSync(imgPath);
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Cache-Control", "no-store");
+        res.send(imgBuf);
+
+        fs.unlinkSync(tmpPdf);
+        fs.unlinkSync(imgPath);
+      } catch (e) {
+        if (fs.existsSync(tmpPdf)) fs.unlinkSync(tmpPdf);
+        throw e;
+      }
+    } catch (error: any) {
+      console.error("Error generating attestation PDF image:", error);
+      res.status(500).json({ message: error.message || "Failed to render PDF page" });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+
   app.get("/api/projects/:id/collective-pdf-image", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);

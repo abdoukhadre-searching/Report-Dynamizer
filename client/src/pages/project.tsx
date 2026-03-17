@@ -5,16 +5,17 @@ import type { Project } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Zap, FileText, LayoutDashboard, BookOpen, Building2 } from "lucide-react";
+import { ArrowLeft, Zap, FileText, LayoutDashboard, BookOpen, Building2, ClipboardCheck } from "lucide-react";
 import UploadTab from "@/components/upload-tab";
 import DashboardTab from "@/components/dashboard-tab";
 import ReportTab from "@/components/report-tab";
 import CollectiveBuildingTab from "@/components/collective-building-tab";
+import AttestationTab from "@/components/attestation-tab";
 
 export default function ProjectPage() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
-  const [reportSubTab, setReportSubTab] = useState<"qualification" | "collective">("qualification");
+  const [reportSubTab, setReportSubTab] = useState<"qualification" | "collective" | "attestation">("qualification");
 
   const { data: project, isLoading } = useQuery<Project>({
     queryKey: ["/api/projects", params.id],
@@ -89,7 +90,7 @@ export default function ProjectPage() {
           <TabsList className="mb-6" data-testid="tabs-project">
             <TabsTrigger value="upload" data-testid="tab-upload" className="gap-1.5">
               <FileText className="w-3.5 h-3.5" />
-              Rapports
+              Infos Projet
             </TabsTrigger>
             <TabsTrigger value="dashboard" disabled={!hasBothReports} data-testid="tab-dashboard" className="gap-1.5">
               <LayoutDashboard className="w-3.5 h-3.5" />
@@ -139,6 +140,19 @@ export default function ProjectPage() {
                     <Building2 className="w-4 h-4" />
                     Immeuble collectif
                   </button>
+                  <button
+                    type="button"
+                    data-testid="subtab-attestation"
+                    onClick={() => setReportSubTab("attestation")}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                      reportSubTab === "attestation"
+                        ? "border-[#1e3a5f] text-[#1e3a5f]"
+                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                    }`}
+                  >
+                    <ClipboardCheck className="w-4 h-4" />
+                    Attestation APH
+                  </button>
                 </div>
 
                 {reportSubTab === "qualification" && (
@@ -148,6 +162,9 @@ export default function ProjectPage() {
                 )}
                 {reportSubTab === "collective" && (
                   <CollectiveBuildingTab project={project} />
+                )}
+                {reportSubTab === "attestation" && (
+                  <AttestationTab project={project} />
                 )}
               </div>
             )}

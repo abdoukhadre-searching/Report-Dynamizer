@@ -32,6 +32,9 @@ Web application for energy efficiency qualification under the APH SELECT program
 - `POST /api/projects/:id/upload-pre-pdf` - Upload and parse PRE report PDF (multipart)
 - `POST /api/projects/:id/upload-post-pdf` - Upload and parse POST report PDF (multipart)
 - `GET /api/projects/:id/collective-pdf` - Generate filled APH SELECT immeubles collectifs form PDF
+- `GET /api/projects/:id/collective-pdf-image?page=N` - Render collective PDF page as PNG image
+- `GET /api/projects/:id/attestation-pdf` - Generate filled SCHL Attestation APH SELECT PDF
+- `GET /api/projects/:id/attestation-pdf-image?page=N` - Render attestation PDF page as PNG image
 
 ## Parser Details
 - Handles French-language HOT2000 reports from Quebec
