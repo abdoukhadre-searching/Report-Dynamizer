@@ -72,6 +72,7 @@ export const reportDataSchema = z.object({
     climateData: z.string().optional(),
     occupants: z.string().optional(),
     windowFraction: z.string().optional(),
+    wallMaxRsi: z.number().optional(),
   }).optional(),
   zone1: z.array(buildingZoneSchema).optional(),
   zone1Total: z.object({
