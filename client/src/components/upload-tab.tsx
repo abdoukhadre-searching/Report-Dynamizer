@@ -19,6 +19,7 @@ import {
   HardHat,
   ArrowLeft,
   ArrowRight,
+  MapPin,
 } from "lucide-react";
 
 interface UploadTabProps {
@@ -27,14 +28,16 @@ interface UploadTabProps {
 
 export default function UploadTab({ project }: UploadTabProps) {
   const { toast } = useToast();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [preText, setPreText] = useState("");
   const [postText, setPostText] = useState("");
-  const [projectName, setProjectName] = useState(project.name);
-  const [projectAddress, setProjectAddress] = useState(project.address || "");
   const [buildingType, setBuildingType] = useState<"existing" | "new">(
     (project.buildingType as "existing" | "new") || "existing"
   );
+  const [address, setAddress] = useState(project.address || "");
+  const [city, setCity] = useState(project.city || "");
+  const [province, setProvince] = useState(project.province || "Québec");
+  const [postalCode, setPostalCode] = useState(project.postalCode || "");
   const [prePdfFile, setPrePdfFile] = useState<File | null>(null);
   const [postPdfFile, setPostPdfFile] = useState<File | null>(null);
 
@@ -55,25 +58,29 @@ export default function UploadTab({ project }: UploadTabProps) {
 
   const updateInfoMutation = useMutation({
     mutationFn: async () => {
+      const generatedName = [address.trim(), city.trim()].filter(Boolean).join(", ") || "Nouveau projet";
       const res = await apiRequest("PATCH", `/api/projects/${project.id}`, {
-        name: projectName,
-        address: projectAddress,
+        name: generatedName,
+        address: address.trim(),
+        city: city.trim(),
+        province: province.trim(),
+        postalCode: postalCode.trim(),
       });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
-      toast({ title: "Informations mises a jour" });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      setStep(3);
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder les informations.", variant: "destructive" });
     },
   });
 
   const handleBuildingTypeSelect = (type: "existing" | "new") => {
     setBuildingType(type);
     updateBuildingTypeMutation.mutate(type);
-  };
-
-  const handleContinue = () => {
-    setStep(2);
   };
 
   const uploadPreMutation = useMutation({
@@ -86,7 +93,7 @@ export default function UploadTab({ project }: UploadTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
       setPreText("");
-      toast({ title: "Rapport PRE analyse avec succes" });
+      toast({ title: "Rapport PRE analysé avec succès" });
     },
     onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -103,7 +110,7 @@ export default function UploadTab({ project }: UploadTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
       setPostText("");
-      toast({ title: "Rapport POST analyse avec succes" });
+      toast({ title: "Rapport POST analysé avec succès" });
     },
     onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -127,7 +134,7 @@ export default function UploadTab({ project }: UploadTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
       setPrePdfFile(null);
-      toast({ title: "Rapport PRE (PDF) analyse avec succes" });
+      toast({ title: "Rapport PRE (PDF) analysé avec succès" });
     },
     onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -151,7 +158,7 @@ export default function UploadTab({ project }: UploadTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
       setPostPdfFile(null);
-      toast({ title: "Rapport POST (PDF) analyse avec succes" });
+      toast({ title: "Rapport POST (PDF) analysé avec succès" });
     },
     onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -196,11 +203,31 @@ export default function UploadTab({ project }: UploadTabProps) {
     }
   };
 
+  const StepDots = ({ current }: { current: 1 | 2 | 3 }) => (
+    <div className="flex items-center gap-1.5">
+      {[1, 2, 3].map((s) => (
+        <div
+          key={s}
+          className={`rounded-full transition-all ${
+            s === current
+              ? "w-6 h-1.5 bg-[#1e3a5f]"
+              : s < current
+              ? "w-4 h-1.5 bg-[#1e3a5f]/40"
+              : "w-4 h-1.5 bg-muted"
+          }`}
+        />
+      ))}
+    </div>
+  );
+
   if (step === 1) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 py-8">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>
+          <h2
+            className="text-2xl font-bold"
+            style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}
+          >
             Type de bâtiment
           </h2>
           <p className="text-muted-foreground text-sm max-w-md">
@@ -219,9 +246,13 @@ export default function UploadTab({ project }: UploadTabProps) {
                 : "border-border hover:border-[#1e3a5f]/50 hover:shadow-sm"
             }`}
           >
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
-              buildingType === "existing" ? "bg-[#1e3a5f] text-white" : "bg-muted text-muted-foreground group-hover:bg-[#1e3a5f]/10 group-hover:text-[#1e3a5f]"
-            }`}>
+            <div
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
+                buildingType === "existing"
+                  ? "bg-[#1e3a5f] text-white"
+                  : "bg-muted text-muted-foreground group-hover:bg-[#1e3a5f]/10 group-hover:text-[#1e3a5f]"
+              }`}
+            >
               <Building2 className="w-8 h-8" />
             </div>
             <div className="text-center">
@@ -229,7 +260,9 @@ export default function UploadTab({ project }: UploadTabProps) {
                 Bâtiment existant
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Immeuble déjà construit<br />Analyse avant / après travaux
+                Immeuble déjà construit
+                <br />
+                Analyse avant / après travaux
               </p>
             </div>
             {buildingType === "existing" && (
@@ -250,9 +283,13 @@ export default function UploadTab({ project }: UploadTabProps) {
                 : "border-border hover:border-[#1e3a5f]/50 hover:shadow-sm"
             }`}
           >
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
-              buildingType === "new" ? "bg-[#1e3a5f] text-white" : "bg-muted text-muted-foreground group-hover:bg-[#1e3a5f]/10 group-hover:text-[#1e3a5f]"
-            }`}>
+            <div
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
+                buildingType === "new"
+                  ? "bg-[#1e3a5f] text-white"
+                  : "bg-muted text-muted-foreground group-hover:bg-[#1e3a5f]/10 group-hover:text-[#1e3a5f]"
+              }`}
+            >
               <HardHat className="w-8 h-8" />
             </div>
             <div className="text-center">
@@ -260,7 +297,9 @@ export default function UploadTab({ project }: UploadTabProps) {
                 Construction neuve
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Projet à construire<br />Bâtiment de référence CNEB 2017
+                Projet à construire
+                <br />
+                Bâtiment de référence CNEB 2017
               </p>
             </div>
             {buildingType === "new" && (
@@ -273,19 +312,130 @@ export default function UploadTab({ project }: UploadTabProps) {
         </div>
 
         <Button
-          onClick={handleContinue}
+          onClick={() => setStep(2)}
           size="lg"
           className="px-10"
-          data-testid="button-continue-to-upload"
-          style={{ backgroundColor: '#1e3a5f' }}
+          data-testid="button-continue-to-address"
+          style={{ backgroundColor: "#1e3a5f" }}
         >
           Continuer
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="w-6 h-1.5 rounded-full bg-[#1e3a5f]" />
-          <div className="w-6 h-1.5 rounded-full bg-muted" />
+        <StepDots current={1} />
+      </div>
+    );
+  }
+
+  if (step === 2) {
+    const previewName = [address.trim(), city.trim()].filter(Boolean).join(", ") || "—";
+
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] py-8">
+        <div className="w-full max-w-lg space-y-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setStep(1)}
+              data-testid="button-back-to-type"
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Retour
+            </Button>
+            <StepDots current={2} />
+          </div>
+
+          <div className="text-center space-y-1">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-[#1e3a5f]/10 flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-[#1e3a5f]" />
+              </div>
+            </div>
+            <h2
+              className="text-2xl font-bold"
+              style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}
+            >
+              Adresse du bâtiment
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Ces informations identifient le projet dans vos rapports.
+            </p>
+          </div>
+
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <Label htmlFor="address">Adresse</Label>
+                <Input
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Ex: 7546-7556 Avenue Casgrain"
+                  data-testid="input-address"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="city">Ville</Label>
+                  <Input
+                    id="city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Ex: Montréal"
+                    data-testid="input-city"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="postalCode">Code postal</Label>
+                  <Input
+                    id="postalCode"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder="Ex: H2T 1S3"
+                    data-testid="input-postal-code"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="province">Province</Label>
+                <Input
+                  id="province"
+                  value={province}
+                  onChange={(e) => setProvince(e.target.value)}
+                  placeholder="Québec"
+                  data-testid="input-province"
+                />
+              </div>
+
+              {address.trim() || city.trim() ? (
+                <div className="pt-2 px-3 py-2 rounded-md bg-muted/50 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Nom du projet : </span>
+                  {previewName}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Button
+            onClick={() => updateInfoMutation.mutate()}
+            disabled={updateInfoMutation.isPending || (!address.trim() && !city.trim())}
+            size="lg"
+            className="w-full"
+            data-testid="button-save-address"
+            style={{ backgroundColor: "#1e3a5f" }}
+          >
+            {updateInfoMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : null}
+            Continuer
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+
+          <div className="flex justify-center">
+            <StepDots current={2} />
+          </div>
         </div>
       </div>
     );
@@ -297,65 +447,35 @@ export default function UploadTab({ project }: UploadTabProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setStep(1)}
-          data-testid="button-back-to-type"
+          onClick={() => setStep(2)}
+          data-testid="button-back-to-address"
           className="gap-1.5 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4" />
           Retour
         </Button>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="w-6 h-1.5 rounded-full bg-muted" />
-          <div className="w-6 h-1.5 rounded-full bg-[#1e3a5f]" />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <StepDots current={3} />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {buildingType === "existing" ? (
-            <><Building2 className="w-4 h-4" /> Bâtiment existant</>
+            <>
+              <Building2 className="w-3.5 h-3.5" />
+              Bâtiment existant
+            </>
           ) : (
-            <><HardHat className="w-4 h-4" /> Construction neuve</>
+            <>
+              <HardHat className="w-3.5 h-3.5" />
+              Construction neuve
+            </>
+          )}
+          {(address || city) && (
+            <>
+              <span className="mx-1">·</span>
+              <MapPin className="w-3.5 h-3.5" />
+              {[address, city].filter(Boolean).join(", ")}
+            </>
           )}
         </div>
       </div>
-
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="font-medium mb-4">Informations du projet</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="name">Nom du projet</Label>
-              <Input
-                id="name"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder="Ex: 2327-2337 Rue Cartier"
-                data-testid="input-project-name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="address">Adresse</Label>
-              <Input
-                id="address"
-                value={projectAddress}
-                onChange={(e) => setProjectAddress(e.target.value)}
-                placeholder="Adresse du batiment"
-                data-testid="input-project-address"
-              />
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => updateInfoMutation.mutate()}
-              disabled={updateInfoMutation.isPending}
-              data-testid="button-save-info"
-            >
-              {updateInfoMutation.isPending && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
-              Sauvegarder
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -368,7 +488,7 @@ export default function UploadTab({ project }: UploadTabProps) {
               {hasPreReport ? (
                 <Badge variant="default" className="gap-1">
                   <CheckCircle2 className="w-3 h-3" />
-                  Charge
+                  Chargé
                 </Badge>
               ) : (
                 <Badge variant="secondary">En attente</Badge>
@@ -431,7 +551,7 @@ export default function UploadTab({ project }: UploadTabProps) {
               <div className="mt-4 p-3 rounded-md bg-muted/50 flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-chart-4 mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
-                  Rapport PRE analyse. Les donnees ont ete extraites avec succes.
+                  Rapport PRE analysé. Les données ont été extraites avec succès.
                 </div>
               </div>
             )}
@@ -448,7 +568,7 @@ export default function UploadTab({ project }: UploadTabProps) {
               {hasPostReport ? (
                 <Badge variant="default" className="gap-1">
                   <CheckCircle2 className="w-3 h-3" />
-                  Charge
+                  Chargé
                 </Badge>
               ) : (
                 <Badge variant="secondary">En attente</Badge>
@@ -511,7 +631,7 @@ export default function UploadTab({ project }: UploadTabProps) {
               <div className="mt-4 p-3 rounded-md bg-muted/50 flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-chart-4 mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
-                  Rapport POST analyse. Les donnees ont ete extraites avec succes.
+                  Rapport POST analysé. Les données ont été extraites avec succès.
                 </div>
               </div>
             )}
@@ -527,9 +647,9 @@ export default function UploadTab({ project }: UploadTabProps) {
                 <CheckCircle2 className="w-5 h-5 text-chart-4" />
               </div>
               <div>
-                <h3 className="font-medium text-sm">Les deux rapports sont charges</h3>
+                <h3 className="font-medium text-sm">Les deux rapports sont chargés</h3>
                 <p className="text-xs text-muted-foreground">
-                  Consultez le tableau de bord ou generez le cahier de qualification.
+                  Consultez le tableau de bord ou générez le cahier de qualification.
                 </p>
               </div>
             </div>
@@ -551,8 +671,8 @@ export default function UploadTab({ project }: UploadTabProps) {
                 <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
                   <li>Importez vos rapports HOT2000 (PRE et POST travaux) en format PDF</li>
                   <li>Ou copiez le contenu texte du rapport et collez-le dans la zone de texte</li>
-                  <li>Cliquez sur "Analyser" pour extraire les donnees</li>
-                  <li>Une fois les deux rapports analyses, consultez le tableau de bord</li>
+                  <li>Cliquez sur "Analyser" pour extraire les données</li>
+                  <li>Une fois les deux rapports analysés, consultez le tableau de bord</li>
                 </ol>
               </div>
             </div>
