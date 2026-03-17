@@ -1529,22 +1529,24 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                           <p className="text-xs text-muted-foreground mb-4">
                             Installation de {numUnits > 0 ? numUnits : "—"} Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.
                           </p>
-                          <div className="flex flex-col gap-4">
-                            <div>
+                          <div className="flex flex-row gap-6 items-start print:break-inside-avoid">
+                            <div className="flex-shrink-0">
                               <p className="text-xs font-medium text-muted-foreground mb-2">Appareil — Rheem ProTerra</p>
                               <img
                                 src={rheemProductPath}
                                 alt="Chauffe-eau thermopompe Rheem ProTerra"
-                                className="max-h-[320px] w-auto object-contain rounded border mx-auto block"
+                                className="w-auto object-contain rounded border mx-auto block"
+                                style={{ maxHeight: '480px', maxWidth: '220px' }}
                                 data-testid="img-annex-rheem-product"
                               />
                             </div>
-                            <div>
+                            <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-muted-foreground mb-2">Fiche technique — ENERGY STAR</p>
                               <img
                                 src={rheemSpecPath}
                                 alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star"
-                                className="max-w-full w-full object-contain rounded border"
+                                className="w-full object-contain rounded border"
+                                style={{ maxHeight: '480px' }}
                                 data-testid="img-annex-rheem-spec"
                               />
                             </div>
@@ -1552,7 +1554,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                         </div>
                       )}
 
-                      <div>
+                      <div className="print:break-before-page">
                         <h3 className="text-sm font-semibold mb-2">{annexNum++}. Pertes thermiques par composante</h3>
                         <p className="text-xs text-muted-foreground mb-3">
                           Comparaison des pertes thermiques annuelles par composante du bâtiment, avant et après travaux (GJ/an).
