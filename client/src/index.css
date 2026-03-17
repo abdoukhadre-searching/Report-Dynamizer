@@ -469,4 +469,9 @@
     break-after: avoid-page;
     page-break-after: avoid;
   }
+
+  .print\:break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
 }

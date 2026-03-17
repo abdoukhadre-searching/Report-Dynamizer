@@ -45,12 +45,14 @@ function AnnexImageUpload({
   label,
   currentImage,
   defaultImageUrl,
+  maxImageHeight,
 }: {
   projectId: string;
   annexType: string;
   label: string;
   currentImage: string | null;
   defaultImageUrl?: string;
+  maxImageHeight?: number;
 }) {
   const { toast } = useToast();
 
@@ -85,7 +87,7 @@ function AnnexImageUpload({
           src={currentImage}
           alt={label}
           className="max-w-full rounded-md border"
-          style={{ maxHeight: "500px" }}
+          style={{ maxHeight: maxImageHeight ? `${maxImageHeight}px` : "500px" }}
           data-testid={`img-annex-${annexType}`}
         />
         <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
@@ -781,7 +783,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
           </CardContent>
         </Card>
 
-        <Card className="print:shadow-none print:border-none print:break-before-page mt-6">
+        <Card className="print:shadow-none print:border-none mt-6">
           <CardContent className="p-8 space-y-8 report-prose relative overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] z-0 print:opacity-[0.04]" aria-hidden="true">
               <p className="text-[120px] font-bold tracking-widest text-slate-900 rotate-[-30deg] whitespace-nowrap" style={{ fontFamily: "'Playfair Display', serif" }}>
@@ -789,7 +791,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </p>
             </div>
 
-            <div className="relative z-10 flex items-center justify-between pb-3 mb-6" style={{ borderBottom: '2px solid #1e3a5f' }}>
+            <div className="relative z-10 flex items-center justify-between pb-3 mb-6 print:hidden" style={{ borderBottom: '2px solid #1e3a5f' }}>
               <img src={mabLogoPath} alt="MAB" className="h-10 w-auto object-contain opacity-80" />
               <p className="text-xs text-slate-400 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>Cahier de qualification — APH SELECT</p>
             </div>
@@ -844,27 +846,30 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                           La façade principale du bâtiment est présentée ci-dessous à partir des plans architecturaux du projet.
                         </p>
 
-                        <AnnexImageUpload
-                          key="description-building-photo"
-                          projectId={project.id}
-                          annexType="ledLighting"
-                          label="Plans architecturaux / façade du bâtiment"
-                          currentImage={annexImages.ledLighting}
-                        />
+                        <div className="print:break-inside-avoid">
+                          <AnnexImageUpload
+                            key="description-building-photo"
+                            projectId={project.id}
+                            annexType="ledLighting"
+                            label="Plans architecturaux / façade du bâtiment"
+                            currentImage={annexImages.ledLighting}
+                            maxImageHeight={220}
+                          />
 
-                        <p>
-                          Le bâtiment de référence est défini conformément aux exigences du Code national de l'énergie pour les bâtiments 2017 (CNEB 2017). Il représente un bâtiment type établi selon les normes en vigueur, servant de base de comparaison pour l'évaluation de la performance énergétique du bâtiment proposé.
-                        </p>
+                          <p>
+                            Le bâtiment de référence est défini conformément aux exigences du Code national de l'énergie pour les bâtiments 2017 (CNEB 2017). Il représente un bâtiment type établi selon les normes en vigueur, servant de base de comparaison pour l'évaluation de la performance énergétique du bâtiment proposé.
+                          </p>
 
-                        <p className="font-bold mt-4 mb-2">Caractéristiques générales du bâtiment de référence :</p>
-                        <ul className="space-y-1.5 ml-1">
-                          {chars.map(({ label, value }) => (
-                            <li key={label} className="flex items-start gap-2">
-                              <span className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }} />
-                              <span><span className="text-muted-foreground">{label} :</span> <span className="font-medium">{value}</span></span>
-                            </li>
-                          ))}
-                        </ul>
+                          <p className="font-bold mt-4 mb-2">Caractéristiques générales du bâtiment de référence :</p>
+                          <ul className="space-y-1.5 ml-1">
+                            {chars.map(({ label, value }) => (
+                              <li key={label} className="flex items-start gap-2">
+                                <span className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }} />
+                                <span><span className="text-muted-foreground">{label} :</span> <span className="font-medium">{value}</span></span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </>
                     ) : (
                       <>
@@ -872,27 +877,30 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                           Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}, construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>.{floorsDisplay && <> Le bâtiment comporte <span className="font-semibold">{floorsLabel}</span>.</>} La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
                         </p>
 
-                        <AnnexImageUpload
-                          key="description-building-photo"
-                          projectId={project.id}
-                          annexType="ledLighting"
-                          label="Photo du bâtiment"
-                          currentImage={annexImages.ledLighting}
-                        />
+                        <div className="print:break-inside-avoid">
+                          <AnnexImageUpload
+                            key="description-building-photo"
+                            projectId={project.id}
+                            annexType="ledLighting"
+                            label="Photo du bâtiment"
+                            currentImage={annexImages.ledLighting}
+                            maxImageHeight={220}
+                          />
 
-                        <p className="font-bold mt-4 mb-2">Caractéristiques générales :</p>
-                        <ul className="space-y-1.5 ml-1">
-                          {chars.map(({ label, value }) => (
-                            <li key={label} className="flex items-start gap-2">
-                              <span className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }} />
-                              <span><span className="text-muted-foreground">{label} :</span> <span className="font-medium">{value}</span></span>
-                            </li>
-                          ))}
-                        </ul>
+                          <p className="font-bold mt-4 mb-2">Caractéristiques générales :</p>
+                          <ul className="space-y-1.5 ml-1">
+                            {chars.map(({ label, value }) => (
+                              <li key={label} className="flex items-start gap-2">
+                                <span className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }} />
+                                <span><span className="text-muted-foreground">{label} :</span> <span className="font-medium">{value}</span></span>
+                              </li>
+                            ))}
+                          </ul>
 
-                        <p>
-                          Ces caractéristiques sont représentatives des bâtiments construits avant l'introduction des normes modernes d'efficacité énergétique, ce qui explique le potentiel important d'amélioration énergétique.
-                        </p>
+                          <p>
+                            Ces caractéristiques sont représentatives des bâtiments construits avant l'introduction des normes modernes d'efficacité énergétique, ce qui explique le potentiel important d'amélioration énergétique.
+                          </p>
+                        </div>
                       </>
                     )}
                   </div>
