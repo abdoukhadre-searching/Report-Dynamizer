@@ -3,16 +3,6 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import type { Project, ReportData, ComparisonData, MonthlyEnergy } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { FileText, Printer, Upload, Loader2, ImageIcon } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import buildingCoverPath from "@assets/building-cover.png";
@@ -136,64 +126,63 @@ function MonthlyEnergyTable({ data, annual, label }: { data: MonthlyEnergy[]; an
   const rows = [...data];
   if (annual) rows.push(annual);
 
-  const colGroups = [
-    { label: "Chauffage", cols: ["Primaire", "Secondaire"], color: "#dc2626" },
-    { label: "Eau chaude", cols: ["Primaire", "Secondaire"], color: "#2563eb" },
-    { label: "Charges", cols: ["Éclair. & App."], color: "#7c3aed" },
-    { label: "Ventil.", cols: [""], color: "#0d9488" },
-    { label: "Climat.", cols: [""], color: "#ea580c" },
+  const cols: { header: string; key: keyof MonthlyEnergy; group: string }[] = [
+    { header: "Chauf. P.", key: "heatingPrimary", group: "Chauffage" },
+    { header: "Chauf. S.", key: "heatingSecondary", group: "Chauffage" },
+    { header: "Eau ch. P.", key: "hotWaterPrimary", group: "Eau chaude" },
+    { header: "Eau ch. S.", key: "hotWaterSecondary", group: "Eau chaude" },
+    { header: "Charges", key: "lightingAppliances", group: "Charges" },
+    { header: "Ventil.", key: "ventilation", group: "Ventil." },
+    { header: "Climat.", key: "cooling", group: "Climat." },
   ];
+
+  const groupColors: Record<string, string> = {
+    "Chauffage": "#dc2626",
+    "Eau chaude": "#2563eb",
+    "Charges": "#7c3aed",
+    "Ventil.": "#0d9488",
+    "Climat.": "#ea580c",
+  };
 
   return (
     <div className="my-6">
-      <p className="text-xs text-center text-muted-foreground mb-3 italic">{label}</p>
-      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-sm">
-        <table className="w-full text-[10px] border-collapse" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+      <p className="text-xs text-center text-slate-400 mb-3 italic tracking-wide">{label}</p>
+      <div className="overflow-x-auto rounded-xl border border-slate-200/80 shadow-sm">
+        <table className="w-full text-[10.5px] border-collapse" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
           <thead>
-            <tr>
-              <th rowSpan={2} className="text-left py-2 px-2 font-semibold border-b-2 border-r border-slate-200" style={{ backgroundColor: '#1e3a5f', color: '#fff', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>Mois</th>
-              {colGroups.map((g) => (
-                <th
-                  key={g.label}
-                  colSpan={g.cols.length}
-                  className="text-center py-1.5 px-1 font-semibold border-b border-r border-white/30 text-[9px] uppercase tracking-wider text-white"
-                  style={{ backgroundColor: g.color, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}
-                >
-                  {g.label}
+            <tr style={{ backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+              <th className="text-left py-2.5 px-3 font-semibold text-white/90 text-[9px] uppercase tracking-widest border-r border-white/10">Mois</th>
+              {cols.map((c) => (
+                <th key={c.key as string} className="text-right py-2.5 px-2 font-medium text-white/80 text-[9px] uppercase tracking-wide border-r border-white/10 last:border-r-0">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full mr-1 mb-0.5 align-middle" style={{ backgroundColor: groupColors[c.group], opacity: 0.85 }} />
+                  {c.header}
                 </th>
               ))}
-              <th rowSpan={2} className="text-right py-2 px-2 font-bold border-b-2 border-l border-slate-200 text-white" style={{ backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>Total</th>
-            </tr>
-            <tr style={{ backgroundColor: '#f1f5f9', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Prim.</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Sec.</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Prim.</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">Sec.</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">—</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">—</th>
-              <th className="text-right py-1 px-1.5 font-medium border-b border-r border-slate-200 text-slate-600 text-[9px]">—</th>
+              <th className="text-right py-2.5 px-3 font-bold text-white text-[9px] uppercase tracking-widest">Total</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row, i) => {
-              const total = (row.heatingPrimary ?? 0) + (row.heatingSecondary ?? 0) + (row.hotWaterPrimary ?? 0) + (row.hotWaterSecondary ?? 0) + (row.lightingAppliances ?? 0) + (row.ventilation ?? 0) + (row.cooling ?? 0);
+              const total = cols.reduce((sum, c) => sum + ((row[c.key] as number) ?? 0), 0);
               const isAnnual = row.month === "Annuel";
-              const rowBg = isAnnual
-                ? { backgroundColor: '#1e3a5f', color: '#fff', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties
-                : i % 2 === 1 ? { backgroundColor: '#f8fafc', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties : {};
-              const cellBorder = isAnnual ? "border-r border-white/20" : "border-r border-slate-100";
-              const bottomBorder = isAnnual ? "" : "border-b border-slate-100";
               return (
-                <tr key={i} style={rowBg} className={isAnnual ? "border-t-2 border-slate-300" : "hover:bg-slate-50/50"}>
-                  <td className={`py-1.5 px-2 ${bottomBorder} ${cellBorder} font-semibold ${isAnnual ? "text-white" : "text-slate-700"}`}>{row.month}</td>
-                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.heatingPrimary ?? 0).toFixed(1)}</td>
-                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.heatingSecondary ?? 0).toFixed(1)}</td>
-                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.hotWaterPrimary ?? 0).toFixed(1)}</td>
-                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.hotWaterSecondary ?? 0).toFixed(1)}</td>
-                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.lightingAppliances ?? 0).toFixed(1)}</td>
-                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.ventilation ?? 0).toFixed(1)}</td>
-                  <td className={`py-1.5 px-1.5 ${bottomBorder} ${cellBorder} text-right font-mono`}>{(row.cooling ?? 0).toFixed(1)}</td>
-                  <td className={`py-1.5 px-2 ${bottomBorder} text-right font-mono font-bold ${isAnnual ? "text-white" : "text-slate-900"}`}>{total.toFixed(1)}</td>
+                <tr
+                  key={i}
+                  style={isAnnual
+                    ? { backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties
+                    : i % 2 === 0
+                      ? { backgroundColor: '#ffffff' } as React.CSSProperties
+                      : { backgroundColor: '#f8fafc', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties
+                  }
+                  className={isAnnual ? "border-t-2 border-slate-300/50" : "border-b border-slate-100"}
+                >
+                  <td className={`py-2 px-3 border-r ${isAnnual ? "border-white/10 font-semibold text-white" : "border-slate-100 font-semibold text-slate-600"}`}>{row.month}</td>
+                  {cols.map((c) => (
+                    <td key={c.key as string} className={`py-2 px-2 text-right font-mono border-r ${isAnnual ? "border-white/10 text-white/90" : "border-slate-100 text-slate-600"}`}>
+                      {((row[c.key] as number) ?? 0).toFixed(0)}
+                    </td>
+                  ))}
+                  <td className={`py-2 px-3 text-right font-mono font-bold ${isAnnual ? "text-white" : "text-slate-800"}`}>{total.toFixed(0)}</td>
                 </tr>
               );
             })}
@@ -569,7 +558,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
             </div>
 
             <section id="toc-resume" className="relative z-10">
-              <h2 className="text-base font-semibold mb-4" data-testid="text-section-resume">
+              <h2 className="" data-testid="text-section-resume">
                 1. Résumé exécutif
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
@@ -760,7 +749,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
             </div>
 
             <section id="toc-description" className="relative z-10">
-              <h2 className="text-base font-semibold mb-4" data-testid="text-section-description">
+              <h2 className="" data-testid="text-section-description">
                 2. Description du bâtiment
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
@@ -800,10 +789,10 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </div>
             </section>
 
-            <Separator className="relative z-10" />
+            <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
             <section id="toc-profil" className="relative z-10">
-              <h2 className="text-base font-semibold mb-4" data-testid="text-section-profil">
+              <h2 className="" data-testid="text-section-profil">
                 3. Profil de consommation énergétique actuel
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
@@ -872,10 +861,10 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </div>
             </section>
 
-            <Separator className="relative z-10" />
+            <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
             <section id="toc-strategies" className="relative z-10">
-              <h2 className="text-base font-semibold mb-4" data-testid="text-section-strategies">
+              <h2 className="" data-testid="text-section-strategies">
                 4. Stratégie d'optimisation énergétique
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
@@ -994,10 +983,10 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </div>
             </section>
 
-            <Separator className="relative z-10" />
+            <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
             <section id="toc-performance" className="relative z-10">
-              <h2 className="text-base font-semibold mb-4" data-testid="text-section-performance">
+              <h2 className="" data-testid="text-section-performance">
                 5. Performance énergétique après optimisation
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
@@ -1115,72 +1104,68 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </div>
             </section>
 
-            <Separator className="relative z-10" />
+            <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
             <section id="toc-comparatif" className="relative z-10">
-              <h2 className="text-base font-semibold mb-4" data-testid="text-section-comparatif">
+              <h2 className="" data-testid="text-section-comparatif">
                 6. Comparatif énergétique
               </h2>
-              <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-                <table className="w-full border-collapse" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+              <div className="overflow-hidden rounded-xl border border-slate-200/80 shadow-sm">
+                <table className="w-full border-collapse text-[11px]" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
                   <thead>
-                    <tr>
-                      <th className="text-xs font-semibold py-3 px-4 text-left text-white border-r border-white/20" style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>Usage énergétique</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#dc2626' } as React.CSSProperties}>Avant (GJ)</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#16a34a' } as React.CSSProperties}>Après (GJ)</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-white border-r border-white/20" style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>Variation</th>
-                      <th className="text-xs font-semibold py-3 px-4 text-right text-white" style={{ backgroundColor: '#1e3a5f', color: '#fff' } as React.CSSProperties}>Réduction</th>
+                    <tr style={{ backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                      <th className="py-3 px-4 text-left text-white/90 font-medium text-[9px] uppercase tracking-widest border-r border-white/10">Catégorie</th>
+                      <th className="py-3 px-4 text-right font-medium text-[9px] uppercase tracking-wide border-r border-white/10" style={{ color: '#fca5a5' }}>Avant (GJ)</th>
+                      <th className="py-3 px-4 text-right font-medium text-[9px] uppercase tracking-wide border-r border-white/10" style={{ color: '#86efac' }}>Après (GJ)</th>
+                      <th className="py-3 px-4 text-right font-medium text-[9px] uppercase tracking-wide border-r border-white/10 text-white/70">Variation</th>
+                      <th className="py-3 px-4 text-right font-medium text-[9px] uppercase tracking-wide text-white/70">Réduction</th>
                     </tr>
                   </thead>
                   <tbody>
                     {[
-                      { label: "Chauffage des locaux", icon: "flame", avant: heatingBeforeGJ, apres: heatingAfterGJ },
-                      { label: "Eau chaude domestique", icon: "droplet", avant: hotWaterBeforeGJ, apres: hotWaterAfterGJ },
-                      { label: "Charges électriques de base", icon: "zap", avant: baseLoadsBeforeGJ, apres: baseLoadsAfterGJ },
-                      { label: "Ventilation", icon: "wind", avant: ventilationBeforeGJ, apres: ventilationAfterGJ },
-                      { label: "Climatisation", icon: "snow", avant: coolingBeforeGJ, apres: coolingAfterGJ },
+                      { label: "Chauffage des locaux", avant: heatingBeforeGJ, apres: heatingAfterGJ },
+                      { label: "Eau chaude domestique", avant: hotWaterBeforeGJ, apres: hotWaterAfterGJ },
+                      { label: "Charges électriques de base", avant: baseLoadsBeforeGJ, apres: baseLoadsAfterGJ },
+                      { label: "Ventilation", avant: ventilationBeforeGJ, apres: ventilationAfterGJ },
+                      { label: "Climatisation", avant: coolingBeforeGJ, apres: coolingAfterGJ },
                     ].map((row, idx) => {
                       const variation = row.apres - row.avant;
                       const pct = row.avant > 0 ? ((row.avant - row.apres) / row.avant) * 100 : 0;
-                      const barWidth = row.avant > 0 ? Math.min(100, (row.apres / row.avant) * 100) : 0;
                       return (
-                        <tr key={idx} style={idx % 2 === 1 ? { backgroundColor: '#f8fafc' } as React.CSSProperties : {}}>
-                          <td className="text-xs py-3 px-4 border-r border-slate-100 font-medium text-slate-700">{row.label}</td>
-                          <td className="text-xs text-right py-3 px-4 font-mono border-r border-slate-100 text-slate-600">{row.avant.toFixed(2)}</td>
-                          <td className="text-xs text-right py-3 px-4 font-mono border-r border-slate-100 text-slate-600">{row.apres.toFixed(2)}</td>
-                          <td className={`text-xs text-right py-3 px-4 font-mono border-r border-slate-100 font-semibold ${variation < 0 ? "text-green-600" : variation > 0 ? "text-red-600" : "text-slate-400"}`}>
-                            {variation < 0 ? "" : "+"}{variation.toFixed(2)}
+                        <tr key={idx}
+                          className="border-b border-slate-100"
+                          style={idx % 2 === 1 ? { backgroundColor: '#f8fafc', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties : {}}>
+                          <td className="py-3 px-4 border-r border-slate-100 font-medium text-slate-700">{row.label}</td>
+                          <td className="py-3 px-4 text-right font-mono border-r border-slate-100 text-slate-500">{row.avant.toFixed(1)}</td>
+                          <td className="py-3 px-4 text-right font-mono border-r border-slate-100 text-slate-500">{row.apres.toFixed(1)}</td>
+                          <td className={`py-3 px-4 text-right font-mono border-r border-slate-100 font-semibold ${variation < 0 ? "text-emerald-600" : variation > 0 ? "text-red-500" : "text-slate-400"}`}>
+                            {variation < 0 ? "" : "+"}{variation.toFixed(1)}
                           </td>
-                          <td className="text-xs text-right py-3 px-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <div className="w-16 h-2 rounded-full bg-slate-100 overflow-hidden hidden md:block print:hidden">
-                                <div className="h-full rounded-full" style={{ width: `${100 - barWidth}%`, backgroundColor: pct > 0 ? '#16a34a' : pct < 0 ? '#dc2626' : '#94a3b8' }} />
-                              </div>
-                              {pct > 0 ? (
-                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: '#16a34a' } as React.CSSProperties}>
-                                  -{pct.toFixed(1)}%
-                                </span>
-                              ) : pct < 0 ? (
-                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: '#dc2626' } as React.CSSProperties}>
-                                  +{Math.abs(pct).toFixed(1)}%
-                                </span>
-                              ) : (
-                                <span className="text-slate-400 text-[10px]">—</span>
-                              )}
-                            </div>
+                          <td className="py-3 px-4 text-right">
+                            {pct > 0 ? (
+                              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: '#059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                                ↓ {pct.toFixed(1)}%
+                              </span>
+                            ) : pct < 0 ? (
+                              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: '#dc2626' } as React.CSSProperties}>
+                                ↑ {Math.abs(pct).toFixed(1)}%
+                              </span>
+                            ) : (
+                              <span className="text-slate-300 text-[10px]">—</span>
+                            )}
                           </td>
                         </tr>
                       );
                     })}
-                    <tr className="border-t-2 border-slate-300" style={{ backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-                      <td className="text-xs py-3 px-4 text-white font-bold border-r border-white/20">Consommation totale</td>
-                      <td className="text-xs text-right py-3 px-4 font-mono text-white font-bold border-r border-white/20">{totalBeforeGJ.toFixed(2)}</td>
-                      <td className="text-xs text-right py-3 px-4 font-mono text-white font-bold border-r border-white/20">{totalAfterGJ.toFixed(2)}</td>
-                      <td className="text-xs text-right py-3 px-4 font-mono font-bold border-r border-white/20" style={{ color: '#86efac' }}>
-                        {(totalAfterGJ - totalBeforeGJ) < 0 ? "" : "+"}{(totalAfterGJ - totalBeforeGJ).toFixed(2)}
+                    <tr style={{ backgroundColor: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                      <td className="py-3.5 px-4 text-white font-bold border-r border-white/10">Total consommation</td>
+                      <td className="py-3.5 px-4 text-right font-mono text-white font-bold border-r border-white/10">{totalBeforeGJ.toFixed(1)}</td>
+                      <td className="py-3.5 px-4 text-right font-mono text-white font-bold border-r border-white/10">{totalAfterGJ.toFixed(1)}</td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold border-r border-white/10" style={{ color: '#86efac' }}>
+                        {(totalAfterGJ - totalBeforeGJ).toFixed(1)}
                       </td>
-                      <td className="text-xs text-right py-3 px-4">
-                        <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold" style={{ backgroundColor: '#fff', color: '#1e3a5f' } as React.CSSProperties}>{improvementPct.toFixed(1)}%</span>
+                      <td className="py-3.5 px-4 text-right">
+                        <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold" style={{ backgroundColor: '#fff', color: '#1e3a5f', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>↓ {improvementPct.toFixed(1)}%</span>
                       </td>
                     </tr>
                   </tbody>
@@ -1215,10 +1200,10 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </div>
             </section>
 
-            <Separator className="relative z-10" />
+            <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
             <section id="toc-conclusion" className="relative z-10">
-              <h2 className="text-base font-semibold mb-4" data-testid="text-section-conclusion">
+              <h2 className="" data-testid="text-section-conclusion">
                 7. Conclusion
               </h2>
               <div className="space-y-3 text-sm leading-relaxed">
@@ -1244,10 +1229,10 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </div>
             </section>
 
-            <Separator className="relative z-10" />
+            <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
             <section id="toc-annexes" className="relative z-10">
-              <h2 className="text-base font-semibold mb-6" data-testid="text-annexes-title">
+              <h2 className="" data-testid="text-annexes-title">
                 8. Annexes
               </h2>
 
