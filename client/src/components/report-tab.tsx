@@ -517,7 +517,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ '--card': '0 0% 100%', '--background': '0 0% 100%' } as React.CSSProperties}>
       <div className="flex items-center justify-between gap-4 mb-4 print:hidden">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-muted-foreground" />
