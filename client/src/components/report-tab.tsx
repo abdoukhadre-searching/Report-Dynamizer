@@ -880,16 +880,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   Cette répartition démontre que les stratégies visant à améliorer l'efficacité du système de chauffage et à réduire les pertes thermiques du bâtiment constituent les interventions les plus efficaces pour diminuer la consommation énergétique globale.
                 </p>
 
-                {pre.monthlyEnergy && (
-                  <div id="tableau-1">
-                    <MonthlyEnergyTable
-                      data={pre.monthlyEnergy}
-                      annual={pre.annualEnergy}
-                      label="Tableau 1 : Consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
-                    />
-                  </div>
-                )}
-
                 <div id="figure-1" className="mt-8">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 1 : Répartition de la consommation énergétique avant travaux (GJ/an)</p>
                   <div className="flex justify-center">
@@ -926,6 +916,60 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     </div>
                   </div>
                 </div>
+
+                {pre.monthlyEnergy && (
+                  <div id="tableau-1" className="mt-8">
+                    <MonthlyEnergyTable
+                      data={pre.monthlyEnergy}
+                      annual={pre.annualEnergy}
+                      label="Tableau 1 : Consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
+                    />
+                  </div>
+                )}
+
+                {pre.monthlyEnergy && (() => {
+                  const monthLabels = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Août", "Sep", "Oct", "Nov", "Déc"];
+                  const stackedData = monthLabels.map((month, idx) => {
+                    const m = pre.monthlyEnergy![idx];
+                    return {
+                      month,
+                      Chauffage: Number(((m.heatingPrimary + m.heatingSecondary) / 1000).toFixed(3)),
+                      "Eau chaude": Number((m.hotWaterPrimary / 1000).toFixed(3)),
+                      "Éclairage & appareils": Number((m.lightingAppliances / 1000).toFixed(3)),
+                      Ventilation: Number((m.ventilation / 1000).toFixed(3)),
+                      Climatisation: Number((m.cooling / 1000).toFixed(3)),
+                    };
+                  });
+                  const stackEntries: Array<{ key: string; color: string }> = [
+                    { key: "Chauffage", color: CATEGORY_COLORS["Chauffage"] || "hsl(var(--chart-1))" },
+                    { key: "Eau chaude", color: CATEGORY_COLORS["Eau chaude"] || "hsl(var(--chart-2))" },
+                    { key: "Éclairage & appareils", color: CATEGORY_COLORS["Charges de base"] || "hsl(var(--chart-3))" },
+                    { key: "Ventilation", color: CATEGORY_COLORS["Ventilation"] || "hsl(var(--chart-4))" },
+                    { key: "Climatisation", color: CATEGORY_COLORS["Climatisation"] || "hsl(var(--chart-5))" },
+                  ];
+                  return (
+                    <div className="mt-6" id="figure-pre-monthly">
+                      <p className="text-xs text-center text-muted-foreground mb-2 italic">Consommation mensuelle PRÉ-travaux par catégorie (GJ/mois)</p>
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={stackedData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                            <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} unit=" GJ" />
+                            <Tooltip
+                              contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: 11 }}
+                              formatter={(value: number, name: string) => [`${value} GJ`, name]}
+                            />
+                            <Legend wrapperStyle={{ fontSize: 10 }} />
+                            {stackEntries.map(({ key, color }) => (
+                              <Bar key={key} dataKey={key} stackId="pre" fill={color} />
+                            ))}
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </section>
 
