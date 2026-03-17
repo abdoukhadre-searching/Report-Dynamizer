@@ -679,7 +679,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               <nav className="space-y-2.5 text-xs">
                 {tocItems.map((item, idx) => {
                   const ids = ["toc-resume", "toc-description", "toc-profil", "toc-strategies", "toc-performance", "toc-comparatif", "toc-conclusion", "toc-approbation", "toc-annexes"];
-                  const sectionLabels = ["p. 3", "p. 4", "p. 5", "p. 6", "p. 7", "p. 8", "p. 9", "p. 10", "p. 11"];
+                  const sectionLabels = ["", "", "", "", "", "", "", "", ""];
                   const isStrategiesSection = idx === 3;
                   return (
                     <div key={idx}>
@@ -698,7 +698,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                         <span className="text-[10px] text-slate-400 italic">{sectionLabels[idx]}</span>
                       </a>
                       {isStrategiesSection && activeStrategies.length > 0 && (
-                        <div className="ml-6 mt-0.5 mb-0.5 space-y-0.5">
+                        <div className="ml-6 mt-1.5 mb-1.5 space-y-2">
                           {activeStrategies.map((s, si) => (
                             <a
                               key={si}
@@ -708,7 +708,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                             >
                               <span className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{si + 1}</span>
                               <span className="flex-1">{s.label}</span>
-                              <span className="text-[10px] text-slate-400 italic">p. 6</span>
                             </a>
                           ))}
                         </div>
@@ -815,6 +814,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   return equip || "N/A";
                 })();
                 const chars = [
+                  { label: "Nombre d'étages", value: floorsLabel || "N/A" },
                   { label: "Valeur thermique du toit (R)", value: "N/A" },
                   { label: "Valeur thermique des murs extérieurs (R)", value: "N/A" },
                   { label: "Taux de renouvellement d'air", value: cah50 !== null ? `${cah50} CAH à 50 Pa, ${cahLevel}` : "N/A" },
@@ -856,7 +856,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
-            <section id="toc-profil" className="relative z-10">
+            <section id="toc-profil" className="relative z-10 print:break-before-page">
               <h2 className="" data-testid="text-section-profil">
                 3. Profil de consommation énergétique actuel
               </h2>
@@ -931,7 +931,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
-            <section id="toc-strategies" className="relative z-10">
+            <section id="toc-strategies" className="relative z-10 print:break-before-page">
               <h2 className="" data-testid="text-section-strategies">
                 4. Stratégie d'optimisation énergétique
               </h2>
@@ -1053,7 +1053,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
-            <section id="toc-performance" className="relative z-10">
+            <section id="toc-performance" className="relative z-10 print:break-before-page">
               <h2 className="" data-testid="text-section-performance">
                 5. Performance énergétique après optimisation
               </h2>
@@ -1183,7 +1183,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
-            <section id="toc-comparatif" className="relative z-10">
+            <section id="toc-comparatif" className="relative z-10 print:break-before-page">
               <h2 className="" data-testid="text-section-comparatif">
                 6. Comparatif énergétique
               </h2>
@@ -1279,7 +1279,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
-            <section id="toc-conclusion" className="relative z-10">
+            <section id="toc-conclusion" className="relative z-10 print:break-before-page">
               <h2 className="" data-testid="text-section-conclusion">
                 7. Conclusion
               </h2>
@@ -1313,40 +1313,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 8. Approbation de l'évaluateur et signature
               </h2>
               <div className="space-y-6 text-sm">
-                <table className="w-full border-collapse text-xs" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>
-                      <th className="py-3 px-4 text-left text-white font-semibold border-r border-white/20 w-[45%]"></th>
-                      <th className="py-3 px-4 text-center text-white font-semibold border-r border-white/20">Immeuble évalué (E)</th>
-                      <th className="py-3 px-4 text-center text-white font-semibold border-r border-white/20">Immeuble de référence (R)</th>
-                      <th className="py-3 px-4 text-center text-white font-semibold">Économie d'énergie (en%)<br/>(R−E) / R×100</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-slate-200">
-                      <td className="py-3 px-4 font-medium text-slate-700 border-r border-slate-100">Consommation d'énergie annuelle totale (GJ/A)</td>
-                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{totalAfterGJ.toFixed(3)} GJ</td>
-                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{totalBeforeGJ.toFixed(3)} GJ</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="inline-block px-3 py-1 rounded text-white text-xs font-bold" style={{ backgroundColor: '#16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-                          {improvementPct.toFixed(1)}%
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 px-4 font-medium text-slate-700 border-r border-slate-100">Émission de gaz à effet de serre annuelle totale (nombre de tonnes équivalent CO₂ par année)</td>
-                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{ghsAfter.toFixed(5)} T/A</td>
-                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{ghsBefore.toFixed(5)} T/A</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="inline-block px-3 py-1 rounded text-white text-xs font-bold" style={{ backgroundColor: '#16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
-                          {ghsImprovementPct.toFixed(1)}%
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <div className="mt-8 pt-6" style={{ borderTop: '1px solid #e2e8f0' }}>
+                <div>
                   <p className="text-sm font-bold mb-4">Document approuvé par :</p>
                   <div className="flex items-start gap-6">
                     <div className="flex-shrink-0">
