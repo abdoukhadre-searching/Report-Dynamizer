@@ -463,20 +463,41 @@ export async function registerRoutes(
     // <date du rapport> at pdftotext x=45, yMin=374.456, yMax=384.529
     fill(p1, 45, 374.456, 384.529, fullDate, { wide: 75 });
 
-    // ── Page 1: new construction table % ────────────────────────────
+    // Checkbox X positions (pdftotext): right after "Niveau N" text
+    // Page 1 (new): "N 1" xMax≈84.1, "N 2" xMax≈270.6, "N 3" xMax≈457.1
+    // Page 2 (existing): same X positions
+    const checkboxXByNiveau = [87, 274, 460] as const;
+    const checkX = checkboxXByNiveau[niveau - 1];
+
+    // Helper to draw bold "X" checkmark inside the small checkbox square
+    const drawCheck = (page: (typeof pages)[0], ptopX: number, ptopY: number) => {
+      page.drawText("X", {
+        x: ptopX + 1,
+        y: toPdfY(ptopY + 9),
+        size: 7,
+        font: fontBold,
+        color: BLACK,
+      });
+    };
+
+    // ── Page 1: new construction table % + checkbox ──────────────────
     // "<%>" at pdftotext y≈650 for each niveau column
     if (isNew) {
       const Y1 = 642, Y2 = 655;
       const xByNiveau = [87, 267, 449] as const;
       fill(p1, xByNiveau[niveau - 1], Y1, Y2, pctText, { bold: true, wide: 65 });
+      // Checkbox row: pdftotext yMin≈580.24, checkbox is at Y≈582
+      drawCheck(p1, checkX, 580.24);
     }
 
-    // ── Page 2: existing properties table % ─────────────────────────
+    // ── Page 2: existing properties table % + checkbox ───────────────
     // "de <%>" at pdftotext y≈214 for each niveau column
     if (!isNew) {
       const Y1 = 214, Y2 = 227;
       const xByNiveau = [82, 268, 455] as const;
       fill(p2, xByNiveau[niveau - 1], Y1, Y2, pctText, { bold: true, wide: 55 });
+      // Checkbox row: pdftotext yMin≈122.81, checkbox is at Y≈122.81
+      drawCheck(p2, checkX, 122.81);
     }
 
     // ── Page 2: DATÉ du <jour> de <mois>, 20<an> ────────────────────
