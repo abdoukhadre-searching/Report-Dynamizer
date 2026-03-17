@@ -337,6 +337,52 @@ export default function DashboardTab({ project }: DashboardTabProps) {
         </CardContent>
       </Card>
 
+      {pre.monthlyEnergy && (() => {
+        const preMonthlyStackedData = monthLabels.map((month, idx) => {
+          const m = pre.monthlyEnergy![idx];
+          return {
+            month,
+            Chauffage: Number(((m.heatingPrimary + m.heatingSecondary) / 1000).toFixed(3)),
+            "Eau chaude": Number((m.hotWaterPrimary / 1000).toFixed(3)),
+            "Éclairage & appareils": Number((m.lightingAppliances / 1000).toFixed(3)),
+            Ventilation: Number((m.ventilation / 1000).toFixed(3)),
+            Climatisation: Number((m.cooling / 1000).toFixed(3)),
+          };
+        });
+        const stackColors: Record<string, string> = {
+          Chauffage: "hsl(var(--chart-1))",
+          "Eau chaude": "hsl(var(--chart-2))",
+          "Éclairage & appareils": "hsl(var(--chart-3))",
+          Ventilation: "hsl(var(--chart-4))",
+          Climatisation: "hsl(var(--chart-5))",
+        };
+        return (
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="font-medium mb-1">Consommation mensuelle PRÉ-travaux par catégorie (GJ/mois)</h3>
+              <p className="text-xs text-muted-foreground mb-4">Répartition détaillée de la consommation énergétique avant travaux</p>
+              <div className="h-[340px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={preMonthlyStackedData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} label={{ value: "GJ/mois", angle: -90, position: "insideLeft", offset: 5, style: { fontSize: 10 } }} />
+                    <Tooltip
+                      contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "6px", fontSize: 12 }}
+                      formatter={(value: number, name: string) => [`${value} GJ`, name]}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    {Object.entries(stackColors).map(([key, color]) => (
+                      <Bar key={key} dataKey={key} stackId="pre" fill={color} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardContent className="p-6">
