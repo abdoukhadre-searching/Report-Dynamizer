@@ -499,6 +499,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
     "Performance énergétique après optimisation",
     "Comparatif énergétique",
     "Conclusion",
+    "Approbation de l'évaluateur et signature",
     "Annexes",
   ];
 
@@ -677,8 +678,8 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               <h2 className="text-lg font-semibold mb-6" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Table des matières</h2>
               <nav className="space-y-1.5 text-xs">
                 {tocItems.map((item, idx) => {
-                  const ids = ["toc-resume", "toc-description", "toc-profil", "toc-strategies", "toc-performance", "toc-comparatif", "toc-conclusion", "toc-annexes"];
-                  const sectionLabels = ["Section 1", "Section 2", "Section 3", "Section 4", "Section 5", "Section 6", "Section 7", "Annexes"];
+                  const ids = ["toc-resume", "toc-description", "toc-profil", "toc-strategies", "toc-performance", "toc-comparatif", "toc-conclusion", "toc-approbation", "toc-annexes"];
+                  const sectionLabels = ["p. 3", "p. 4", "p. 5", "p. 6", "p. 7", "p. 8", "p. 9", "p. 10", "p. 11"];
                   const isStrategiesSection = idx === 3;
                   return (
                     <div key={idx}>
@@ -707,7 +708,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                             >
                               <span className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{si + 1}</span>
                               <span className="flex-1">{s.label}</span>
-                              <span className="text-[10px] text-slate-400 italic">Section 4.{si + 1}</span>
+                              <span className="text-[10px] text-slate-400 italic">p. 6</span>
                             </a>
                           ))}
                         </div>
@@ -721,9 +722,9 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des tableaux</h3>
                 <nav className="space-y-1.5 text-xs">
                   {[
-                    { id: "toc-profil", label: "Tableau 1 : Consommation mensuelle détaillée (Avant travaux)", section: "Section 3" },
-                    { id: "toc-performance", label: "Tableau 2 : Consommation mensuelle détaillée (Après travaux)", section: "Section 5" },
-                    { id: "toc-comparatif", label: "Tableau 3 : Comparatif énergétique Avant / Après", section: "Section 6" },
+                    { id: "toc-profil", label: "Tableau 1 : Consommation mensuelle détaillée (Avant travaux)", page: "p. 5" },
+                    { id: "toc-performance", label: "Tableau 2 : Consommation mensuelle détaillée (Après travaux)", page: "p. 7" },
+                    { id: "toc-comparatif", label: "Tableau 3 : Comparatif énergétique Avant / Après", page: "p. 8" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -734,7 +735,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     >
                       <span className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>{idx + 1}</span>
                       <span className="flex-1">{item.label}</span>
-                      <span className="text-[10px] text-slate-400 italic">{item.section}</span>
+                      <span className="text-[10px] text-slate-400 italic">{item.page}</span>
                     </a>
                   ))}
                 </nav>
@@ -744,11 +745,11 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 <h3 className="text-sm font-semibold mb-4" style={{ color: '#1e3a5f', fontFamily: "'Playfair Display', serif" }}>Liste des figures</h3>
                 <nav className="space-y-1.5 text-xs">
                   {[
-                    { id: "toc-profil", label: "Figure 1 : Répartition énergétique par catégorie (Avant travaux)", section: "Section 3" },
-                    { id: "toc-performance", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)", section: "Section 5" },
-                    { id: "toc-performance", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)", section: "Section 5" },
-                    { id: "toc-performance", label: "Figure 4 : Consommation mensuelle totale (Après travaux)", section: "Section 5" },
-                    { id: "toc-annexes", label: "Figure 5 : Répartition des déperditions thermiques", section: "Annexes" },
+                    { id: "toc-profil", label: "Figure 1 : Répartition énergétique par catégorie (Avant travaux)", page: "p. 5" },
+                    { id: "toc-performance", label: "Figure 2 : Comparaison Avant / Après par catégorie (GJ)", page: "p. 7" },
+                    { id: "toc-performance", label: "Figure 3 : Répartition énergétique par catégorie (Après travaux)", page: "p. 7" },
+                    { id: "toc-performance", label: "Figure 4 : Consommation mensuelle totale (Après travaux)", page: "p. 7" },
+                    { id: "toc-annexes", label: "Figure 5 : Répartition des déperditions thermiques", page: "p. 11" },
                   ].map((item, idx) => (
                     <a
                       key={idx}
@@ -759,7 +760,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     >
                       <span className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#16a34a' }}>{idx + 1}</span>
                       <span className="flex-1">{item.label}</span>
-                      <span className="text-[10px] text-slate-400 italic">{item.section}</span>
+                      <span className="text-[10px] text-slate-400 italic">{item.page}</span>
                     </a>
                   ))}
                 </nav>
@@ -814,7 +815,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   return equip || "N/A";
                 })();
                 const chars = [
-                  { label: "Nombre d'étages", value: floorsLabel },
                   { label: "Valeur thermique du toit (R)", value: "N/A" },
                   { label: "Valeur thermique des murs extérieurs (R)", value: "N/A" },
                   { label: "Taux de renouvellement d'air", value: cah50 !== null ? `${cah50} CAH à 50 Pa, ${cahLevel}` : "N/A" },
@@ -825,7 +825,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 return (
                   <div className="space-y-4 text-sm leading-relaxed">
                     <p>
-                      Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}, construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>.
+                      Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}, construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>.{floorsDisplay && <> Le bâtiment comporte <span className="font-semibold">{floorsLabel}</span>.</>} La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
                     </p>
 
                     <AnnexImageUpload
@@ -1117,7 +1117,26 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                       ) : (
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={postPieData} cx="50%" cy="42%" outerRadius={95} dataKey="value">
+                            <Pie
+                              data={postPieData}
+                              cx="50%"
+                              cy="42%"
+                              outerRadius={95}
+                              dataKey="value"
+                              labelLine={false}
+                              label={({ cx: pcx, cy: pcy, midAngle, innerRadius, outerRadius: or, value }: any) => {
+                                if (!value || value < 3) return null;
+                                const RADIAN = Math.PI / 180;
+                                const r = innerRadius + (or - innerRadius) * 0.55;
+                                const x = pcx + r * Math.cos(-midAngle * RADIAN);
+                                const y = pcy + r * Math.sin(-midAngle * RADIAN);
+                                return (
+                                  <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="bold">
+                                    {value} GJ
+                                  </text>
+                                );
+                              }}
+                            >
                               {postPieData.map((entry, idx) => (
                                 <Cell key={idx} fill={CATEGORY_COLORS[entry.name] || "hsl(var(--chart-1))"} />
                               ))}
@@ -1298,9 +1317,71 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
+            <section id="toc-approbation" className="relative z-10 print:break-before-page">
+              <h2 className="" data-testid="text-section-approbation">
+                8. Approbation de l'évaluateur et signature
+              </h2>
+              <div className="space-y-6 text-sm">
+                <table className="w-full border-collapse text-xs" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#1e3a5f' } as React.CSSProperties}>
+                      <th className="py-3 px-4 text-left text-white font-semibold border-r border-white/20 w-[45%]"></th>
+                      <th className="py-3 px-4 text-center text-white font-semibold border-r border-white/20">Immeuble évalué (E)</th>
+                      <th className="py-3 px-4 text-center text-white font-semibold border-r border-white/20">Immeuble de référence (R)</th>
+                      <th className="py-3 px-4 text-center text-white font-semibold">Économie d'énergie (en%)<br/>(R−E) / R×100</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-slate-200">
+                      <td className="py-3 px-4 font-medium text-slate-700 border-r border-slate-100">Consommation d'énergie annuelle totale (GJ/A)</td>
+                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{totalAfterGJ.toFixed(3)} GJ</td>
+                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{totalBeforeGJ.toFixed(3)} GJ</td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-block px-3 py-1 rounded text-white text-xs font-bold" style={{ backgroundColor: '#16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                          {improvementPct.toFixed(1)}%
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-medium text-slate-700 border-r border-slate-100">Émission de gaz à effet de serre annuelle totale (nombre de tonnes équivalent CO₂ par année)</td>
+                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{ghsAfter.toFixed(5)} T/A</td>
+                      <td className="py-3 px-4 text-center font-mono border-r border-slate-100">{ghsBefore.toFixed(5)} T/A</td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-block px-3 py-1 rounded text-white text-xs font-bold" style={{ backgroundColor: '#16a34a', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as React.CSSProperties}>
+                          {ghsImprovementPct.toFixed(1)}%
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="mt-8 pt-6" style={{ borderTop: '1px solid #e2e8f0' }}>
+                  <p className="text-sm font-bold mb-4">Document approuvé par :</p>
+                  <div className="flex items-start gap-6">
+                    <div className="flex-shrink-0">
+                      <p className="text-4xl font-light mb-1" style={{ fontFamily: "'Playfair Display', serif", color: '#1e3a5f', lineHeight: 1.15 }}>
+                        Marc-André<br/>Boucher
+                      </p>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1 pt-1 border-l border-slate-200 pl-4">
+                      <p className="font-medium text-slate-700">Signature numérique de</p>
+                      <p className="font-medium text-slate-700">Marc-André Boucher</p>
+                      <p className="mt-1">Date : {new Date().toISOString().slice(0, 10).replace(/-/g, ".")} {new Date().toLocaleTimeString("fr-CA", { hour12: false })} -05'00'</p>
+                    </div>
+                  </div>
+                  <div className="mt-6 pt-4" style={{ borderTop: '1px solid #cbd5e1' }}>
+                    <p className="text-sm font-bold text-slate-800">Marc-André Boucher</p>
+                    <p className="text-xs text-slate-500">Évaluateur en efficacité énergétique agréé</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
+
             <section id="toc-annexes" className="relative z-10">
               <h2 className="" data-testid="text-annexes-title">
-                8. Annexes
+                9. Annexes
               </h2>
 
               <div className="space-y-8">
