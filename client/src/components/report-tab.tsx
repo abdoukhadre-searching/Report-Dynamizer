@@ -880,7 +880,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   Cette répartition démontre que les stratégies visant à améliorer l'efficacité du système de chauffage et à réduire les pertes thermiques du bâtiment constituent les interventions les plus efficaces pour diminuer la consommation énergétique globale.
                 </p>
 
-                <div id="figure-1" className="mt-8">
+                <div id="figure-1" className="mt-16">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 1 : Répartition de la consommation énergétique avant travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[560px]">
@@ -948,7 +948,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     { key: "Climatisation", color: CATEGORY_COLORS["Climatisation"] || "hsl(var(--chart-5))" },
                   ];
                   return (
-                    <div className="mt-6" id="figure-pre-monthly">
+                    <div className="mt-14" id="figure-pre-monthly">
                       <p className="text-xs text-center text-muted-foreground mb-2 italic">Consommation mensuelle PRÉ-travaux par catégorie (GJ/mois)</p>
                       <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -1404,7 +1404,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               </h2>
 
               <div className="space-y-8">
-                <div>
+                <div className="print:break-after-page">
                   <h3 className="text-sm font-semibold mb-2">1. Zone climatique</h3>
                   <p className="text-xs text-muted-foreground mb-2">
                     Données climatiques: {pre.buildingInfo?.climateData || "-"}
