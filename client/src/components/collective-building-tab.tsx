@@ -99,29 +99,29 @@ export default function CollectiveBuildingTab({ project }: CollectiveBuildingTab
       <div className="grid grid-cols-3 gap-3 text-sm">
         <div className="border rounded p-3 bg-slate-50">
           <div className="text-xs text-muted-foreground mb-1">Énergie — Immeuble évalué (E)</div>
-          <div className="font-bold text-base">{energyE != null ? `${energyE.toFixed(3)} GJ` : "—"}</div>
+          <div className="text-base">{energyE != null ? `${energyE.toFixed(3)} GJ` : "—"}</div>
         </div>
         <div className="border rounded p-3 bg-slate-50">
           <div className="text-xs text-muted-foreground mb-1">Énergie — Référence (R)</div>
-          <div className="font-bold text-base">{energyR != null ? `${energyR.toFixed(3)} GJ` : "—"}</div>
+          <div className="text-base">{energyR != null ? `${energyR.toFixed(3)} GJ` : "—"}</div>
         </div>
-        <div className="border rounded p-3" style={{ backgroundColor: "#e8f5f2" }}>
+        <div className="border rounded p-3 bg-slate-50">
           <div className="text-xs text-muted-foreground mb-1">Économies d'énergie</div>
-          <div className="font-bold text-base" style={{ color: "#2a7d6e" }}>
+          <div className="text-base">
             {energySavings != null ? `${energySavings.toFixed(1)} %` : "—"}
           </div>
         </div>
         <div className="border rounded p-3 bg-slate-50">
           <div className="text-xs text-muted-foreground mb-1">GES — Immeuble évalué (E)</div>
-          <div className="font-bold text-base">{ghgE != null ? `${ghgE.toFixed(5)} T/A` : "—"}</div>
+          <div className="text-base">{ghgE != null ? `${ghgE.toFixed(5)} T/A` : "—"}</div>
         </div>
         <div className="border rounded p-3 bg-slate-50">
           <div className="text-xs text-muted-foreground mb-1">GES — Référence (R)</div>
-          <div className="font-bold text-base">{ghgR != null ? `${ghgR.toFixed(5)} T/A` : "—"}</div>
+          <div className="text-base">{ghgR != null ? `${ghgR.toFixed(5)} T/A` : "—"}</div>
         </div>
-        <div className="border rounded p-3" style={{ backgroundColor: "#e8f5f2" }}>
+        <div className="border rounded p-3 bg-slate-50">
           <div className="text-xs text-muted-foreground mb-1">Réduction GES</div>
-          <div className="font-bold text-base" style={{ color: "#2a7d6e" }}>
+          <div className="text-base">
             {ghgSavings != null ? `${ghgSavings.toFixed(1)} %` : "—"}
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function CollectiveBuildingTab({ project }: CollectiveBuildingTab
         </button>
 
         {showPreview && (
-          <div className="divide-y bg-gray-100 p-4 space-y-4">
+          <div className="bg-gray-100 p-4 space-y-4">
             {[1, 2, 3, 4].map((pageNum) => (
               <div key={pageNum}>
                 <div className="text-xs text-muted-foreground mb-2 font-medium">Page {pageNum}</div>
