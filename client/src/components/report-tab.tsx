@@ -788,32 +788,64 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
               {(() => {
                 const numFloors = pre.buildingInfo?.numFloors || post.buildingInfo?.numFloors || "";
                 const floorsDisplay = numFloors.replace(/\s*étages?\s*$/i, "").trim() || numFloors;
+                const floorsLabel = floorsDisplay
+                  ? `${floorsDisplay} étage${(floorsDisplay.toLowerCase() === "un" || floorsDisplay === "1") ? "" : "s"}`
+                  : "N/A";
+                const cah50 = pre.airLeakage?.cah50 ?? null;
+                const cahLevel = cah50 !== null
+                  ? cah50 >= 7 ? "indiquant un niveau élevé d'infiltration d'air"
+                    : cah50 >= 4 ? "indiquant un niveau modéré d'infiltration d'air"
+                    : "indiquant un niveau faible d'infiltration d'air"
+                  : "";
+                const heatingLabel = (() => {
+                  const eq = (pre.heating?.primaryEquipment || "").toLowerCase();
+                  const fuel = (pre.heating?.primaryType || "").toLowerCase();
+                  if (/thermopompe/i.test(eq)) return "thermopompe à air";
+                  if (/plinthe/i.test(eq) || fuel === "électricité") return "plinthes électriques";
+                  if (/chaudière|fournaise/i.test(eq) && /gaz/i.test(fuel)) return "chaudière au gaz naturel";
+                  return eq || "N/A";
+                })();
+                const hotWaterLabel = (() => {
+                  const type = (pre.hotWater?.primaryType || "").toLowerCase();
+                  const equip = (pre.hotWater?.equipmentType || "").toLowerCase();
+                  if (/thermopompe/i.test(equip)) return "chauffe-eau thermopompe";
+                  if (type === "électricité" || type === "electricite") return "chauffe-eau électrique";
+                  if (/gaz/i.test(type)) return "chauffe-eau au gaz naturel";
+                  return equip || "N/A";
+                })();
+                const chars = [
+                  { label: "Nombre d'étages", value: floorsLabel },
+                  { label: "Valeur thermique du toit (R)", value: "N/A" },
+                  { label: "Valeur thermique des murs extérieurs (R)", value: "N/A" },
+                  { label: "Taux de renouvellement d'air", value: cah50 !== null ? `${cah50} CAH à 50 Pa, ${cahLevel}` : "N/A" },
+                  { label: "Système de chauffage", value: heatingLabel },
+                  { label: "Système de production d'eau chaude domestique", value: hotWaterLabel },
+                  { label: "Ratio de fenestration (murs hors-terre)", value: windowFraction },
+                ];
                 return (
-                  <div className="space-y-3 text-sm leading-relaxed">
+                  <div className="space-y-4 text-sm leading-relaxed">
                     <p>
-                      Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}.
-                    </p>
-                    <p>
-                      Construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>, il s'agit d'un bâtiment représentatif des constructions résidentielles de cette période.{floorsDisplay && <> Le bâtiment comporte <span className="font-semibold">{floorsDisplay} étage{floorsDisplay.toLowerCase() === "un" || floorsDisplay === "1" ? "" : "s"}</span>.</>} La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
+                      Le bâtiment analysé est un immeuble résidentiel situé au <span className="font-semibold">{fullAddress}</span>{numUnits > 0 && <>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>}, construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>.
                     </p>
 
                     <AnnexImageUpload
-                      key="description-climate-zone"
+                      key="description-building-photo"
                       projectId={project.id}
                       annexType="ledLighting"
                       label="Photo du bâtiment"
                       currentImage={annexImages.ledLighting}
                     />
 
-                    <p>
-                      L'analyse énergétique indique un taux de changement d'air de <span className="font-semibold">{pre.airLeakage?.cah50 ?? "N/A"} CAH</span> à 50 Pa, ce qui témoigne d'un niveau relativement élevé d'infiltration d'air et contribue aux pertes thermiques du bâtiment.
-                    </p>
-                    <p>
-                      Le système de chauffage des logements est assuré par <span className="font-semibold">{preHeatingEquipment.toLowerCase()}</span>, tandis que la production d'eau chaude domestique est réalisée par des chauffe-eau{pre.hotWater?.primaryType ? ` ${pre.hotWater.primaryType.toLowerCase() === "électricité" ? "électriques" : `au ${pre.hotWater.primaryType.toLowerCase()}`}` : ""}.
-                    </p>
-                    <p>
-                      La fraction de la surface des murs hors-terre occupée par les fenêtres est estimée à environ <span className="font-semibold">{windowFraction}</span>, ce qui influence également les pertes thermiques de l'enveloppe du bâtiment.
-                    </p>
+                    <p className="font-medium mt-2">Caractéristiques générales :</p>
+                    <ul className="space-y-1.5 ml-2">
+                      {chars.map(({ label, value }) => (
+                        <li key={label} className="flex gap-1">
+                          <span className="text-muted-foreground shrink-0">{label} :</span>
+                          <span className="font-medium">{value}</span>
+                        </li>
+                      ))}
+                    </ul>
+
                     <p>
                       Ces caractéristiques sont représentatives des bâtiments construits avant l'introduction des normes modernes d'efficacité énergétique, ce qui explique le potentiel important d'amélioration énergétique.
                     </p>

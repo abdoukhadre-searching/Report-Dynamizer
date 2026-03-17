@@ -214,13 +214,29 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   }
 
   if (!info.numFloors) {
-    const floorsIdx = findLineIndex(lines, "Nombre d'étages:");
-    if (floorsIdx >= 0) {
-      for (let i = floorsIdx; i < Math.min(floorsIdx + 10, lines.length); i++) {
-        const l = lines[i].toLowerCase();
-        if (l.includes("étage") && !l.includes("nombre")) {
-          info.numFloors = lines[i];
-          break;
+    // Try regex first: handles "Nombre d'étages: Trois étages" on same line
+    const sameLine = text.match(/Nombre d['']étages[:\s]+([^\n\r]+)/i);
+    if (sameLine) {
+      const val = sameLine[1].trim();
+      if (/étage/i.test(val)) {
+        info.numFloors = val;
+      }
+    }
+    if (!info.numFloors) {
+      const floorsIdx = findLineIndex(lines, "Nombre d'étages:");
+      if (floorsIdx >= 0) {
+        // Check same line for inline value
+        const sameLineVal = lines[floorsIdx].replace(/Nombre d['']étages[:\s]*/i, "").trim();
+        if (sameLineVal && /étage/i.test(sameLineVal)) {
+          info.numFloors = sameLineVal;
+        } else {
+          for (let i = floorsIdx + 1; i < Math.min(floorsIdx + 10, lines.length); i++) {
+            const l = lines[i].toLowerCase();
+            if (l.includes("étage") && !l.includes("nombre")) {
+              info.numFloors = lines[i];
+              break;
+            }
+          }
         }
       }
     }
