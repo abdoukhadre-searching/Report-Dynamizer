@@ -99,7 +99,7 @@ export default function ProjectPage() {
           <TabsContent value="dashboard">
             {hasBothReports && <DashboardTab project={project} />}
           </TabsContent>
-          <TabsContent value="report">
+          <TabsContent value="report" className="-mx-6 -mb-6 px-6 pb-6 bg-white">
             {hasBothReports && <ReportTab project={project} />}
           </TabsContent>
         </Tabs>
