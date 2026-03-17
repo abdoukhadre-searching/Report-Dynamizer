@@ -880,7 +880,17 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   Cette répartition démontre que les stratégies visant à améliorer l'efficacité du système de chauffage et à réduire les pertes thermiques du bâtiment constituent les interventions les plus efficaces pour diminuer la consommation énergétique globale.
                 </p>
 
-                <div id="figure-1" className="my-6">
+                {pre.monthlyEnergy && (
+                  <div id="tableau-1">
+                    <MonthlyEnergyTable
+                      data={pre.monthlyEnergy}
+                      annual={pre.annualEnergy}
+                      label="Tableau 1 : Consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
+                    />
+                  </div>
+                )}
+
+                <div id="figure-1" className="mt-8">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 1 : Répartition de la consommation énergétique avant travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[560px]">
@@ -916,16 +926,6 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     </div>
                   </div>
                 </div>
-
-                {pre.monthlyEnergy && (
-                  <div id="tableau-1">
-                    <MonthlyEnergyTable
-                      data={pre.monthlyEnergy}
-                      annual={pre.annualEnergy}
-                      label="Tableau 1 : Consommation mensuelle d'énergie par appareil — Avant travaux (MJ)"
-                    />
-                  </div>
-                )}
               </div>
             </section>
 
@@ -944,7 +944,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
 
                 {showAirTightnessStrategy && (
-                  <div className="mt-5" data-testid="strategy-air-tightness">
+                  <div className="mt-10" data-testid="strategy-air-tightness">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("air")}</span>
                       Amélioration de l'étanchéité du bâtiment
@@ -959,7 +959,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHeatingStrategy && (
-                  <div className="mt-5" data-testid="strategy-thermopompe">
+                  <div className="mt-10" data-testid="strategy-thermopompe">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("heat")}</span>
                       Installation de thermopompes haute efficacité
@@ -977,7 +977,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHotWaterStrategy && (
-                  <div className="mt-5" data-testid="strategy-hot-water">
+                  <div className="mt-10" data-testid="strategy-hot-water">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("hw")}</span>
                       Réduction de la consommation d'eau chaude domestique
@@ -992,7 +992,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showLedStrategy && (
-                  <div className="mt-5" data-testid="strategy-led">
+                  <div className="mt-10" data-testid="strategy-led">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("led")}</span>
                       Conversion de l'éclairage vers la technologie DEL
@@ -1007,7 +1007,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showVrcStrategy && (
-                  <div className="mt-5" data-testid="strategy-vrc">
+                  <div className="mt-10" data-testid="strategy-vrc">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("vrc")}</span>
                       Ventilation avec récupération de chaleur (VRC)
@@ -1019,7 +1019,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showHeatPumpWaterHeaterStrategy && (
-                  <div className="mt-5" data-testid="strategy-heat-pump-water-heater">
+                  <div className="mt-10" data-testid="strategy-heat-pump-water-heater">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("hwt")}</span>
                       Chauffe-eaux Thermopompe
@@ -1031,7 +1031,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 )}
 
                 {showGasConversionStrategy && (
-                  <div className="mt-5" data-testid="strategy-gas-conversion">
+                  <div className="mt-10" data-testid="strategy-gas-conversion">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: '#1e3a5f' }}>4.{stratNum("gas")}</span>
                       Conversion {getPreFossilFuelLabel(pre)} vers Électricité
@@ -1183,7 +1183,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
-            <section id="toc-comparatif" className="relative z-10 print:break-before-page">
+            <section id="toc-comparatif" className="relative z-10">
               <h2 className="" data-testid="text-section-comparatif">
                 6. Comparatif énergétique
               </h2>
@@ -1308,7 +1308,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
 
             <div className="relative z-10 my-6" style={{ borderTop: "1px solid #e8eef4", marginLeft: "0" }} />
 
-            <section id="toc-approbation" className="relative z-10 print:break-before-page">
+            <section id="toc-approbation" className="relative z-10">
               <h2 className="" data-testid="text-section-approbation">
                 8. Approbation de l'évaluateur et signature
               </h2>
