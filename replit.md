@@ -63,6 +63,12 @@ The report tab generates a professional narrative PDF-style document with 7 sect
 - **Chauffe-eaux Thermopompe**: Shown when POST hot water equipmentType matches /thermopompe/i
 - **Conversion fossile vers Électricité**: Shown when PRE has fossil fuel and POST has electricity
 
+## Default Annex PDFs
+- `client/public/defaults/thermopompe-innovair.pdf` — Innovair Q4 spec sheet; default for Thermopompes annex (when showHeatingStrategy)
+- `client/public/defaults/faible-debit.pdf` — ECD faible débit spec sheet; default for Robinetterie annex (ALWAYS shown)
+- `AnnexImageUpload` component accepts `defaultPdfUrl` prop; renders as `<object>` when no user image uploaded; user can replace with image upload
+- Robinetterie faible débit annex is unconditionally shown (not conditional on showHotWaterStrategy)
+
 ## User Flow
 1. Create a new project
 2. Upload PRE-travaux HOT2000 report (PDF file or paste text)

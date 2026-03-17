@@ -39,11 +39,13 @@ function AnnexImageUpload({
   annexType,
   label,
   currentImage,
+  defaultPdfUrl,
 }: {
   projectId: string;
   annexType: string;
   label: string;
   currentImage: string | null;
+  defaultPdfUrl?: string;
 }) {
   const { toast } = useToast();
 
@@ -71,42 +73,19 @@ function AnnexImageUpload({
     },
   });
 
-  return (
-    <div className="mt-3">
-      {currentImage ? (
-        <div className="space-y-2 flex flex-col items-center">
-          <img
-            src={currentImage}
-            alt={label}
-            className="max-w-full rounded-md border"
-            style={{ maxHeight: "400px" }}
-            data-testid={`img-annex-${annexType}`}
-          />
-          <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
-            <Upload className="w-3 h-3" />
-            Remplacer l'image
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadMutation.mutate({ file, annexType });
-              }}
-            />
-          </label>
-        </div>
-      ) : (
-        <label
-          className="flex items-center justify-center gap-2 px-4 py-6 border border-dashed rounded-md cursor-pointer text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden"
-          data-testid={`upload-annex-${annexType}`}
-        >
-          {uploadMutation.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <ImageIcon className="w-4 h-4" />
-          )}
-          Importer une image pour {label}
+  if (currentImage) {
+    return (
+      <div className="mt-3 space-y-2 flex flex-col items-center">
+        <img
+          src={currentImage}
+          alt={label}
+          className="max-w-full rounded-md border"
+          style={{ maxHeight: "500px" }}
+          data-testid={`img-annex-${annexType}`}
+        />
+        <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
+          <Upload className="w-3 h-3" />
+          Remplacer l'image
           <input
             type="file"
             accept="image/*"
@@ -117,7 +96,65 @@ function AnnexImageUpload({
             }}
           />
         </label>
-      )}
+      </div>
+    );
+  }
+
+  if (defaultPdfUrl) {
+    return (
+      <div className="mt-3">
+        <div className="border rounded-md overflow-hidden" style={{ height: "500px" }}>
+          <object
+            data={defaultPdfUrl}
+            type="application/pdf"
+            width="100%"
+            height="100%"
+            data-testid={`pdf-annex-${annexType}`}
+          >
+            <a href={defaultPdfUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline p-4 block">
+              Ouvrir le document PDF
+            </a>
+          </object>
+        </div>
+        <label className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
+          <Upload className="w-3 h-3" />
+          Remplacer par une image
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadMutation.mutate({ file, annexType });
+            }}
+          />
+        </label>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3">
+      <label
+        className="flex items-center justify-center gap-2 px-4 py-6 border border-dashed rounded-md cursor-pointer text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden"
+        data-testid={`upload-annex-${annexType}`}
+      >
+        {uploadMutation.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <ImageIcon className="w-4 h-4" />
+        )}
+        Importer une image pour {label}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) uploadMutation.mutate({ file, annexType });
+          }}
+        />
+      </label>
     </div>
   );
 }
@@ -1270,27 +1307,27 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                             annexType="thermopompes"
                             label="Thermopompes"
                             currentImage={annexImages.thermopompes}
+                            defaultPdfUrl="/defaults/thermopompe-innovair.pdf"
                           />
                         </div>
                       )}
 
-                      {showHotWaterStrategy && (
-                        <div id="annex-robineterie">
-                          <h3 className="text-sm font-semibold mb-2">
-                            {annexNum++}. Robinetterie faible débit
-                          </h3>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Installation de pommeaux de douche et de robinets à faible débit afin de réduire la consommation d'eau chaude domestique et, par conséquent, la charge associée à sa production.
-                          </p>
-                          <AnnexImageUpload
-                            key="annex-robineterie"
-                            projectId={project.id}
-                            annexType="robineterie"
-                            label="Robinetterie faible débit"
-                            currentImage={annexImages.robineterie}
-                          />
-                        </div>
-                      )}
+                      <div id="annex-robineterie">
+                        <h3 className="text-sm font-semibold mb-2">
+                          {annexNum++}. Robinetterie faible débit
+                        </h3>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Installation de pommeaux de douche et de robinets à faible débit afin de réduire la consommation d'eau chaude domestique et, par conséquent, la charge associée à sa production.
+                        </p>
+                        <AnnexImageUpload
+                          key="annex-robineterie"
+                          projectId={project.id}
+                          annexType="robineterie"
+                          label="Robinetterie faible débit"
+                          currentImage={annexImages.robineterie}
+                          defaultPdfUrl="/defaults/faible-debit.pdf"
+                        />
+                      </div>
 
                       {showHeatPumpWaterHeaterStrategy && (
                         <div id="annex-chauffe-eau-thermopompe">
