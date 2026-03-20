@@ -2289,15 +2289,103 @@ export default function ReportTab({
                   .
                 </p>
                 <p>
-                  La réduction la plus importante est observée au niveau du
-                  chauffage des locaux, principalement grâce à l'installation de
-                  thermopompes et à l'amélioration de l'étanchéité du bâtiment.
-                </p>
-                <p>
-                  La consommation énergétique liée à la climatisation diminue
-                  également, tandis que les charges de base et la consommation
-                  d'eau chaude domestique sont légèrement réduites grâce aux
-                  mesures d'efficacité énergétique mises en place.
+                {(() => {
+                  const reductions = [
+                    {
+                      key: "heating",
+                      label: "chauffage des locaux",
+                      delta: heatingBeforeGJ - heatingAfterGJ,
+                      strategies: [
+                        ...(showHeatingStrategy ? ["l'installation de thermopompes"] : []),
+                        ...(showAirTightnessStrategy ? ["l'amélioration de l'étanchéité du bâtiment"] : []),
+                      ],
+                    },
+                    {
+                      key: "hotWater",
+                      label: "production d'eau chaude domestique",
+                      delta: hotWaterBeforeGJ - hotWaterAfterGJ,
+                      strategies: [
+                        ...(showHotWaterStrategy ? ["l'installation de pommeaux de douche et robinets à faible débit"] : []),
+                        ...(showHeatPumpWaterHeaterStrategy ? ["le remplacement du chauffe-eau par un modèle thermopompe"] : []),
+                      ],
+                    },
+                    {
+                      key: "baseLoads",
+                      label: "charges électriques de base",
+                      delta: baseLoadsBeforeGJ - baseLoadsAfterGJ,
+                      strategies: [
+                        ...(showLedStrategy ? ["le remplacement des luminaires par des DEL"] : []),
+                      ],
+                    },
+                    {
+                      key: "cooling",
+                      label: "climatisation",
+                      delta: coolingBeforeGJ - coolingAfterGJ,
+                      strategies: [
+                        ...(showHeatingStrategy ? ["les nouvelles thermopompes haute efficacité"] : []),
+                      ],
+                    },
+                  ].sort((a, b) => b.delta - a.delta);
+
+                  const biggest = reductions[0];
+                  const others  = reductions.slice(1);
+
+                  const stratText = biggest.strategies.length > 0
+                    ? "principalement grâce à " + biggest.strategies.join(" et ")
+                    : "grâce aux mesures d'efficacité énergétique appliquées";
+
+                  const otherIncreased = others.filter(o => o.delta < -0.5).map(o => o.label);
+                  const otherReduced   = others.filter(o => o.delta >= 0.5).map(o => o.label);
+                  const otherStable    = others.filter(o => Math.abs(o.delta) < 0.5).map(o => o.label);
+
+                  return (
+                    <>
+                      <p>
+                        La réduction la plus importante est observée au niveau{" "}
+                        <span className="font-semibold">du {biggest.label}</span>
+                        {biggest.delta > 0 && (
+                          <>, avec une baisse d'environ{" "}
+                          <span className="font-semibold">{biggest.delta.toFixed(1)} GJ</span>{" "}
+                          par année</>
+                        )}
+                        , {stratText}.
+                      </p>
+                      <p>
+                        {otherReduced.length > 0 && (
+                          <>
+                            La consommation liée à{" "}
+                            <span className="font-semibold">
+                              {otherReduced.join(", ")}
+                            </span>{" "}
+                            diminue également.{" "}
+                          </>
+                        )}
+                        {otherStable.length > 0 && (
+                          <>
+                            Les{" "}
+                            <span className="font-semibold">
+                              {otherStable.join(", ")}
+                            </span>{" "}
+                            demeurent relativement stables.{" "}
+                          </>
+                        )}
+                        {otherIncreased.length > 0 && (
+                          <>
+                            Certains postes comme{" "}
+                            <span className="font-semibold">
+                              {otherIncreased.join(", ")}
+                            </span>{" "}
+                            connaissent une légère hausse en raison des nouveaux
+                            équipements installés.{" "}
+                          </>
+                        )}
+                        L'ensemble des mesures d'efficacité énergétique mises en
+                        place contribue à l'amélioration globale de la performance
+                        du bâtiment.
+                      </p>
+                    </>
+                  );
+                })()}
                 </p>
 
                 <div
@@ -2437,12 +2525,97 @@ export default function ReportTab({
                   des mesures d'efficacité énergétique.
                 </p>
                 <p>
-                  On observe que les gains énergétiques les plus importants se
-                  produisent durant la période hivernale, lorsque les besoins en
-                  chauffage sont les plus élevés. L'installation de thermopompes
-                  et l'amélioration de l'étanchéité du bâtiment permettent ainsi
-                  de réduire significativement la consommation énergétique
-                  pendant les mois les plus froids.
+                {(() => {
+                  const winterMonths = [0, 1, 2, 10, 11];
+                  const summerMonths = [5, 6, 7];
+                  let winterSavings = 0;
+                  let summerSavings = 0;
+                  let totalSavings  = 0;
+                  monthlyChartData.forEach((m, i) => {
+                    const diff = m.avant - m.apres;
+                    totalSavings += diff;
+                    if (winterMonths.includes(i)) winterSavings += diff;
+                    if (summerMonths.includes(i)) summerSavings += diff;
+                  });
+                  const winterPct = totalSavings > 0 ? (winterSavings / totalSavings) * 100 : 0;
+                  const summerPct = totalSavings > 0 ? (summerSavings / totalSavings) * 100 : 0;
+                  const dominantSeason = winterPct >= 50 ? "hivernale" : summerPct >= 40 ? "estivale" : null;
+
+                  const winterStrategiesArr: string[] = [
+                    ...(showHeatingStrategy ? ["l'installation de thermopompes"] : []),
+                    ...(showAirTightnessStrategy ? ["l'amélioration de l'étanchéité du bâtiment"] : []),
+                  ];
+                  const summerStrategiesArr: string[] = [
+                    ...(showHeatingStrategy ? ["les thermopompes haute efficacité"] : []),
+                  ];
+                  const yearRoundStrategiesArr: string[] = [
+                    ...(showLedStrategy ? ["le remplacement des luminaires DEL"] : []),
+                    ...(showHotWaterStrategy ? ["la réduction de la consommation d'eau chaude"] : []),
+                    ...(showVrcStrategy ? ["l'installation d'un VRC"] : []),
+                  ];
+
+                  if (dominantSeason === "hivernale") {
+                    return (
+                      <p>
+                        On observe que les gains énergétiques les plus importants
+                        se produisent durant la{" "}
+                        <span className="font-semibold">période hivernale</span>
+                        {winterPct > 0 && (
+                          <>, représentant environ{" "}
+                          <span className="font-semibold">{winterPct.toFixed(0)} %</span>{" "}
+                          des économies annuelles</>
+                        )}
+                        {winterStrategiesArr.length > 0 ? (
+                          <>
+                            . {winterStrategiesArr[0].charAt(0).toUpperCase() + winterStrategiesArr[0].slice(1)}
+                            {winterStrategiesArr.length > 1 && (" et " + winterStrategiesArr.slice(1).join(", "))}
+                            {" "}permettent ainsi de réduire significativement la consommation
+                            énergétique pendant les mois les plus froids.
+                          </>
+                        ) : (
+                          <>. Les mesures appliquées réduisent significativement la consommation pendant les mois les plus froids.</>
+                        )}
+                      </p>
+                    );
+                  } else if (dominantSeason === "estivale") {
+                    return (
+                      <p>
+                        On observe que les gains énergétiques les plus importants
+                        se produisent durant la{" "}
+                        <span className="font-semibold">période estivale</span>
+                        {summerPct > 0 && (
+                          <>, représentant environ{" "}
+                          <span className="font-semibold">{summerPct.toFixed(0)} %</span>{" "}
+                          des économies annuelles</>
+                        )}
+                        {summerStrategiesArr.length > 0 ? (
+                          <>
+                            . {summerStrategiesArr[0].charAt(0).toUpperCase() + summerStrategiesArr[0].slice(1)}
+                            {summerStrategiesArr.length > 1 && (" et " + summerStrategiesArr.slice(1).join(", "))}
+                            {" "}contribuent à réduire la consommation liée à la climatisation.
+                          </>
+                        ) : (
+                          <>. Les mesures appliquées réduisent la consommation durant les mois les plus chauds.</>
+                        )}
+                      </p>
+                    );
+                  } else {
+                    return (
+                      <p>
+                        Les gains énergétiques sont répartis de façon relativement
+                        uniforme tout au long de l'année
+                        {yearRoundStrategiesArr.length > 0 ? (
+                          <>
+                            , grâce notamment à{" "}
+                            {yearRoundStrategiesArr.join(", ")}.
+                          </>
+                        ) : (
+                          <>.</>
+                        )}
+                      </p>
+                    );
+                  }
+                })()}
                 </p>
 
                 <div
