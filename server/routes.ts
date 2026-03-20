@@ -491,9 +491,18 @@ export async function registerRoutes(
     //    <jour> grey box ~100-200, <mois> ~206-333, <an> ~333-381
     overlay(page2, y2, 100, 360, 100, 17, day,        102, 372, 9);
     overlay(page2, y2, 206, 360, 127, 17, monthName,  208, 372, 9);
-    overlay(page2, y2,  333, 360,  48, 17, year2,     335, 372, 9);
+    overlay(page2, y2, 333, 360,  48, 17, year2,      335, 372, 9);
 
-    // Signature / Nom / Titre professionnel / Coordonnées: NOT touched.
+    // 8. Nom (pdftotext y=432-444, grey box ~x=100-490)
+    overlay(page2, y2, 100, 432, 390, 14, "Marc-André Boucher", 102, 442, 9);
+
+    // 9. Titre professionnel (pdftotext y=453-477, grey box ~x=100-490, 2 label lines)
+    overlay(page2, y2, 100, 453, 390, 26, "evaluateur en efficacité énergétique", 102, 466, 9);
+
+    // 10. Coordonnées (pdftotext y=490-502, grey box ~x=100-490)
+    overlay(page2, y2, 100, 490, 390, 14, "438 521-9645", 102, 500, 9);
+
+    // Signature: NOT touched (left blank for manual signing).
 
     return Buffer.from(await pdfDoc.save());
   }
