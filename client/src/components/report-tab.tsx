@@ -1646,7 +1646,7 @@ export default function ReportTab({
                             ))}
                           </ul>
 
-                          <p>
+                          <p className="mt-4">
                             Ces caractéristiques sont représentatives des
                             bâtiments construits avant l'introduction des normes
                             modernes d'efficacité énergétique, ce qui explique
