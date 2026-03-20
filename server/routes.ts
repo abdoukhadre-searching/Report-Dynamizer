@@ -11,7 +11,7 @@ import { promisify } from "util";
 import { renderProjectPdf } from "./pdf-export";
 import * as os from "os";
 import * as crypto from "crypto";
-import { PDFDocument, rgb, StandardFonts, PDFName } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, PDFName, PDFDict, PDFArray, PDFRef } from "pdf-lib";
 
 const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -416,23 +416,71 @@ export async function registerRoutes(
       } catch (_) {}
     };
 
-    // ── Clear digital signature: remove value + appearance so user can sign ─────
+    // ── Completely remove digital signature field from AcroForm + page annots ───
+    // Removing only /V or /AP leaves a corrupt SigDict that Adobe Acrobat rejects.
+    // We must remove the field ref from the AcroForm /Fields array and remove the
+    // widget annotation from every page's /Annots array.
     try {
-      const allFields = form.getFields();
-      for (const field of allFields) {
-        if (field.getName() === "signature") {
-          const acroField = (field as any).acroField;
-          // Remove actual cryptographic signature data
-          acroField.dict.delete(PDFName.of("V"));
-          // Remove visual appearance so it shows as empty/signable
-          const widgets = acroField.getWidgets();
-          for (const widget of widgets) {
-            widget.dict.delete(PDFName.of("AP"));
+      const catalog = pdfDoc.catalog;
+      const acroFormRef = catalog.get(PDFName.of("AcroForm"));
+      const acroFormDict = acroFormRef instanceof PDFRef
+        ? pdfDoc.context.lookup(acroFormRef, PDFDict)
+        : (acroFormRef instanceof PDFDict ? acroFormRef : null);
+
+      let sigRefs: Set<string> = new Set();
+
+      if (acroFormDict) {
+        const fieldsVal = acroFormDict.get(PDFName.of("Fields"));
+        const fieldsArr = fieldsVal instanceof PDFRef
+          ? pdfDoc.context.lookup(fieldsVal, PDFArray)
+          : (fieldsVal instanceof PDFArray ? fieldsVal : null);
+
+        if (fieldsArr) {
+          for (let i = fieldsArr.size() - 1; i >= 0; i--) {
+            const entry = fieldsArr.get(i);
+            const fieldDict = entry instanceof PDFRef
+              ? pdfDoc.context.lookup(entry, PDFDict)
+              : (entry instanceof PDFDict ? entry : null);
+            if (fieldDict) {
+              const ft = fieldDict.get(PDFName.of("FT"));
+              const isSig = ft && ft.toString() === "/Sig";
+              if (isSig) {
+                if (entry instanceof PDFRef) sigRefs.add(entry.toString());
+                (fieldsArr as any).array.splice(i, 1);
+              }
+            }
           }
-          break;
         }
       }
-    } catch (_) {}
+
+      // Remove widget annotations from all pages
+      for (const page of pdfDoc.getPages()) {
+        const annotsVal = page.node.get(PDFName.of("Annots"));
+        const annotsArr = annotsVal instanceof PDFRef
+          ? pdfDoc.context.lookup(annotsVal, PDFArray)
+          : (annotsVal instanceof PDFArray ? annotsVal : null);
+        if (annotsArr) {
+          for (let i = (annotsArr as any).array.length - 1; i >= 0; i--) {
+            const entry = (annotsArr as any).array[i];
+            const annotDict = entry instanceof PDFRef
+              ? pdfDoc.context.lookup(entry, PDFDict)
+              : (entry instanceof PDFDict ? entry : null);
+            if (annotDict) {
+              const subtype = annotDict.get(PDFName.of("Subtype"));
+              const ft = annotDict.get(PDFName.of("FT"));
+              if (
+                (subtype && subtype.toString() === "/Widget" && ft && ft.toString() === "/Sig") ||
+                (entry instanceof PDFRef && sigRefs.has(entry.toString()))
+              ) {
+                (annotsArr as any).array.splice(i, 1);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Signature field removal error:", e);
+    }
 
     // ── Project address ───────────────────────────────────────────────────────
     setText("adresse municipale", address);
