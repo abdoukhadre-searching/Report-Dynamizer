@@ -11,7 +11,7 @@ import { promisify } from "util";
 import { renderProjectPdf } from "./pdf-export";
 import * as os from "os";
 import * as crypto from "crypto";
-import { PDFDocument, rgb, StandardFonts, PDFName, PDFDict, PDFArray, PDFRef } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -371,9 +371,9 @@ export async function registerRoutes(
     "juillet", "août", "septembre", "octobre", "novembre", "décembre",
   ];
 
-  // Fills the AcroForm fields of the SCHL APH SELECT attestation template
-  // with project-specific values. Uses pdf-lib's native form API so that
-  // field values replace existing content cleanly (no white-rect hacks).
+  // Fills the new clean SCHL APH SELECT attestation template (no AcroForm, no
+  // embedded digital signature) using white-rectangle overlays + pdf-lib drawing.
+  // The signature / nom / titre professionnel / coordonnées section is NOT touched.
   async function buildAttestationPdf(project: any): Promise<Buffer> {
     const cmp = project.comparisonData as ComparisonData | null;
     const impPct = cmp?.improvementPercent ?? 0;
@@ -392,139 +392,108 @@ export async function registerRoutes(
     const year2 = String(now.getFullYear()).slice(-2);
     const reportDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
-    // Load the pre-filled template (contains evaluator credentials as real text)
-    const templatePath = path.join(process.cwd(), "server/templates/attestation-filled-template.pdf");
-    const templateBytes = fs.readFileSync(templatePath);
-    const pdfDoc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
-    const form = pdfDoc.getForm();
+    // Build a fresh PDF using pre-rendered PNG backgrounds (the original template PDF
+    // has broken xref entries that prevent pdf-lib from loading it directly).
+    const pdfDoc = await PDFDocument.create();
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    // Helper: set a text field, silently skip if not found
-    const setText = (name: string, value: string) => {
-      try {
-        const field = form.getTextField(name);
-        field.setText(value);
-        field.enableReadOnly();
-      } catch (_) {}
+    const templatesDir = path.join(process.cwd(), "server/templates");
+    const png1Bytes = fs.readFileSync(path.join(templatesDir, "attestation-page1.png"));
+    const png2Bytes = fs.readFileSync(path.join(templatesDir, "attestation-page2.png"));
+    const img1 = await pdfDoc.embedPng(png1Bytes);
+    const img2 = await pdfDoc.embedPng(png2Bytes);
+
+    const W = 612, H1 = 792, H2 = 792;
+    const page1 = pdfDoc.addPage([W, H1]);
+    const page2 = pdfDoc.addPage([W, H2]);
+
+    // Draw template backgrounds (full page)
+    page1.drawImage(img1, { x: 0, y: 0, width: W, height: H1 });
+    page2.drawImage(img2, { x: 0, y: 0, width: W, height: H2 });
+
+    // Helper: convert pdftotext (top-left) y to pdf-lib (bottom-left) y
+    const y1 = (ptY: number) => H1 - ptY;
+    const y2 = (ptY: number) => H2 - ptY;
+
+    // Helper: draw white rect + text overlay (pdftotext coords for rect)
+    const overlay = (
+      page: typeof page1,
+      yFn: (n: number) => number,
+      rx: number, ry: number, rw: number, rh: number, // pdftotext rect (x, y_top, w, h)
+      text: string,
+      tx: number, ty: number, // pdftotext text baseline
+      fontSize = 8,
+      color = rgb(0, 0, 0),
+    ) => {
+      page.drawRectangle({ x: rx, y: yFn(ry + rh), width: rw, height: rh, color: rgb(1, 1, 1) });
+      page.drawText(text, { x: tx, y: yFn(ty), font: helvetica, size: fontSize, color });
     };
 
-    // Helper: check / uncheck a checkbox
-    const setCheck = (name: string, checked: boolean) => {
-      try {
-        const field = form.getCheckBox(name);
-        checked ? field.check() : field.uncheck();
-        field.enableReadOnly();
-      } catch (_) {}
+    // Helper: draw a filled dark checkmark box inside a checkbox
+    const drawCheck = (page: typeof page1, yFn: (n: number) => number, cx: number, cy: number) => {
+      // cx, cy = pdftotext top-left of checkbox area (~14x14pt)
+      page.drawRectangle({ x: cx + 2, y: yFn(cy + 11), width: 10, height: 10, color: rgb(0.1, 0.1, 0.5) });
     };
 
-    // ── Completely remove digital signature field from AcroForm + page annots ───
-    // Removing only /V or /AP leaves a corrupt SigDict that Adobe Acrobat rejects.
-    // We must remove the field ref from the AcroForm /Fields array and remove the
-    // widget annotation from every page's /Annots array.
-    try {
-      const catalog = pdfDoc.catalog;
-      const acroFormRef = catalog.get(PDFName.of("AcroForm"));
-      const acroFormDict = acroFormRef instanceof PDFRef
-        ? pdfDoc.context.lookup(acroFormRef, PDFDict)
-        : (acroFormRef instanceof PDFDict ? acroFormRef : null);
+    // ── PAGE 1 ─────────────────────────────────────────────────────────────────
 
-      let sigRefs: Set<string> = new Set();
+    // 1. Adresse municipale  (grey box ~398-562, pdftotext y=219-239)
+    overlay(page1, y1, 398, 219, 164, 20, address, 400, 233, 8);
 
-      if (acroFormDict) {
-        const fieldsVal = acroFormDict.get(PDFName.of("Fields"));
-        const fieldsArr = fieldsVal instanceof PDFRef
-          ? pdfDoc.context.lookup(fieldsVal, PDFArray)
-          : (fieldsVal instanceof PDFArray ? fieldsVal : null);
+    // 2. Quality field  (grey box ~398-575, pdftotext y=255-305, ~3 lines)
+    overlay(page1, y1, 398, 255, 177, 50,
+      "EVALUATEUR EN EFFICACITÉ ÉNERGÉTIQUE", 400, 270, 7.5);
 
-        if (fieldsArr) {
-          for (let i = fieldsArr.size() - 1; i >= 0; i--) {
-            const entry = fieldsArr.get(i);
-            const fieldDict = entry instanceof PDFRef
-              ? pdfDoc.context.lookup(entry, PDFDict)
-              : (entry instanceof PDFDict ? entry : null);
-            if (fieldDict) {
-              const ft = fieldDict.get(PDFName.of("FT"));
-              const isSig = ft && ft.toString() === "/Sig";
-              if (isSig) {
-                if (entry instanceof PDFRef) sigRefs.add(entry.toString());
-                (fieldsArr as any).array.splice(i, 1);
-              }
-            }
-          }
-        }
-      }
+    // 3. Expertise field  (grey box ~398-575, pdftotext y=308-340, 2 lines)
+    page1.drawRectangle({ x: 398, y: y1(308 + 32), width: 177, height: 32, color: rgb(1, 1, 1) });
+    page1.drawText("MODELISATION ET OPTIMISATION", { x: 400, y: y1(322), font: helvetica, size: 7, color: rgb(0, 0, 0) });
+    page1.drawText("EN EFFICACITÉ ENERGETIQUE", { x: 400, y: y1(333), font: helvetica, size: 7, color: rgb(0, 0, 0) });
 
-      // Remove widget annotations from all pages
-      for (const page of pdfDoc.getPages()) {
-        const annotsVal = page.node.get(PDFName.of("Annots"));
-        const annotsArr = annotsVal instanceof PDFRef
-          ? pdfDoc.context.lookup(annotsVal, PDFArray)
-          : (annotsVal instanceof PDFArray ? annotsVal : null);
-        if (annotsArr) {
-          for (let i = (annotsArr as any).array.length - 1; i >= 0; i--) {
-            const entry = (annotsArr as any).array[i];
-            const annotDict = entry instanceof PDFRef
-              ? pdfDoc.context.lookup(entry, PDFDict)
-              : (entry instanceof PDFDict ? entry : null);
-            if (annotDict) {
-              const subtype = annotDict.get(PDFName.of("Subtype"));
-              const ft = annotDict.get(PDFName.of("FT"));
-              if (
-                (subtype && subtype.toString() === "/Widget" && ft && ft.toString() === "/Sig") ||
-                (entry instanceof PDFRef && sigRefs.has(entry.toString()))
-              ) {
-                (annotsArr as any).array.splice(i, 1);
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Signature field removal error:", e);
-    }
+    // 4. Date du rapport  (grey box ~41-190, pdftotext y=370-388)
+    overlay(page1, y1, 41, 370, 149, 18, reportDate, 43, 381, 8);
 
-    // ── Project address ───────────────────────────────────────────────────────
-    setText("adresse municipale", address);
-
-    // ── Date of the HOT2000 report ────────────────────────────────────────────
-    setText("date du rapport", reportDate);
-
-    // ── Signature date (DATÉ du …) ───────────────────────────────────────────
-    setText("jour", day);
-    setText("mois", monthName);
-    setText("an", year2);
-
-    // ── Niveau checkboxes + percentage values ─────────────────────────────────
+    // 5. Construction niveau checkboxes (pdftotext y=578-592, checkbox offset ~76/262/448)
     if (isNew) {
-      // Pour la construction (Page 1)
-      setCheck("construction, niveau 1, check box", niveau === 1);
-      setCheck("construction, niveau 2, check box", niveau === 2);
-      setCheck("construction, niveau 3, check box", niveau === 3);
-      setText("construction, niveau 1, percent", niveau === 1 ? pctText : "");
-      setText("construction, niveau 2, percent", niveau === 2 ? pctText : "");
-      setText("construction, niveau 3, percent", niveau === 3 ? pctText : "");
-      // Clear existing-properties fields
-      setCheck("propriétés existantes, niveau 1, check box", false);
-      setCheck("propriétés existantes, niveau 2, check box", false);
-      setCheck("propriétés existantes, niveau 3, check box", false);
-      setText("propriétés existantes, niveau 1, percent", "");
-      setText("propriétés existantes, niveau 2, percent", "");
-      setText("propriétés existantes, niveau 3, percent", "");
-    } else {
-      // Propriétés existantes (Page 2)
-      setCheck("propriétés existantes, niveau 1, check box", niveau === 1);
-      setCheck("propriétés existantes, niveau 2, check box", niveau === 2);
-      setCheck("propriétés existantes, niveau 3, check box", niveau === 3);
-      setText("propriétés existantes, niveau 1, percent", niveau === 1 ? pctText : "");
-      setText("propriétés existantes, niveau 2, percent", niveau === 2 ? pctText : "");
-      setText("propriétés existantes, niveau 3, percent", niveau === 3 ? pctText : "");
-      // Clear new-construction fields
-      setCheck("construction, niveau 1, check box", false);
-      setCheck("construction, niveau 2, check box", false);
-      setCheck("construction, niveau 3, check box", false);
-      setText("construction, niveau 1, percent", "");
-      setText("construction, niveau 2, percent", "");
-      setText("construction, niveau 3, percent", "");
+      if (niveau === 1) drawCheck(page1, y1, 76, 578);
+      if (niveau === 2) drawCheck(page1, y1, 262, 578);
+      if (niveau === 3) drawCheck(page1, y1, 448, 578);
+
+      // <%> boxes (pdftotext y=650-663)
+      const pcts1 = [{ x: 47, w: 60 }, { x: 233, w: 61 }, { x: 419, w: 61 }];
+      pcts1.forEach(({ x, w }, i) => {
+        // White out all three, then fill the active one
+        page1.drawRectangle({ x, y: y1(650 + 13 + 5), width: w, height: 21, color: rgb(1, 1, 1) });
+        if (i + 1 === niveau) {
+          page1.drawText(pctText, { x: x + 2, y: y1(660), font: helvetica, size: 8, color: rgb(0, 0, 0) });
+        }
+      });
     }
+
+    // ── PAGE 2 ─────────────────────────────────────────────────────────────────
+
+    // 6. Existing-properties niveau checkboxes (pdftotext y=120-134)
+    if (!isNew) {
+      if (niveau === 1) drawCheck(page2, y2, 76, 120);
+      if (niveau === 2) drawCheck(page2, y2, 262, 120);
+      if (niveau === 3) drawCheck(page2, y2, 448, 120);
+
+      // <%> boxes (pdftotext y=214-227)
+      const pcts2 = [{ x: 58, w: 60 }, { x: 244, w: 61 }, { x: 431, w: 61 }];
+      pcts2.forEach(({ x, w }, i) => {
+        page2.drawRectangle({ x, y: y2(214 + 13 + 5), width: w, height: 20, color: rgb(1, 1, 1) });
+        if (i + 1 === niveau) {
+          page2.drawText(pctText, { x: x + 2, y: y2(224), font: helvetica, size: 8, color: rgb(0, 0, 0) });
+        }
+      });
+    }
+
+    // 7. DATÉ du fields (pdftotext y=360-377)
+    //    <jour> grey box ~100-200, <mois> ~206-333, <an> ~333-381
+    overlay(page2, y2, 100, 360, 100, 17, day,        102, 372, 9);
+    overlay(page2, y2, 206, 360, 127, 17, monthName,  208, 372, 9);
+    overlay(page2, y2,  333, 360,  48, 17, year2,     335, 372, 9);
+
+    // Signature / Nom / Titre professionnel / Coordonnées: NOT touched.
 
     return Buffer.from(await pdfDoc.save());
   }
