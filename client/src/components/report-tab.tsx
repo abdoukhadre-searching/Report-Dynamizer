@@ -1688,55 +1688,108 @@ export default function ReportTab({
                   </span>{" "}
                   par année.
                 </p>
-                <p>
-                  L'analyse de la répartition de cette consommation énergétique
-                  démontre que la plus grande portion de l'énergie est utilise�e
-                  pour le chauffage des locaux, qui représente environ{" "}
-                  <span className="font-semibold">
-                    {heatingBeforeGJ.toFixed(0)} GJ
-                  </span>{" "}
-                  par année
-                  {totalBeforeGJ > 0 ? (
+                {(() => {
+                  const cats = [
+                    {
+                      key: "heating",
+                      gj: heatingBeforeGJ,
+                      labelCourt: "le chauffage des locaux",
+                      introPhrase: "est utilisée pour le chauffage des locaux",
+                      suitePhrase: "est associée au chauffage des locaux",
+                    },
+                    {
+                      key: "baseLoads",
+                      gj: baseLoadsBeforeGJ,
+                      labelCourt: "les charges électriques de base",
+                      introPhrase:
+                        "correspond aux charges électriques de base, incluant l'éclairage et les appareils utilisés par les occupants",
+                      suitePhrase:
+                        "est associée aux charges électriques de base, incluant l'éclairage et les appareils utilisés par les occupants",
+                    },
+                    {
+                      key: "hotWater",
+                      gj: hotWaterBeforeGJ,
+                      labelCourt: "la production d'eau chaude domestique",
+                      introPhrase: "est dédiée à la production d'eau chaude domestique",
+                      suitePhrase: "correspond à la production d'eau chaude domestique",
+                    },
+                  ].sort((a, b) => b.gj - a.gj);
+
+                  const pct = (gj: number) =>
+                    totalBeforeGJ > 0
+                      ? ((gj / totalBeforeGJ) * 100).toFixed(0)
+                      : "0";
+
+                  const [first, second, third] = cats;
+                  const dominantIsHeating = first.key === "heating";
+
+                  return (
                     <>
-                      , soit près de{" "}
-                      {((heatingBeforeGJ / totalBeforeGJ) * 100).toFixed(0)} %
-                      de la consommation énergétique totale du bâtiment
+                      <p>
+                        L'analyse de la répartition de cette consommation
+                        énergétique démontre que la plus grande portion de
+                        l'énergie{" "}
+                        <span className="font-semibold">
+                          {first.introPhrase}
+                        </span>
+                        , qui représente environ{" "}
+                        <span className="font-semibold">
+                          {first.gj.toFixed(0)} GJ
+                        </span>{" "}
+                        par année
+                        {totalBeforeGJ > 0 && (
+                          <>
+                            , soit près de{" "}
+                            <span className="font-semibold">
+                              {pct(first.gj)} %
+                            </span>{" "}
+                            de la consommation énergétique totale du bâtiment
+                          </>
+                        )}
+                        .
+                      </p>
+                      <p>
+                        La deuxième source de consommation énergétique{" "}
+                        <span className="font-semibold">
+                          {second.suitePhrase}
+                        </span>
+                        . Cette catégorie représente environ{" "}
+                        <span className="font-semibold">
+                          {second.gj.toFixed(0)} GJ
+                        </span>{" "}
+                        par année, soit{" "}
+                        <span className="font-semibold">{pct(second.gj)} %</span>{" "}
+                        de la consommation totale.
+                      </p>
+                      <p>
+                        La troisième source{" "}
+                        <span className="font-semibold">
+                          {third.suitePhrase}
+                        </span>
+                        , représentant environ{" "}
+                        <span className="font-semibold">
+                          {third.gj.toFixed(0)} GJ
+                        </span>{" "}
+                        par année (
+                        <span className="font-semibold">{pct(third.gj)} %</span>
+                        ).
+                      </p>
+                      <p>
+                        Les systèmes de ventilation et de climatisation
+                        représentent une portion plus faible de la consommation
+                        énergétique globale du bâtiment.
+                      </p>
+                      <p>
+                        Cette répartition démontre que les stratégies visant à
+                        améliorer{" "}
+                        {dominantIsHeating
+                          ? "l'efficacité du système de chauffage et à réduire les pertes thermiques du bâtiment constituent les interventions les plus efficaces"
+                          : "l'optimisation de " + first.labelCourt + " et la réduction de la consommation des postes secondaires constituent les interventions les plus pertinentes"}{" "}
+                        pour diminuer la consommation énergétique globale.
+                      </p>
                     </>
-                  ) : (
-                    ""
-                  )}
-                  .
-                </p>
-                <p>
-                  La deuxième source de consommation énergétique est associée
-                  aux charges électriques de base, incluant l'éclairage et les
-                  appareils utilisés par les occupants. Cette catégorie
-                  représente environ{" "}
-                  <span className="font-semibold">
-                    {baseLoadsBeforeGJ.toFixed(0)} GJ
-                  </span>{" "}
-                  par année.
-                </p>
-                <p>
-                  La production d'eau chaude domestique représente quant à elle
-                  environ{" "}
-                  <span className="font-semibold">
-                    {hotWaterBeforeGJ.toFixed(0)} GJ
-                  </span>{" "}
-                  par année.
-                </p>
-                <p>
-                  Les systèmes de ventilation et de climatisation représentent
-                  une portion plus faible de la consommation énergétique globale
-                  du bâtiment.
-                </p>
-                <p>
-                  Cette répartition démontre que les stratégies visant à
-                  améliorer l'efficacité du système de chauffage et à réduire
-                  les pertes thermiques du bâtiment constituent les
-                  interventions les plus efficaces pour diminuer la consommation
-                  énergétique globale.
-                </p>
+                  );
+                })()}
 
                 <div
                   id="figure-1"
