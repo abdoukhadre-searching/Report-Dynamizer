@@ -416,10 +416,10 @@ export async function registerRoutes(
       } catch (_) {}
     };
 
-    // ── Clear evaluator identity fields — user will sign manually ─────────────
-    setText("nom", "");
-    setText("titre professionnel", "");
-    setText("coordonnées", "");
+    // ── Evaluator identity fields ─────────────────────────────────────────────
+    setText("nom", "Marc-André Boucher");
+    setText("titre professionnel", "evaluateur en efficacité énergétique");
+    setText("coordonnées", "438 521-9645");
 
     // ── Project address ───────────────────────────────────────────────────────
     setText("adresse municipale", address);
