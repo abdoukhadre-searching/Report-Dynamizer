@@ -416,12 +416,16 @@ export async function registerRoutes(
       } catch (_) {}
     };
 
-    // ── Clear digital signature appearance (keep Nom/Titre/Coordonnées) ────────
+    // ── Clear digital signature: remove value + appearance so user can sign ─────
     try {
       const allFields = form.getFields();
       for (const field of allFields) {
         if (field.getName() === "signature") {
-          const widgets = (field as any).acroField.getWidgets();
+          const acroField = (field as any).acroField;
+          // Remove actual cryptographic signature data
+          acroField.dict.delete(PDFName.of("V"));
+          // Remove visual appearance so it shows as empty/signable
+          const widgets = acroField.getWidgets();
           for (const widget of widgets) {
             widget.dict.delete(PDFName.of("AP"));
           }
