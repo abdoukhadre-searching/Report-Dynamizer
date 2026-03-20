@@ -76,6 +76,15 @@ The report tab generates a professional narrative PDF-style document with 7 sect
 - Values: E = POST totalGJ, R = PRE totalGJ, Savings = (R-E)/R × 100; same for GES (T/A)
 - Uses `pdf-lib` (StandardFonts.HelveticaBold, 10pt) for overlay text
 
+## SCHL Attestation APH SELECT PDF
+- Template: `server/templates/attestation-filled-template.pdf` (unencrypted, 2 pages, pre-filled with evaluator credentials)
+- Uses pdf-lib AcroForm API (`form.getTextField()`, `form.getCheckBox()`) — NOT white-rect overlays
+- Fields updated per project: `"adresse municipale"`, `"date du rapport"`, `"jour"`, `"mois"`, `"an"`, Niveau checkboxes + percent fields
+- Static fields kept from template: evaluator quality/expertise, Marc-André Boucher name/titre/coordonnées/signature
+- Niveau thresholds: existing N1=15–24%, N2=25–39%, N3≥40%; new construction N1=20–24%, N2=25–39%, N3≥40%
+- `buildingType === "new"` → fills "construction" section (page 1); else fills "propriétés existantes" (page 2)
+- All updated fields are marked `enableReadOnly()` to prevent accidental edits in Acrobat
+
 ## Default Annex PDFs
 - `client/public/defaults/thermopompe-innovair.pdf` — Innovair Q4 spec sheet; default for Thermopompes annex (when showHeatingStrategy)
 - `client/public/defaults/faible-debit.pdf` — ECD faible débit spec sheet; default for Robinetterie annex (ALWAYS shown)

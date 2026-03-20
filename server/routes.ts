@@ -371,16 +371,18 @@ export async function registerRoutes(
     "juillet", "août", "septembre", "octobre", "novembre", "décembre",
   ];
 
-  // Renders template pages as PNG backgrounds and overlays fill text
+  // Fills the AcroForm fields of the SCHL APH SELECT attestation template
+  // with project-specific values. Uses pdf-lib's native form API so that
+  // field values replace existing content cleanly (no white-rect hacks).
   async function buildAttestationPdf(project: any): Promise<Buffer> {
     const cmp = project.comparisonData as ComparisonData | null;
     const impPct = cmp?.improvementPercent ?? 0;
     const isNew = project.buildingType === "new";
 
-    let niveau: 1 | 2 | 3;
-    niveau = impPct >= 40 ? 3 : impPct >= 25 ? 2 : 1;
-
+    // Niveau thresholds (existing: N1=15-24%, N2=25-39%, N3≥40%;  new: N1=20-24%)
+    const niveau: 1 | 2 | 3 = impPct >= 40 ? 3 : impPct >= 25 ? 2 : 1;
     const pctText = `${impPct.toFixed(1)} %`;
+
     const address = [project.address, project.city, project.province, project.postalCode]
       .filter(Boolean).join(", ");
 
@@ -388,138 +390,75 @@ export async function registerRoutes(
     const day = String(now.getDate()).padStart(2, "0");
     const monthName = FRENCH_MONTHS[now.getMonth()];
     const year2 = String(now.getFullYear()).slice(-2);
-    const fullDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const reportDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
-    const templatePath = path.join(process.cwd(), "server/templates/attestation-aph-template.pdf");
-    const tmpId = crypto.randomBytes(6).toString("hex");
-    const tmpDir = os.tmpdir();
+    // Load the pre-filled template (contains evaluator credentials as real text)
+    const templatePath = path.join(process.cwd(), "server/templates/attestation-filled-template.pdf");
+    const templateBytes = fs.readFileSync(templatePath);
+    const pdfDoc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
+    const form = pdfDoc.getForm();
 
-    // Render each template page as a high-res PNG
-    const pngPaths: string[] = [];
-    for (let pageNum = 1; pageNum <= 2; pageNum++) {
-      const prefix = path.join(tmpDir, `aph-bg-${tmpId}-p${pageNum}`);
-      await execFileAsync("pdftoppm", [
-        "-png", "-r", "150",
-        "-f", String(pageNum), "-l", String(pageNum),
-        templatePath, prefix,
-      ]);
-      const candidates = [
-        `${prefix}-1.png`, `${prefix}-01.png`,
-        `${prefix}-${pageNum}.png`, `${prefix}-0${pageNum}.png`,
-      ];
-      const found = candidates.find((p) => fs.existsSync(p));
-      if (!found) throw new Error(`PNG not found for page ${pageNum}`);
-      pngPaths.push(found);
-    }
-
-    // Build new PDF with template images as backgrounds
-    const pdfDoc = await PDFDocument.create();
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const BLACK = rgb(0.05, 0.05, 0.05);
-    const WHITE = rgb(1, 1, 1);
-    const PAGE_W = 612;
-    const PAGE_H = 792;
-
-    const pages: ReturnType<typeof pdfDoc.addPage>[] = [];
-    for (let i = 0; i < 2; i++) {
-      const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
-      const pngBytes = fs.readFileSync(pngPaths[i]);
-      const pngImg = await pdfDoc.embedPng(pngBytes);
-      page.drawImage(pngImg, { x: 0, y: 0, width: PAGE_W, height: PAGE_H });
-      pages.push(page);
-    }
-
-    // Clean up tmp PNGs
-    pngPaths.forEach((p) => { try { fs.unlinkSync(p); } catch {} });
-
-    const FSIZE = 9;
-    const toPdfY = (ptopY: number) => PAGE_H - ptopY;
-
-    // Fill helper: white rect + text overlay
-    const fill = (
-      page: (typeof pages)[0],
-      ptopX: number,
-      ptopYMin: number,
-      ptopYMax: number,
-      text: string,
-      opts?: { bold?: boolean; wide?: number; fontSize?: number }
-    ) => {
-      const rectBottom = toPdfY(ptopYMax) - 1;
-      const rectH = (ptopYMax - ptopYMin) + 4;
-      const wide = opts?.wide ?? 180;
-      page.drawRectangle({ x: ptopX - 1, y: rectBottom, width: wide + 2, height: rectH, color: WHITE });
-      const f = opts?.bold ? fontBold : font;
-      const fsize = opts?.fontSize ?? FSIZE;
-      page.drawText(text, { x: ptopX, y: rectBottom + 3, size: fsize, font: f, color: BLACK });
+    // Helper: set a text field, silently skip if not found
+    const setText = (name: string, value: string) => {
+      try {
+        const field = form.getTextField(name);
+        field.setText(value);
+        field.enableReadOnly();
+      } catch (_) {}
     };
 
-    const [p1, p2] = pages;
-
-    // ── Page 1: address ──────────────────────────────────────────────
-    // The OBJET line continues: "…construire au <adresse municipale> (« l'immeuble »)"
-    // Placeholder xMin=402, yMin=225.354, yMax=235.427
-    // «l'immeuble» ends at xMax≈539 — cover full zone to page edge, use compact font
-    if (address) {
-      // Cover from x=399 to x=566 (placeholder + brackets) in one white rect
-      fill(p1, 402, 223.929, 236, address, { wide: 164, fontSize: 8 });
-    }
-
-    // ── Page 1: date in body text ────────────────────────────────────
-    // <date du rapport> at pdftotext x=45, yMin=374.456, yMax=384.529
-    fill(p1, 45, 374.456, 384.529, fullDate, { wide: 75 });
-
-    // Checkbox X positions (pdftotext): right after "Niveau N" text
-    // Page 1 (new): "N 1" xMax≈84.1, "N 2" xMax≈270.6, "N 3" xMax≈457.1
-    // Page 2 (existing): same X positions
-    const checkboxXByNiveau = [87, 274, 460] as const;
-    const checkX = checkboxXByNiveau[niveau - 1];
-
-    // Helper to draw bold "X" checkmark inside the small checkbox square
-    const drawCheck = (page: (typeof pages)[0], ptopX: number, ptopY: number) => {
-      page.drawText("X", {
-        x: ptopX + 1,
-        y: toPdfY(ptopY + 9),
-        size: 7,
-        font: fontBold,
-        color: BLACK,
-      });
+    // Helper: check / uncheck a checkbox
+    const setCheck = (name: string, checked: boolean) => {
+      try {
+        const field = form.getCheckBox(name);
+        checked ? field.check() : field.uncheck();
+        field.enableReadOnly();
+      } catch (_) {}
     };
 
-    // ── Page 1: new construction table % + checkbox ──────────────────
-    // "<%>" at pdftotext y≈650 for each niveau column
+    // ── Project address ───────────────────────────────────────────────────────
+    setText("adresse municipale", address);
+
+    // ── Date of the HOT2000 report ────────────────────────────────────────────
+    setText("date du rapport", reportDate);
+
+    // ── Signature date (DATÉ du …) ───────────────────────────────────────────
+    setText("jour", day);
+    setText("mois", monthName);
+    setText("an", year2);
+
+    // ── Niveau checkboxes + percentage values ─────────────────────────────────
     if (isNew) {
-      const Y1 = 642, Y2 = 655;
-      const xByNiveau = [87, 267, 449] as const;
-      fill(p1, xByNiveau[niveau - 1], Y1, Y2, pctText, { bold: true, wide: 65 });
-      // Checkbox row: pdftotext yMin≈580.24, checkbox is at Y≈582
-      drawCheck(p1, checkX, 580.24);
+      // Pour la construction (Page 1)
+      setCheck("construction, niveau 1, check box", niveau === 1);
+      setCheck("construction, niveau 2, check box", niveau === 2);
+      setCheck("construction, niveau 3, check box", niveau === 3);
+      setText("construction, niveau 1, percent", niveau === 1 ? pctText : "");
+      setText("construction, niveau 2, percent", niveau === 2 ? pctText : "");
+      setText("construction, niveau 3, percent", niveau === 3 ? pctText : "");
+      // Clear existing-properties fields
+      setCheck("propriétés existantes, niveau 1, check box", false);
+      setCheck("propriétés existantes, niveau 2, check box", false);
+      setCheck("propriétés existantes, niveau 3, check box", false);
+      setText("propriétés existantes, niveau 1, percent", "");
+      setText("propriétés existantes, niveau 2, percent", "");
+      setText("propriétés existantes, niveau 3, percent", "");
+    } else {
+      // Propriétés existantes (Page 2)
+      setCheck("propriétés existantes, niveau 1, check box", niveau === 1);
+      setCheck("propriétés existantes, niveau 2, check box", niveau === 2);
+      setCheck("propriétés existantes, niveau 3, check box", niveau === 3);
+      setText("propriétés existantes, niveau 1, percent", niveau === 1 ? pctText : "");
+      setText("propriétés existantes, niveau 2, percent", niveau === 2 ? pctText : "");
+      setText("propriétés existantes, niveau 3, percent", niveau === 3 ? pctText : "");
+      // Clear new-construction fields
+      setCheck("construction, niveau 1, check box", false);
+      setCheck("construction, niveau 2, check box", false);
+      setCheck("construction, niveau 3, check box", false);
+      setText("construction, niveau 1, percent", "");
+      setText("construction, niveau 2, percent", "");
+      setText("construction, niveau 3, percent", "");
     }
-
-    // ── Page 2: existing properties table % + checkbox ───────────────
-    // "de <%>" at pdftotext y≈214 for each niveau column
-    if (!isNew) {
-      const Y1 = 214, Y2 = 227;
-      const xByNiveau = [82, 268, 455] as const;
-      fill(p2, xByNiveau[niveau - 1], Y1, Y2, pctText, { bold: true, wide: 55 });
-      // Checkbox row: pdftotext yMin≈122.81, checkbox is at Y≈122.81
-      drawCheck(p2, checkX, 122.81);
-    }
-
-    // ── Page 2: DATÉ du <jour> de <mois>, 20<an> ────────────────────
-    // "DATÉ" line: pdftotext yMin=362.931, yMax=374.941
-    fill(p2, 111, 362.931, 374.941, day, { wide: 50 });
-    fill(p2, 262, 362.931, 374.941, monthName, { wide: 85 });
-    fill(p2, 398, 362.931, 374.941, year2, { wide: 28 });
-
-    // ── Page 2: Nom ──────────────────────────────────────────────────
-    fill(p2, 67, 432.171, 444.181, "Marc-André Boucher", { wide: 220 });
-
-    // ── Page 2: Titre professionnel ──────────────────────────────────
-    fill(p2, 36, 465.171, 477, "Évaluateur en efficacité énergétique", { wide: 310 });
-
-    // ── Page 2: Coordonnées ──────────────────────────────────────────
-    fill(p2, 120, 490.671, 502.681, "438 521-9645", { wide: 150 });
 
     return Buffer.from(await pdfDoc.save());
   }
