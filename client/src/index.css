@@ -470,6 +470,34 @@
     page-break-after: avoid;
   }
 
+  /* Figure title stays glued to the chart that follows it */
+  .figure-caption {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Figure block: reduce excessive top/bottom margins so figures don't get pushed unnecessarily */
+  .figure-block {
+    margin-top: 1.25rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  /* Section content: distribute space so pages feel balanced when content is shorter than a full page */
+  .report-section-content {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .report-section-content p {
+    line-height: 1.9 !important;
+    margin-bottom: 0.55rem !important;
+  }
+
+  /* Figures pushed to a new page: add a natural top breathing space */
+  .figure-block + .figure-block {
+    margin-top: 2rem !important;
+  }
+
   .print\:break-inside-avoid {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
