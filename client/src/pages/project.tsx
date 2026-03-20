@@ -5,12 +5,13 @@ import type { Project } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Zap, FileText, LayoutDashboard, BookOpen, Building2, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, Zap, FileText, LayoutDashboard, BookOpen, Building2, ClipboardCheck, BarChart2 } from "lucide-react";
 import UploadTab from "@/components/upload-tab";
 import DashboardTab from "@/components/dashboard-tab";
 import ReportTab from "@/components/report-tab";
 import CollectiveBuildingTab from "@/components/collective-building-tab";
 import AttestationTab from "@/components/attestation-tab";
+import StrategyTab from "@/components/strategy-tab";
 
 export default function ProjectPage() {
   const params = useParams<{ id: string }>();
@@ -100,6 +101,10 @@ export default function ProjectPage() {
               <BookOpen className="w-3.5 h-3.5" />
               Rapport
             </TabsTrigger>
+            <TabsTrigger value="strategie" disabled={!hasBothReports} data-testid="tab-strategie" className="gap-1.5">
+              <BarChart2 className="w-3.5 h-3.5" />
+              Stratégie et Empreinte
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">
@@ -108,6 +113,14 @@ export default function ProjectPage() {
 
           <TabsContent value="dashboard">
             {hasBothReports && <DashboardTab project={project} />}
+          </TabsContent>
+
+          <TabsContent value="strategie">
+            {hasBothReports && (
+              <div className="space-y-4">
+                <StrategyTab project={project} />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="report">
