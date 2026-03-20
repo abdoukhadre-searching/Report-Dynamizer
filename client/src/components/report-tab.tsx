@@ -974,7 +974,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </div>
 
                 {pre.monthlyEnergy && (
-                  <div id="tableau-1" className="mt-8">
+                  <div id="tableau-1" className="mt-8 print:break-before-page">
                     <MonthlyEnergyTable
                       data={pre.monthlyEnergy}
                       annual={pre.annualEnergy}
