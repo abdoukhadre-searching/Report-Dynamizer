@@ -1477,6 +1477,13 @@ export default function ReportTab({
                 const chars = [
                   { label: "Nombre d'étages", value: floorsLabel || "N/A" },
                   {
+                    label: "Lieu climatique",
+                    value:
+                      pre.buildingInfo?.climateData ||
+                      post.buildingInfo?.climateData ||
+                      "N/A",
+                  },
+                  {
                     label: "Valeur thermique du toit (RSI)",
                     value: roofThermal,
                   },
@@ -2029,7 +2036,14 @@ export default function ReportTab({
                       Ces équipements permettent de produire plus d'énergie
                       thermique qu'ils n'en consomment, ce qui contribue à
                       réduire la consommation énergétique associée au chauffage
-                      des logements.
+                      des logements.{" "}
+                      <a
+                        href="#annex-thermopompes"
+                        className="text-xs font-medium text-primary underline cursor-pointer print:hidden"
+                        onClick={(e) => { e.preventDefault(); document.getElementById("annex-thermopompes")?.scrollIntoView({ behavior: "smooth" }); }}
+                      >
+                        [Voir détails]
+                      </a>
                     </p>
                   </div>
                 )}
@@ -2054,7 +2068,14 @@ export default function ReportTab({
                       Cette mesure permet de diminuer la quantité d'énergie
                       nécessaire pour chauffer l'eau utilisée dans les logements
                       tout en maintenant un niveau de confort adéquat pour les
-                      occupants.
+                      occupants.{" "}
+                      <a
+                        href="#annex-robineterie"
+                        className="text-xs font-medium text-primary underline cursor-pointer print:hidden"
+                        onClick={(e) => { e.preventDefault(); document.getElementById("annex-robineterie")?.scrollIntoView({ behavior: "smooth" }); }}
+                      >
+                        [Voir détails]
+                      </a>
                     </p>
                   </div>
                 )}
