@@ -416,6 +416,11 @@ export async function registerRoutes(
       } catch (_) {}
     };
 
+    // ── Clear evaluator identity fields — user will sign manually ─────────────
+    setText("nom", "");
+    setText("titre professionnel", "");
+    setText("coordonnées", "");
+
     // ── Project address ───────────────────────────────────────────────────────
     setText("adresse municipale", address);
 

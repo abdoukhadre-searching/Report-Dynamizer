@@ -8,6 +8,8 @@ import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import buildingCoverPath from "@assets/building-cover.png";
 import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
 import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
+import ashpPage1Path from "@assets/ASHP_page-0001_1773974895557.jpg";
+import ashpPage2Path from "@assets/ASHP_page-0002_1773974895559.jpg";
 import faibleDebitPath from "@assets/ECD_Faible_Débit_page-0001_1773707805841.jpg";
 import rheemProductPath from "@assets/RHEEM_2_page-0001_1773727074851.jpg";
 import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1773727074852.jpg";
@@ -1390,13 +1392,13 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                 </p>
                 <p>
                   Les mesures recommandées
-                  {strategies.length > 0 && <> — notamment {strategies.slice(0, 4).map((s, i) => {
+                  {strategies.length > 0 && <>, notamment {strategies.slice(0, 4).map((s, i) => {
                     const label = s.replace(/^(l'|la |le |les )/, "");
                     if (i === 0) return label;
                     if (i === strategies.slice(0, 4).length - 1) return ` et ${label}`;
                     return `, ${label}`;
-                  }).join("")}</>}
-                  {" "}— constituent des interventions efficaces et techniquement réalisables.
+                  }).join("")},</>}
+                  {" "}constituent des interventions efficaces et techniquement réalisables.
                 </p>
                 <p>
                   La mise en œuvre de ces stratégies permettra non seulement de réduire les coûts d'exploitation du bâtiment, mais également d'améliorer le confort des occupants et de valoriser la performance énergétique de l'immeuble à long terme.
@@ -1499,6 +1501,24 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                               alt="Innovair Q4 — Spécifications techniques"
                               className="w-full rounded-md border"
                               data-testid="img-annex-thermopompes-p2"
+                            />
+                          </div>
+                          <div className="print:break-after-page">
+                            <h3 className="text-sm font-semibold mb-2">(suite) Thermopompes — Caractéristiques ASHP (page 3)</h3>
+                            <img
+                              src={ashpPage1Path}
+                              alt="ASHP — Caractéristiques page 1"
+                              className="w-full rounded-md border"
+                              data-testid="img-annex-thermopompes-ashp-p1"
+                            />
+                          </div>
+                          <div className="print:break-after-page">
+                            <h3 className="text-sm font-semibold mb-2">(suite) Thermopompes — Caractéristiques ASHP (page 4)</h3>
+                            <img
+                              src={ashpPage2Path}
+                              alt="ASHP — Caractéristiques page 2"
+                              className="w-full rounded-md border"
+                              data-testid="img-annex-thermopompes-ashp-p2"
                             />
                           </div>
                         </>
