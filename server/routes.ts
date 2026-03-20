@@ -11,7 +11,8 @@ import { promisify } from "util";
 import { renderProjectPdf } from "./pdf-export";
 import * as os from "os";
 import * as crypto from "crypto";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, PDFName } from "pdf-lib";
+import { inflateSync, deflateSync } from "zlib";
 
 const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -463,6 +464,50 @@ export async function registerRoutes(
       setText("construction, niveau 1, percent", "");
       setText("construction, niveau 2, percent", "");
       setText("construction, niveau 3, percent", "");
+    }
+
+    // ── Update digital signature date to download time ────────────────────────
+    // The signature annotation's n2 appearance stream contains a hardcoded date.
+    // We replace it with the actual download timestamp (no timezone suffix).
+    const sigDateStr = [
+      `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`,
+      ` ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
+    ].join("");
+
+    for (const page of pdfDoc.getPages()) {
+      const annotsRef = page.node.get(PDFName.of("Annots") as any);
+      if (!annotsRef) continue;
+      const annots = (pdfDoc as any).context.lookup(annotsRef);
+      for (let i = 0; i < annots.size(); i++) {
+        try {
+          const annotObj = (pdfDoc as any).context.lookup(annots.get(i));
+          const ft = annotObj.get(PDFName.of("FT") as any);
+          if (ft?.toString() !== "/Sig") continue;
+          const ap = annotObj.get(PDFName.of("AP") as any);
+          if (!ap) continue;
+          const apN = (pdfDoc as any).context.lookup(ap.get(PDFName.of("N") as any));
+          const apNRes = (pdfDoc as any).context.lookup(apN.dict.get(PDFName.of("Resources") as any));
+          const apNXobj = (pdfDoc as any).context.lookup(apNRes.get(PDFName.of("XObject") as any));
+          const frm = (pdfDoc as any).context.lookup(apNXobj.get(PDFName.of("FRM") as any));
+          const frmRes = (pdfDoc as any).context.lookup(frm.dict.get(PDFName.of("Resources") as any));
+          const frmXobj = (pdfDoc as any).context.lookup(frmRes.get(PDFName.of("XObject") as any));
+          const n2 = (pdfDoc as any).context.lookup(frmXobj.get(PDFName.of("n2") as any));
+          // Decompress (FlateDecode), replace date, store uncompressed
+          const rawBytes = Buffer.from(n2.contents);
+          const decompressed = inflateSync(rawBytes);
+          const content = decompressed.toString("latin1");
+          const newContent = content.replace(
+            /\[\(Date : [\d.]+ \)-[\d.]+ \([\d:]+ -05'00'\)\]TJ/,
+            `(Date : ${sigDateStr})Tj`
+          );
+          if (newContent !== content) {
+            const newBytes = Buffer.from(newContent, "latin1");
+            n2.contents = new Uint8Array(newBytes);
+            n2.dict.delete(PDFName.of("Filter") as any);
+            n2.dict.set(PDFName.of("Length") as any, (pdfDoc as any).context.obj(newBytes.length));
+          }
+        } catch (_) {}
+      }
     }
 
     return Buffer.from(await pdfDoc.save());
