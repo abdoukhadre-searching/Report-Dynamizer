@@ -493,7 +493,7 @@ export async function registerRoutes(
     overlay(page2, y2, 206, 360, 127, 17, monthName,  208, 372, 9);
     overlay(page2, y2,  333, 360,  48, 17, year2,     335, 372, 9);
 
-    // Signature / Nom / Titre professionnel / Coordonnées: left blank for manual signing.
+    // Signature / Nom / Titre professionnel / Coordonnées: NOT touched.
 
     return Buffer.from(await pdfDoc.save());
   }

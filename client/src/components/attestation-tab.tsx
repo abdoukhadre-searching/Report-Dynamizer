@@ -62,13 +62,13 @@ export default function AttestationTab({ project }: AttestationTabProps) {
         </div>
         <div className="flex gap-2">
           <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" variant="outline" className="gap-1.5" data-testid="button-open-attestation">
+            <Button size="sm" variant="outline" className="gap-1.5">
               <ExternalLink className="w-3.5 h-3.5" />
               Ouvrir
             </Button>
           </a>
           <a href={pdfUrl} download={`attestation-aph-${project.id}.pdf`}>
-            <Button size="sm" style={{ backgroundColor: "#1e3a5f" }} className="gap-1.5 text-white" data-testid="button-download-attestation">
+            <Button size="sm" style={{ backgroundColor: "#1e3a5f" }} className="gap-1.5 text-white">
               <Download className="w-3.5 h-3.5" />
               Télécharger
             </Button>
