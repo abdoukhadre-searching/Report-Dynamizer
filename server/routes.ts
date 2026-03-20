@@ -11,7 +11,7 @@ import { promisify } from "util";
 import { renderProjectPdf } from "./pdf-export";
 import * as os from "os";
 import * as crypto from "crypto";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, PDFName } from "pdf-lib";
 
 const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -416,10 +416,19 @@ export async function registerRoutes(
       } catch (_) {}
     };
 
-    // ── Clear evaluator identity fields — user will sign manually ─────────────
-    setText("nom", "");
-    setText("titre professionnel", "");
-    setText("coordonnées", "");
+    // ── Clear digital signature appearance (keep Nom/Titre/Coordonnées) ────────
+    try {
+      const allFields = form.getFields();
+      for (const field of allFields) {
+        if (field.getName() === "signature") {
+          const widgets = (field as any).acroField.getWidgets();
+          for (const widget of widgets) {
+            widget.dict.delete(PDFName.of("AP"));
+          }
+          break;
+        }
+      }
+    } catch (_) {}
 
     // ── Project address ───────────────────────────────────────────────────────
     setText("adresse municipale", address);
