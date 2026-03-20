@@ -1,5 +1,6 @@
 import type { Project, ReportData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Printer, TrendingDown, Zap, Droplets, Wind, Lightbulb, Flame, CheckCircle2 } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 
@@ -18,7 +19,7 @@ function getThermopompeCount(occupants?: string): number {
   return count > 0 ? Math.ceil(count / 2) : 0;
 }
 
-function getNumUnits(occupants?: string): number {
+function getNumUnitsFromOccupants(occupants?: string): number {
   return getThermopompeCount(occupants);
 }
 
@@ -87,6 +88,8 @@ function getHotWaterLabel(data: ReportData): string {
   return equip || "N/A";
 }
 
+const SUBVENTION_THERMOPOMPE = 1296;
+
 export default function StrategyTab({ project }: StrategyTabProps) {
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
@@ -104,7 +107,7 @@ export default function StrategyTab({ project }: StrategyTabProps) {
   const preWallRsi = pre.buildingInfo?.wallMaxRsi;
 
   const occupants = pre.buildingInfo?.occupants;
-  const numUnits = getNumUnits(occupants);
+  const numUnits = getNumUnitsFromOccupants(occupants);
   const thermopompeCount = getThermopompeCount(occupants);
 
   const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
@@ -118,19 +121,12 @@ export default function StrategyTab({ project }: StrategyTabProps) {
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";
   const province = project.province || pre.buildingInfo?.province || "";
-  const fullLocation = [address, city, province].filter(Boolean).join(", ");
+  const fullAddress = [address, city, province].filter(Boolean).join(", ");
 
   const heatingPre = getHeatingLabel(pre);
   const hotWaterPre = getHotWaterLabel(pre);
 
-  const SUBVENTION_THERMOPOMPE = 1296;
-  const SUBVENTION_CHAUFFE_EAU_HP = 400;
-  const SUBVENTION_VRC = 300;
-
   const subventionThermopompe = showHeatingStrategy ? thermopompeCount * SUBVENTION_THERMOPOMPE : 0;
-  const subventionChauffeEau = showHeatPumpWaterHeaterStrategy ? numUnits * SUBVENTION_CHAUFFE_EAU_HP : 0;
-  const subventionVrc = showVrcStrategy ? numUnits * SUBVENTION_VRC : 0;
-  const subventionTotal = subventionThermopompe + subventionChauffeEau + subventionVrc;
 
   const postItems: { icon: React.ReactNode; label: string }[] = [];
   if (showAirTightnessStrategy && postCah !== undefined) {
@@ -156,243 +152,267 @@ export default function StrategyTab({ project }: StrategyTabProps) {
 
   const handlePrint = () => window.print();
 
+  const ghgBefore = pre.annualSummary?.ghgTotal ?? 0;
+  const ghgAfter = post.annualSummary?.ghgTotal ?? 0;
+  const ghgDelta = ghgBefore - ghgAfter;
+  const ghgPct = ghgBefore > 0 ? (ghgDelta / ghgBefore) * 100 : 0;
+
+  const dateStr = new Date().toLocaleDateString("fr-CA", { year: "numeric", month: "2-digit", day: "2-digit" });
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2 print:hidden">
-        <div>
-          <h2 className="text-lg font-semibold" style={{ color: "#1e3a5f" }}>Stratégie</h2>
-          <p className="text-sm text-muted-foreground">Cahier de stratégie énergétique</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2">
+    <div
+      className="space-y-4"
+      style={{ "--card": "0 0% 100%", "--background": "0 0% 100%" } as React.CSSProperties}
+    >
+      <div className="flex items-center justify-between gap-4 mb-4 print:hidden">
+        <h2 className="font-medium" style={{ color: "#1e3a5f" }}>Cahier de stratégie APH SELECT</h2>
+        <Button variant="secondary" size="sm" onClick={handlePrint} className="gap-2" data-testid="button-print-strategy">
           <Printer className="w-4 h-4" />
-          Imprimer
+          Imprimer / PDF
         </Button>
       </div>
 
-      {/* ── Printable Document ── */}
-      <div
-        className="bg-white rounded-lg border shadow-sm mx-auto print:shadow-none print:border-none print:rounded-none"
-        style={{ maxWidth: 820, fontFamily: "'Inter', sans-serif" }}
-        data-testid="strategy-document"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-10 pt-8 pb-5 border-b-2" style={{ borderColor: "#1e3a5f" }}>
-          <div>
-            <img src={mabLogoPath} alt="MAB Logo" className="h-12 w-auto object-contain" />
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground tracking-widest uppercase">Cahier de</p>
-            <p className="text-xl font-bold" style={{ color: "#1e3a5f", fontFamily: "Playfair Display, serif" }}>
-              Stratégie
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">APH SELECT</p>
-          </div>
-        </div>
+      <div id="strategy-content">
+        {/* ── PAGE PRINCIPALE ── */}
+        <Card className="print:shadow-none print:border-none overflow-hidden" data-testid="strategy-document">
+          <CardContent className="p-0 report-prose">
+            <div className="flex" style={{ minHeight: "600px" }}>
+              {/* Left accent bar — same gradient as the report */}
+              <div
+                className="w-3 flex-shrink-0"
+                style={{ background: "linear-gradient(to bottom, #1e3a5f, #c0392b)" }}
+              />
 
-        {/* Building identity */}
-        <div className="px-10 pt-6 pb-4">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Bâtiment</p>
-          <h1 className="text-lg font-bold" style={{ color: "#1e3a5f", fontFamily: "Playfair Display, serif" }}>
-            {project.name}
-          </h1>
-          {fullLocation && (
-            <p className="text-sm text-muted-foreground mt-0.5">{fullLocation}</p>
-          )}
-        </div>
+              <div className="flex-1 flex flex-col">
+                {/* Cover header */}
+                <div className="flex items-start justify-between px-8 pt-8 pb-4">
+                  <div>
+                    <h1
+                      className="text-2xl font-bold leading-snug mb-1"
+                      style={{ fontFamily: "'Playfair Display', serif", color: "#1e3a5f", maxWidth: "440px" }}
+                    >
+                      Cahier de Stratégie
+                    </h1>
+                    <p className="text-sm text-slate-500" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      {fullAddress}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-6">
+                    <p className="text-5xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#c0392b" }}>
+                      {new Date().getFullYear()}
+                    </p>
+                  </div>
+                </div>
 
-        {/* Energy summary banner */}
-        <div className="mx-10 mb-6 rounded-lg overflow-hidden border" style={{ borderColor: "#1e3a5f22" }}>
-          <div className="grid grid-cols-3 divide-x" style={{ borderColor: "#1e3a5f22" }}>
-            <div className="px-6 py-4 text-center bg-slate-50">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">PRÉ-travaux</p>
-              <p className="text-2xl font-bold" style={{ color: "#1e3a5f" }}>{preGJ.toFixed(1)}</p>
-              <p className="text-xs text-muted-foreground">GJ / an</p>
-            </div>
-            <div className="px-6 py-4 text-center" style={{ backgroundColor: "#1e3a5f" }}>
-              <p className="text-xs text-blue-200 uppercase tracking-wider mb-1">Amélioration</p>
-              <p className="text-2xl font-bold text-white">{improvPct.toFixed(1)} %</p>
-              <p className="text-xs text-blue-200">de réduction</p>
-            </div>
-            <div className="px-6 py-4 text-center bg-slate-50">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">POST-travaux</p>
-              <p className="text-2xl font-bold" style={{ color: "#16a34a" }}>{postGJ.toFixed(1)}</p>
-              <p className="text-xs text-muted-foreground">GJ / an</p>
-            </div>
-          </div>
-        </div>
+                {/* Energy banner */}
+                <div className="mx-8 mb-6 rounded-lg overflow-hidden border" style={{ borderColor: "#1e3a5f33" }}>
+                  <div className="grid grid-cols-3 divide-x divide-slate-200">
+                    <div className="px-6 py-5 text-center bg-slate-50">
+                      <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">PRÉ-travaux</p>
+                      <p className="text-3xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#1e3a5f" }}>
+                        {preGJ.toFixed(1)}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">GJ / an</p>
+                    </div>
+                    <div className="px-6 py-5 text-center" style={{ backgroundColor: "#1e3a5f" }}>
+                      <p className="text-xs text-blue-200 uppercase tracking-wider mb-1">Amélioration</p>
+                      <p className="text-3xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        {improvPct.toFixed(1)} %
+                      </p>
+                      <p className="text-xs text-blue-300 mt-0.5">de réduction</p>
+                    </div>
+                    <div className="px-6 py-5 text-center bg-slate-50">
+                      <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">POST-travaux</p>
+                      <p className="text-3xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#16a34a" }}>
+                        {postGJ.toFixed(1)}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">GJ / an</p>
+                    </div>
+                  </div>
+                </div>
 
-        {/* PRÉ / POST sections */}
-        <div className="px-10 pb-6 grid grid-cols-2 gap-6">
+                {/* PRÉ / POST two-column */}
+                <div className="px-8 pb-6 grid grid-cols-2 gap-6">
+                  {/* PRÉ */}
+                  <div>
+                    <h3
+                      className="text-xs font-bold uppercase tracking-widest mb-3"
+                      style={{ color: "#1e3a5f", fontFamily: "'Inter', sans-serif" }}
+                    >
+                      État PRÉ-travaux
+                    </h3>
+                    <table className="w-full text-xs border rounded-lg overflow-hidden">
+                      <tbody className="divide-y divide-slate-100">
+                        {preCah !== undefined && (
+                          <tr>
+                            <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium w-1/2">CAH @ 50 Pa</td>
+                            <td className="px-3 py-2 font-semibold">{preCah}</td>
+                          </tr>
+                        )}
+                        {preRoofRsi !== undefined && (
+                          <tr>
+                            <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">RSI toit</td>
+                            <td className="px-3 py-2 font-semibold">{preRoofRsi.toFixed(2)}</td>
+                          </tr>
+                        )}
+                        {preWallRsi !== undefined && (
+                          <tr>
+                            <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">RSI murs</td>
+                            <td className="px-3 py-2 font-semibold">{preWallRsi.toFixed(2)}</td>
+                          </tr>
+                        )}
+                        <tr>
+                          <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">Chauffage</td>
+                          <td className="px-3 py-2 font-semibold">{heatingPre}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">Eau chaude</td>
+                          <td className="px-3 py-2 font-semibold">{hotWaterPre}</td>
+                        </tr>
+                        {numUnits > 0 && (
+                          <tr>
+                            <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">Logements</td>
+                            <td className="px-3 py-2 font-semibold">{numUnits}</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
 
-          {/* PRÉ section */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-slate-400" />
-              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">État PRÉ-travaux</h3>
-            </div>
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-xs">
-                <tbody className="divide-y">
-                  {preCah !== undefined && (
-                    <tr>
-                      <td className="px-3 py-2 text-muted-foreground bg-slate-50 font-medium w-1/2">CAH @ 50 Pa</td>
-                      <td className="px-3 py-2 font-semibold">{preCah}</td>
-                    </tr>
-                  )}
-                  {preRoofRsi !== undefined && (
-                    <tr>
-                      <td className="px-3 py-2 text-muted-foreground bg-slate-50 font-medium">RSI toit</td>
-                      <td className="px-3 py-2 font-semibold">{preRoofRsi.toFixed(2)}</td>
-                    </tr>
-                  )}
-                  {preWallRsi !== undefined && (
-                    <tr>
-                      <td className="px-3 py-2 text-muted-foreground bg-slate-50 font-medium">RSI murs</td>
-                      <td className="px-3 py-2 font-semibold">{preWallRsi.toFixed(2)}</td>
-                    </tr>
-                  )}
-                  <tr>
-                    <td className="px-3 py-2 text-muted-foreground bg-slate-50 font-medium">Chauffage</td>
-                    <td className="px-3 py-2 font-semibold">{heatingPre}</td>
-                  </tr>
-                  <tr>
-                    <td className="px-3 py-2 text-muted-foreground bg-slate-50 font-medium">Eau chaude</td>
-                    <td className="px-3 py-2 font-semibold">{hotWaterPre}</td>
-                  </tr>
-                  {numUnits > 0 && (
-                    <tr>
-                      <td className="px-3 py-2 text-muted-foreground bg-slate-50 font-medium">Logements</td>
-                      <td className="px-3 py-2 font-semibold">{numUnits}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* POST section */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#16a34a" }} />
-              <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: "#16a34a" }}>Mesures POST-travaux</h3>
-            </div>
-            {postItems.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden" style={{ borderColor: "#16a34a44" }}>
-                <ul className="divide-y">
-                  {postItems.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2.5 px-3 py-2.5">
-                      <span className="mt-0.5 flex-shrink-0 text-green-600">{item.icon}</span>
-                      <span className="text-xs font-medium">{item.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <div className="border rounded-lg px-3 py-4 text-xs text-muted-foreground italic text-center">
-                Aucune mesure détectée
-              </div>
-            )}
-
-            {/* CAH POST if changed */}
-            {showAirTightnessStrategy && postCah !== undefined && preCah !== undefined && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                <TrendingDown className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-                <span>Étanchéité : {preCah} → <span className="font-semibold text-foreground">{postCah} CAH @ 50 Pa</span></span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Subventions section */}
-        {subventionTotal > 0 && (
-          <>
-            <div className="mx-10 mb-6 border-t pt-5">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="w-4 h-4" style={{ color: "#1e3a5f" }} />
-                <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                  Subventions estimées
-                </h3>
-              </div>
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-left" style={{ backgroundColor: "#1e3a5f10" }}>
-                      <th className="px-4 py-2 font-semibold text-muted-foreground">Mesure</th>
-                      <th className="px-4 py-2 font-semibold text-muted-foreground text-center">Unités</th>
-                      <th className="px-4 py-2 font-semibold text-muted-foreground text-right">Montant / unité</th>
-                      <th className="px-4 py-2 font-semibold text-muted-foreground text-right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {showHeatingStrategy && thermopompeCount > 0 && (
-                      <tr>
-                        <td className="px-4 py-2 font-medium">Thermopompes</td>
-                        <td className="px-4 py-2 text-center text-muted-foreground">{thermopompeCount}</td>
-                        <td className="px-4 py-2 text-right text-muted-foreground">{SUBVENTION_THERMOPOMPE.toLocaleString("fr-CA")} $</td>
-                        <td className="px-4 py-2 text-right font-semibold">{subventionThermopompe.toLocaleString("fr-CA")} $</td>
-                      </tr>
+                  {/* POST */}
+                  <div>
+                    <h3
+                      className="text-xs font-bold uppercase tracking-widest mb-3"
+                      style={{ color: "#16a34a", fontFamily: "'Inter', sans-serif" }}
+                    >
+                      Mesures POST-travaux
+                    </h3>
+                    {postItems.length > 0 ? (
+                      <ul
+                        className="text-xs divide-y rounded-lg overflow-hidden border"
+                        style={{ borderColor: "#16a34a44" }}
+                      >
+                        {postItems.map((item, i) => (
+                          <li key={i} className="flex items-start gap-2.5 px-3 py-2.5">
+                            <span className="mt-0.5 flex-shrink-0 text-green-600">{item.icon}</span>
+                            <span className="font-medium">{item.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="border rounded-lg px-3 py-4 text-xs text-slate-400 italic text-center">
+                        Aucune mesure détectée
+                      </div>
                     )}
-                    {showHeatPumpWaterHeaterStrategy && numUnits > 0 && (
-                      <tr>
-                        <td className="px-4 py-2 font-medium">Chauffe-eaux thermopompe</td>
-                        <td className="px-4 py-2 text-center text-muted-foreground">{numUnits}</td>
-                        <td className="px-4 py-2 text-right text-muted-foreground">{SUBVENTION_CHAUFFE_EAU_HP.toLocaleString("fr-CA")} $</td>
-                        <td className="px-4 py-2 text-right font-semibold">{subventionChauffeEau.toLocaleString("fr-CA")} $</td>
-                      </tr>
-                    )}
-                    {showVrcStrategy && numUnits > 0 && (
-                      <tr>
-                        <td className="px-4 py-2 font-medium">VRC</td>
-                        <td className="px-4 py-2 text-center text-muted-foreground">{numUnits}</td>
-                        <td className="px-4 py-2 text-right text-muted-foreground">{SUBVENTION_VRC.toLocaleString("fr-CA")} $</td>
-                        <td className="px-4 py-2 text-right font-semibold">{subventionVrc.toLocaleString("fr-CA")} $</td>
-                      </tr>
-                    )}
-                  </tbody>
-                  <tfoot>
-                    <tr style={{ backgroundColor: "#1e3a5f" }}>
-                      <td colSpan={3} className="px-4 py-2.5 text-white font-bold text-right">Total estimé</td>
-                      <td className="px-4 py-2.5 text-white font-bold text-right">{subventionTotal.toLocaleString("fr-CA")} $</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 italic">
-                * Les montants de subvention sont des estimations à titre indicatif. Les montants réels peuvent varier selon les programmes en vigueur.
-              </p>
-            </div>
-          </>
-        )}
 
-        {/* GES reduction */}
-        {pre.annualSummary && post.annualSummary && (
-          <div className="mx-10 mb-8">
-            <div className="rounded-lg px-5 py-4 flex items-center justify-between" style={{ backgroundColor: "#1e3a5f08", border: "1px solid #1e3a5f22" }}>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Réduction GES estimée</p>
-                <p className="text-lg font-bold mt-0.5" style={{ color: "#1e3a5f" }}>
-                  {((pre.annualSummary.ghgTotal ?? 0) - (post.annualSummary.ghgTotal ?? 0)).toFixed(3)}{" "}
-                  <span className="text-sm font-normal text-muted-foreground">T CO₂ éq. / an</span>
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Économie GES</p>
-                <p className="text-lg font-bold mt-0.5" style={{ color: "#16a34a" }}>
-                  {pre.annualSummary.ghgTotal && pre.annualSummary.ghgTotal > 0
-                    ? (((pre.annualSummary.ghgTotal - (post.annualSummary.ghgTotal ?? 0)) / pre.annualSummary.ghgTotal) * 100).toFixed(1)
-                    : "0"}{" "}
-                  <span className="text-sm font-normal text-muted-foreground">%</span>
-                </p>
+                    {showAirTightnessStrategy && postCah !== undefined && preCah !== undefined && (
+                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                        <TrendingDown className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                        <span>
+                          Étanchéité : {preCah} →{" "}
+                          <span className="font-semibold text-slate-700">{postCah} CAH @ 50 Pa</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Subventions — thermopompes only */}
+                {subventionThermopompe > 0 && (
+                  <div className="mx-8 mb-6 border-t border-slate-100 pt-5">
+                    <h3
+                      className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"
+                      style={{ color: "#1e3a5f", fontFamily: "'Inter', sans-serif" }}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Subventions estimées
+                    </h3>
+                    <table className="w-full text-xs border rounded-lg overflow-hidden">
+                      <thead>
+                        <tr className="text-left" style={{ backgroundColor: "#1e3a5f0d" }}>
+                          <th className="px-4 py-2 font-semibold text-slate-500">Mesure</th>
+                          <th className="px-4 py-2 font-semibold text-slate-500 text-center">Unités</th>
+                          <th className="px-4 py-2 font-semibold text-slate-500 text-right">Montant / unité</th>
+                          <th className="px-4 py-2 font-semibold text-slate-500 text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium">Thermopompes</td>
+                          <td className="px-4 py-2.5 text-center text-slate-500">{thermopompeCount}</td>
+                          <td className="px-4 py-2.5 text-right text-slate-500">
+                            {SUBVENTION_THERMOPOMPE.toLocaleString("fr-CA")} $
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-bold">
+                            {subventionThermopompe.toLocaleString("fr-CA")} $
+                          </td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr style={{ backgroundColor: "#1e3a5f" }}>
+                          <td colSpan={3} className="px-4 py-2.5 text-white font-bold text-right">
+                            Total estimé
+                          </td>
+                          <td className="px-4 py-2.5 text-white font-bold text-right">
+                            {subventionThermopompe.toLocaleString("fr-CA")} $
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                    <p className="text-xs text-slate-400 mt-2 italic">
+                      * Estimation à titre indicatif. Les montants réels peuvent varier selon les programmes en vigueur.
+                    </p>
+                  </div>
+                )}
+
+                {/* GES reduction */}
+                {ghgBefore > 0 && (
+                  <div className="mx-8 mb-6">
+                    <div
+                      className="rounded-lg px-6 py-4 flex items-center justify-between"
+                      style={{ backgroundColor: "#1e3a5f08", border: "1px solid #1e3a5f22" }}
+                    >
+                      <div>
+                        <p className="text-xs text-slate-400 uppercase tracking-wider">Réduction GES estimée</p>
+                        <p className="text-xl font-bold mt-0.5" style={{ fontFamily: "'Playfair Display', serif", color: "#1e3a5f" }}>
+                          {ghgDelta.toFixed(3)}{" "}
+                          <span className="text-sm font-normal text-slate-400">T CO₂ éq. / an</span>
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400 uppercase tracking-wider">Économie GES</p>
+                        <p className="text-xl font-bold mt-0.5" style={{ fontFamily: "'Playfair Display', serif", color: "#16a34a" }}>
+                          {ghgPct.toFixed(1)}{" "}
+                          <span className="text-sm font-normal text-slate-400">%</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer — same as report */}
+                <div className="mt-auto px-8 pb-8">
+                  <div
+                    className="flex items-end justify-between pt-5"
+                    style={{ borderTop: "2px solid #1e3a5f" }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={mabLogoPath}
+                        alt="MAB — Marc André Boucher, Conseils Immobiliers"
+                        className="h-16 w-auto object-contain"
+                      />
+                    </div>
+                    <div className="text-right text-xs text-slate-500" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      <p className="font-semibold text-slate-700">9433-6450 QC INC.</p>
+                      <p>{dateStr}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="px-10 py-4 border-t flex items-center justify-between" style={{ borderColor: "#1e3a5f22" }}>
-          <p className="text-xs text-muted-foreground">MAB — Marc André Boucher, Conseils Immobiliers</p>
-          <p className="text-xs text-muted-foreground">438 521-9645</p>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
