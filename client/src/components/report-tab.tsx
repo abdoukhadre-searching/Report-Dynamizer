@@ -936,7 +936,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   Cette répartition démontre que les stratégies visant à améliorer l'efficacité du système de chauffage et à réduire les pertes thermiques du bâtiment constituent les interventions les plus efficaces pour diminuer la consommation énergétique globale.
                 </p>
 
-                <div id="figure-1" className="mt-16">
+                <div id="figure-1" className="mt-16 print:break-inside-avoid">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 1 : Répartition de la consommation énergétique avant travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[560px]">
@@ -1004,7 +1004,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                     { key: "Climatisation", color: CATEGORY_COLORS["Climatisation"] || "hsl(var(--chart-5))" },
                   ];
                   return (
-                    <div className="mt-20" id="figure-pre-monthly">
+                    <div className="mt-20 print:break-inside-avoid" id="figure-pre-monthly">
                       <p className="text-xs text-center text-muted-foreground mb-2 italic">Consommation mensuelle PRÉ-travaux par catégorie (GJ/mois)</p>
                       <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -1177,7 +1177,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   La consommation énergétique liée à la climatisation diminue également, tandis que les charges de base et la consommation d'eau chaude domestique sont légèrement réduites grâce aux mesures d'efficacité énergétique mises en place.
                 </p>
 
-                <div id="figure-2" className="my-6">
+                <div id="figure-2" className="my-6 print:break-inside-avoid">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 2 : Comparatif énergétique Avant / Après travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[620px]">
@@ -1196,7 +1196,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   </div>
                 </div>
 
-                <div id="figure-3" className="my-6">
+                <div id="figure-3" className="my-6 print:break-inside-avoid">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 3 : Répartition de la consommation énergétique après travaux (GJ/an)</p>
                   <div className="flex justify-center">
                     <div className="h-[320px] w-full max-w-[560px]">
@@ -1246,7 +1246,7 @@ export default function ReportTab({ project, exportMode = false }: ReportTabProp
                   On observe que les gains énergétiques les plus importants se produisent durant la période hivernale, lorsque les besoins en chauffage sont les plus élevés. L'installation de thermopompes et l'amélioration de l'étanchéité du bâtiment permettent ainsi de réduire significativement la consommation énergétique pendant les mois les plus froids.
                 </p>
 
-                <div id="figure-4" className="my-6">
+                <div id="figure-4" className="my-6 print:break-inside-avoid">
                   <p className="text-xs text-center text-muted-foreground mb-2 italic">Figure 4 : Évolution mensuelle de la consommation énergétique – Avant / Après travaux (GJ)</p>
                   <div className="flex justify-center">
                     <div className="h-[380px] w-full">
