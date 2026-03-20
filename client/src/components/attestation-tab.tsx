@@ -1,6 +1,11 @@
+import { useState } from "react";
 import type { Project, ComparisonData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Download, ExternalLink, AlertCircle, Save, CheckCircle } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AttestationTabProps {
   project: Project;
@@ -20,6 +25,26 @@ function getNiveau(impPct: number, isNew: boolean): { niveau: 1 | 2 | 3; label: 
 
 export default function AttestationTab({ project }: AttestationTabProps) {
   const cmp = project.comparisonData as ComparisonData | null;
+  const queryClient = useQueryClient();
+
+  const [sigName, setSigName] = useState(project.signatoryName || "");
+  const [sigTitle, setSigTitle] = useState(project.signatoryTitle || "");
+  const [sigCoord, setSigCoord] = useState(project.signatoryCoordonnees || "");
+  const [saved, setSaved] = useState(false);
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      apiRequest("PATCH", `/api/projects/${project.id}`, {
+        signatoryName: sigName,
+        signatoryTitle: sigTitle,
+        signatoryCoordonnees: sigCoord,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    },
+  });
 
   const pdfUrl = `/api/projects/${project.id}/attestation-pdf`;
   const isNew = project.buildingType === "new";
@@ -62,13 +87,13 @@ export default function AttestationTab({ project }: AttestationTabProps) {
         </div>
         <div className="flex gap-2">
           <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" variant="outline" className="gap-1.5">
+            <Button size="sm" variant="outline" className="gap-1.5" data-testid="button-open-attestation">
               <ExternalLink className="w-3.5 h-3.5" />
               Ouvrir
             </Button>
           </a>
           <a href={pdfUrl} download={`attestation-aph-${project.id}.pdf`}>
-            <Button size="sm" style={{ backgroundColor: "#1e3a5f" }} className="gap-1.5 text-white">
+            <Button size="sm" style={{ backgroundColor: "#1e3a5f" }} className="gap-1.5 text-white" data-testid="button-download-attestation">
               <Download className="w-3.5 h-3.5" />
               Télécharger
             </Button>
@@ -100,6 +125,66 @@ export default function AttestationTab({ project }: AttestationTabProps) {
           <div className="text-xs text-muted-foreground mb-1">Qualification APH SELECT</div>
           <div className="font-medium text-sm" style={{ color: nc.text }}>
             {niveauLabel} — {niveauRange}
+          </div>
+        </div>
+      </div>
+
+      {/* Signatory section */}
+      <div className="border rounded-lg p-4 space-y-4" style={{ borderColor: "#cbd5e1" }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold" style={{ color: "#1e3a5f" }}>Signataire</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Ces informations seront inscrites dans le PDF. La signature reste à apposer manuellement.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant={saved ? "default" : "outline"}
+            className="gap-1.5"
+            style={saved ? { backgroundColor: "#15803d", color: "white" } : {}}
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            data-testid="button-save-signatory"
+          >
+            {saved ? <CheckCircle className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+            {saved ? "Sauvegardé" : saveMutation.isPending ? "Sauvegarde..." : "Sauvegarder"}
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="sig-name" className="text-xs">Nom</Label>
+            <Input
+              id="sig-name"
+              value={sigName}
+              onChange={(e) => { setSigName(e.target.value); setSaved(false); }}
+              placeholder="Marc-André Boucher"
+              className="h-8 text-sm"
+              data-testid="input-signatory-name"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="sig-title" className="text-xs">Titre professionnel</Label>
+            <Input
+              id="sig-title"
+              value={sigTitle}
+              onChange={(e) => { setSigTitle(e.target.value); setSaved(false); }}
+              placeholder="Évaluateur en efficacité énergétique"
+              className="h-8 text-sm"
+              data-testid="input-signatory-title"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="sig-coord" className="text-xs">Coordonnées</Label>
+            <Input
+              id="sig-coord"
+              value={sigCoord}
+              onChange={(e) => { setSigCoord(e.target.value); setSaved(false); }}
+              placeholder="438 521-9645 — exemple@email.com"
+              className="h-8 text-sm"
+              data-testid="input-signatory-coordonnees"
+            />
           </div>
         </div>
       </div>

@@ -29,6 +29,9 @@ export const projects = pgTable("projects", {
   annexLedLightingImage: text("annex_led_lighting_image"),
   annexVrcImage: text("annex_vrc_image"),
   annexChauffeEauThermopompeImage: text("annex_chauffe_eau_thermopompe_image"),
+  signatoryName: text("signatory_name"),
+  signatoryTitle: text("signatory_title"),
+  signatoryCoordonnees: text("signatory_coordonnees"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

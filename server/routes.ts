@@ -493,7 +493,17 @@ export async function registerRoutes(
     overlay(page2, y2, 206, 360, 127, 17, monthName,  208, 372, 9);
     overlay(page2, y2,  333, 360,  48, 17, year2,     335, 372, 9);
 
-    // Signature / Nom / Titre professionnel / Coordonnées: NOT touched.
+    // 8. Signataire fields (pdftotext coords, page 2)
+    //    Signature grey box: x=79, y=407-443 → left blank for manual signing
+    //    Nom:                x=63, y=428-448
+    //    Titre professionnel: x=95, y=449-483
+    //    Coordonnées:        x=97, y=487-507
+    const sigName = project.signatoryName || "";
+    const sigTitle = project.signatoryTitle || "";
+    const sigCoord = project.signatoryCoordonnees || "";
+    if (sigName)  overlay(page2, y2,  63, 428, 513, 20, sigName,  65, 441, 8);
+    if (sigTitle) overlay(page2, y2,  95, 449, 481, 34, sigTitle, 97, 460, 8);
+    if (sigCoord) overlay(page2, y2,  97, 487, 479, 20, sigCoord, 99, 499, 8);
 
     return Buffer.from(await pdfDoc.save());
   }

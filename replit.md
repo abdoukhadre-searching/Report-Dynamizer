@@ -84,7 +84,9 @@ The report tab generates a professional narrative PDF-style document with 7 sect
 - Quality = "EVALUATEUR EN EFFICACITÉ ÉNERGÉTIQUE"; Expertise = "MODELISATION ET OPTIMISATION / EN EFFICACITE ENERGETIQUE"
 - Niveau thresholds: existing N1=15–24%, N2=25–39%, N3≥40%; new construction N1=20–24%, N2=25–39%, N3≥40%
 - `buildingType === "new"` → fills "construction" section (page 1); else fills "propriétés existantes" (page 2)
-- Signature / Nom / Titre professionnel / Coordonnées: NOT touched (for manual signing in Acrobat)
+- Signature / Nom / Titre professionnel / Coordonnées: filled from `project.signatoryName/Title/Coordonnees` (editable in attestation-tab UI)
+- Signature box itself left blank for manual signing in Acrobat
+- signatoryName, signatoryTitle, signatoryCoordonnees fields stored in projects table
 
 ## Default Annex PDFs
 - `client/public/defaults/thermopompe-innovair.pdf` — Innovair Q4 spec sheet; default for Thermopompes annex (when showHeatingStrategy)
