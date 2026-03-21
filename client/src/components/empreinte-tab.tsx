@@ -144,8 +144,8 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 onClick={() => {
                   const prev = document.title;
                   document.title = `Empreinte économique - ${fullAddress || address}`;
+                  window.addEventListener("afterprint", () => { document.title = prev; }, { once: true });
                   window.print();
-                  document.title = prev;
                 }}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-80 print:hidden"
                 style={{ backgroundColor: "#1e3a5f" }}

@@ -150,8 +150,8 @@ export default function StrategyTab({ project }: StrategyTabProps) {
   const handlePrint = () => {
     const prev = document.title;
     document.title = `Cahier de stratégie - ${fullAddress || address}`;
+    window.addEventListener("afterprint", () => { document.title = prev; }, { once: true });
     window.print();
-    document.title = prev;
   };
 
   const ghgBefore = pre.annualSummary?.ghgTotal ?? 0;
