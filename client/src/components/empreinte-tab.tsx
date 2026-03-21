@@ -1,7 +1,11 @@
 import { useState } from "react";
 import type { Project, ReportData } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves } from "lucide-react";
+import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer } from "lucide-react";
+import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
+import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
+import ashpPage1Path from "@assets/ASHP_page-0001_1773974895557.jpg";
+import ashpPage2Path from "@assets/ASHP_page-0002_1773974895559.jpg";
 const thermoSubventionImg = "/thermo-subvention-hydro.jpg";
 
 interface EmpreinteTabProps {
@@ -132,12 +136,22 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 </div>
               )}
             </div>
-            <div className="flex-shrink-0 text-center px-5 py-3 rounded-xl" style={{ backgroundColor: "#1e3a5f" }}>
-              <p className="text-xs text-white uppercase tracking-wider mb-0.5">Amélioration</p>
-              <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
-                {improvPct.toFixed(1)} %
-              </p>
-              <p className="text-xs text-white opacity-70">de réduction énergétique</p>
+            <div className="flex flex-col items-end gap-3">
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-80 print:hidden"
+                style={{ backgroundColor: "#1e3a5f" }}
+              >
+                <Printer className="w-4 h-4" />
+                Télécharger (PDF)
+              </button>
+              <div className="text-center px-5 py-3 rounded-xl" style={{ backgroundColor: "#1e3a5f" }}>
+                <p className="text-xs text-white uppercase tracking-wider mb-0.5">Amélioration</p>
+                <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {improvPct.toFixed(1)} %
+                </p>
+                <p className="text-xs text-white opacity-70">de réduction énergétique</p>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -454,32 +468,32 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
           {/* Fiche technique thermopompe */}
           <Card className="overflow-hidden border shadow-sm">
             <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
-                  <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                    Fiche technique — Thermopompe Innovair
-                  </h3>
-                </div>
-                <a
-                  href="/defaults/thermopompe-innovair.pdf"
-                  download="thermopompe-innovair.pdf"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "#1e3a5f" }}
-                >
-                  ↓ Télécharger le PDF
-                </a>
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
+                <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                  Fiche technique — Thermopompe Innovair
+                </h3>
               </div>
             </CardHeader>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-4 space-y-4">
               <img
-                src="/defaults/thermopompe-innovair-p1.png"
-                alt="Fiche technique Innovair — page 1"
+                src={innovairPage1Path}
+                alt="Innovair Q4 — Spécifications techniques page 1"
                 className="w-full rounded border border-slate-200 shadow-sm"
               />
               <img
-                src="/defaults/thermopompe-innovair-p2.png"
-                alt="Fiche technique Innovair — page 2"
+                src={innovairPage2Path}
+                alt="Innovair Q4 — Spécifications techniques page 2"
+                className="w-full rounded border border-slate-200 shadow-sm"
+              />
+              <img
+                src={ashpPage1Path}
+                alt="ASHP — Caractéristiques page 1"
+                className="w-full rounded border border-slate-200 shadow-sm"
+              />
+              <img
+                src={ashpPage2Path}
+                alt="ASHP — Caractéristiques page 2"
                 className="w-full rounded border border-slate-200 shadow-sm"
               />
             </CardContent>
