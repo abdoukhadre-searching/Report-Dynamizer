@@ -6,6 +6,8 @@ import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066
 import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
 import ashpPage1Path from "@assets/ASHP_page-0001_1773974895557.jpg";
 import ashpPage2Path from "@assets/ASHP_page-0002_1773974895559.jpg";
+import rheemProductPath from "@assets/RHEEM_2_page-0001_1773727074851.jpg";
+import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1773727074852.jpg";
 const thermoSubventionImg = "/thermo-subvention-hydro.jpg";
 
 interface EmpreinteTabProps {
@@ -81,7 +83,7 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
   const totalEtancheite = coutEtancheite;
   const totalThermo = showHeatingStrategy ? nbThermo * coutThermo : 0;
   const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbUnits * coutChauffeEau : 0;
-  const totalVrc = showVrcStrategy ? nbUnits * coutVrc : 0;
+  const totalVrc = showVrcStrategy ? coutVrc : 0;
   const totalFaibleDebit = coutFaibleDebit;
   const totalLed = showLedStrategy ? coutLed : 0;
 
@@ -277,7 +279,7 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 </tr>
               )}
 
-              {/* VRC — conditional */}
+              {/* VRC — conditional, montant global comme DEL */}
               {showVrcStrategy && (
                 <tr className="hover:bg-blue-50/40 transition-colors">
                   <td className="px-5 py-4">
@@ -289,13 +291,14 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center"><UnitBadge n={nbUnits} /></td>
+                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
                         type="number"
                         value={coutVrc}
                         onChange={(e) => setCoutVrc(Number(e.target.value))}
+                        placeholder="0"
                         className={inputCls}
                       />
                       <span className="text-slate-400 text-xs">$</span>
@@ -498,6 +501,32 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
               />
             </CardContent>
           </Card>
+
+          {/* Fiche technique chauffe-eau thermopompe — si stratégie active */}
+          {showHeatPumpWaterHeaterStrategy && (
+            <Card className="overflow-hidden border shadow-sm">
+              <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
+                  <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                    Fiche technique — Chauffe-eau thermopompe Rheem
+                  </h3>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                <img
+                  src={rheemProductPath}
+                  alt="Rheem — Chauffe-eau thermopompe"
+                  className="w-full rounded border border-slate-200 shadow-sm"
+                />
+                <img
+                  src={rheemSpecPath}
+                  alt="Rheem — Spécifications techniques"
+                  className="w-full rounded border border-slate-200 shadow-sm"
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Subvention Hydro-Québec image */}
           <Card className="overflow-hidden border shadow-sm">
