@@ -10,6 +10,7 @@ import ashpPage2Path from "@assets/ASHP_page-0002_1774063357552.jpg";
 import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
 import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
 import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
+import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 const thermoSubventionImg = "/thermo-subvention-hydro.jpg";
 
 interface EmpreinteTabProps {
@@ -127,11 +128,14 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="w-5 h-5" style={{ color: "#1e3a5f" }} />
-                <h2 className="text-xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#1e3a5f" }}>
-                  Empreinte économique
-                </h2>
+              <div className="flex items-center gap-3 mb-2">
+                <img src={mabLogoPath} alt="MAB Logo" style={{ height: "36px", width: "auto", objectFit: "contain", borderRadius: "4px" }} />
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" style={{ color: "#1e3a5f" }} />
+                  <h2 className="text-xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#1e3a5f" }}>
+                    Empreinte économique
+                  </h2>
+                </div>
               </div>
               <p className="text-sm text-slate-500 mt-1">
                 Estimation des coûts de réalisation des travaux selon les stratégies retenues
@@ -501,20 +505,24 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
         <>
           {/* Fiche technique thermopompe */}
           <Card className="overflow-hidden border shadow-sm">
-            <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
-                <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                  Fiche technique — Thermopompe Innovair
-                </h3>
+            <div style={{ breakInside: "avoid" }}>
+              <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
+                  <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                    Fiche technique — Thermopompe Innovair
+                  </h3>
+                </div>
+              </CardHeader>
+              <div className="p-4">
+                <img
+                  src={innovairPage1Path}
+                  alt="Innovair Q4 — Spécifications techniques page 1"
+                  className="w-full rounded border border-slate-200 shadow-sm"
+                />
               </div>
-            </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              <img
-                src={innovairPage1Path}
-                alt="Innovair Q4 — Spécifications techniques page 1"
-                className="w-full rounded border border-slate-200 shadow-sm"
-              />
+            </div>
+            <div className="p-4 space-y-4">
               <img
                 src={innovairPage2Path}
                 alt="Innovair Q4 — Spécifications techniques page 2"
@@ -530,7 +538,7 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                 alt="ASHP — Caractéristiques page 2"
                 className="w-full rounded border border-slate-200 shadow-sm"
               />
-            </CardContent>
+            </div>
           </Card>
 
           {/* Fiche technique chauffe-eau thermopompe — si stratégie active */}
