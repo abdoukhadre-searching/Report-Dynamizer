@@ -5,18 +5,20 @@ import type { Project } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Zap, FileText, LayoutDashboard, BookOpen, Building2, ClipboardCheck, BarChart2 } from "lucide-react";
+import { ArrowLeft, Zap, FileText, LayoutDashboard, BookOpen, Building2, ClipboardCheck, BarChart2, DollarSign } from "lucide-react";
 import UploadTab from "@/components/upload-tab";
 import DashboardTab from "@/components/dashboard-tab";
 import ReportTab from "@/components/report-tab";
 import CollectiveBuildingTab from "@/components/collective-building-tab";
 import AttestationTab from "@/components/attestation-tab";
 import StrategyTab from "@/components/strategy-tab";
+import EmpreinteTab from "@/components/empreinte-tab";
 
 export default function ProjectPage() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const [reportSubTab, setReportSubTab] = useState<"qualification" | "collective" | "attestation">("qualification");
+  const [strategieSubTab, setStrategieSubTab] = useState<"cahier" | "empreinte">("cahier");
 
   const { data: project, isLoading } = useQuery<Project>({
     queryKey: ["/api/projects", params.id],
@@ -117,8 +119,42 @@ export default function ProjectPage() {
 
           <TabsContent value="strategie">
             {hasBothReports && (
-              <div className="space-y-4">
-                <StrategyTab project={project} />
+              <div>
+                <div className="flex gap-1 mb-6 border-b" data-testid="strategie-sub-tabs">
+                  <button
+                    type="button"
+                    data-testid="subtab-cahier-strategie"
+                    onClick={() => setStrategieSubTab("cahier")}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                      strategieSubTab === "cahier"
+                        ? "border-[#1e3a5f] text-[#1e3a5f]"
+                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                    }`}
+                  >
+                    <BarChart2 className="w-4 h-4" />
+                    Cahier de stratégie
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="subtab-empreinte-economique"
+                    onClick={() => setStrategieSubTab("empreinte")}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                      strategieSubTab === "empreinte"
+                        ? "border-[#1e3a5f] text-[#1e3a5f]"
+                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                    }`}
+                  >
+                    <DollarSign className="w-4 h-4" />
+                    Empreinte économique
+                  </button>
+                </div>
+
+                {strategieSubTab === "cahier" && (
+                  <StrategyTab project={project} />
+                )}
+                {strategieSubTab === "empreinte" && (
+                  <EmpreinteTab project={project} />
+                )}
               </div>
             )}
           </TabsContent>

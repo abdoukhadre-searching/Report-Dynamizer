@@ -1,0 +1,407 @@
+import { useState } from "react";
+import type { Project, ReportData } from "@shared/schema";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2 } from "lucide-react";
+
+interface EmpreinteTabProps {
+  project: Project;
+}
+
+function getOccupantCount(occupants?: string): number {
+  if (!occupants) return 0;
+  const m = occupants.match(/(\d+)\s*adultes?/i);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function getThermopompeCount(occupants?: string): number {
+  const count = getOccupantCount(occupants);
+  return count > 0 ? Math.ceil(count / 2) : 0;
+}
+
+function getNumUnitsFromOccupants(occupants?: string): number {
+  return getThermopompeCount(occupants);
+}
+
+function hasThermopompe(data: ReportData): boolean {
+  const equip = (data.heating?.primaryEquipment || "").toLowerCase();
+  return equip.includes("thermopompe") || equip.includes("source d'air");
+}
+
+function hasHotWaterChanged(pre: ReportData, post: ReportData): boolean {
+  const preDailyHW = pre.hotWater?.dailyConsumption;
+  const postDailyHW = post.hotWater?.dailyConsumption;
+  return preDailyHW !== undefined && postDailyHW !== undefined && preDailyHW !== postDailyHW;
+}
+
+function hasLedImprovement(pre: ReportData, post: ReportData): boolean {
+  const preLighting = pre.interiorLightingKWh;
+  const postLighting = post.interiorLightingKWh;
+  return preLighting !== undefined && postLighting !== undefined && preLighting > postLighting;
+}
+
+function hasVrcInstallation(post: ReportData): boolean {
+  if (!post.centralVentilation) return false;
+  const cv = post.centralVentilation;
+  return cv.sensibleEfficiency0C !== undefined || cv.sensibleEfficiencyMinus25C !== undefined;
+}
+
+function hasHeatPumpWaterHeater(post: ReportData): boolean {
+  return /thermopompe/i.test(post.hotWater?.equipmentType || "");
+}
+
+function hasAirTightnessChanged(pre: ReportData, post: ReportData): boolean {
+  const preCah = pre.airLeakage?.cah50;
+  const postCah = post.airLeakage?.cah50;
+  return preCah !== undefined && postCah !== undefined && preCah !== postCah;
+}
+
+const SUBVENTION_THERMO = 1296;
+
+export default function EmpreinteTab({ project }: EmpreinteTabProps) {
+  const pre = project.preReportData as ReportData | null;
+  const post = project.postReportData as ReportData | null;
+
+  const [coutThermo, setCoutThermo] = useState(2995);
+  const [coutChauffeEau, setCoutChauffeEau] = useState(2305);
+  const [coutVrc, setCoutVrc] = useState(1800);
+  const [coutLed, setCoutLed] = useState(0);
+
+  if (!pre || !post) return null;
+
+  const occupants = pre.buildingInfo?.occupants;
+  const numUnits = getNumUnitsFromOccupants(occupants);
+  const thermopompeCount = getThermopompeCount(occupants);
+
+  const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
+  const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
+  const showVrcStrategy = hasVrcInstallation(post);
+  const showLedStrategy = hasLedImprovement(pre, post);
+
+  const nbThermo = thermopompeCount;
+  const nbUnits = numUnits > 0 ? numUnits : 1;
+
+  const preGJ = pre.annualSummary?.totalGJ ?? 0;
+  const postGJ = post.annualSummary?.totalGJ ?? 0;
+  const improvPct = preGJ > 0 ? ((preGJ - postGJ) / preGJ) * 100 : 0;
+
+  const totalThermo = showHeatingStrategy ? nbThermo * coutThermo : 0;
+  const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbUnits * coutChauffeEau : 0;
+  const totalVrc = showVrcStrategy ? nbUnits * coutVrc : 0;
+  const totalLed = showLedStrategy ? coutLed : 0;
+
+  const totalBrut = totalThermo + totalChauffeEau + totalVrc + totalLed;
+  const totalSubvention = showHeatingStrategy ? nbThermo * SUBVENTION_THERMO : 0;
+  const totalApresSubvention = totalBrut - totalSubvention;
+
+  const address = project.address || pre.buildingInfo?.address || "";
+  const city = project.city || pre.buildingInfo?.city || "";
+  const province = project.province || pre.buildingInfo?.province || "";
+  const fullAddress = [address, city, province].filter(Boolean).join(", ");
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+
+      {/* Header Card */}
+      <Card className="overflow-hidden border-0 shadow-sm" style={{ borderTop: "4px solid #1e3a5f" }}>
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <DollarSign className="w-5 h-5" style={{ color: "#1e3a5f" }} />
+                <h2 className="text-xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#1e3a5f" }}>
+                  Empreinte économique
+                </h2>
+              </div>
+              <p className="text-sm text-slate-500 mt-1">
+                Estimation des coûts de réalisation des travaux selon les stratégies retenues
+              </p>
+              {fullAddress && (
+                <div className="flex items-center gap-1.5 mt-2">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                  <p className="text-xs text-slate-400">{fullAddress}</p>
+                </div>
+              )}
+            </div>
+            {/* Improvement badge */}
+            <div className="flex-shrink-0 text-center px-5 py-3 rounded-xl" style={{ backgroundColor: "#1e3a5f" }}>
+              <p className="text-xs text-white uppercase tracking-wider mb-0.5">Amélioration</p>
+              <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {improvPct.toFixed(1)} %
+              </p>
+              <p className="text-xs text-white opacity-70">de réduction énergétique</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cost Table */}
+      <Card className="overflow-hidden border shadow-sm">
+        <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#16a34a" }} />
+            <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+              Coût des travaux
+            </h3>
+            <span className="text-xs text-slate-400 ml-auto">
+              Cliquez sur un montant pour le modifier
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ backgroundColor: "#1e3a5f" }}>
+                <th className="px-5 py-3 text-left text-white font-semibold text-xs uppercase tracking-wider">Mesure</th>
+                <th className="px-5 py-3 text-center text-white font-semibold text-xs uppercase tracking-wider">Unités</th>
+                <th className="px-5 py-3 text-right text-white font-semibold text-xs uppercase tracking-wider">Coût / unité</th>
+                <th className="px-5 py-3 text-right text-white font-semibold text-xs uppercase tracking-wider">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+
+              {showHeatingStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
+                        <Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800">Thermopompes</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Innovair QHW12H2UZRA / QOS12H2BM5A</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" style={{ backgroundColor: "#1e3a5f10", color: "#1e3a5f" }}>
+                      {nbThermo}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutThermo}
+                        onChange={(e) => setCoutThermo(Number(e.target.value))}
+                        className="w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
+                      {totalThermo.toLocaleString("fr-CA")} $
+                    </span>
+                  </td>
+                </tr>
+              )}
+
+              {showHeatPumpWaterHeaterStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
+                        <Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800">Chauffe-eau thermopompe</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Remplacement chauffe-eau existant</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" style={{ backgroundColor: "#1e3a5f10", color: "#1e3a5f" }}>
+                      {nbUnits}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutChauffeEau}
+                        onChange={(e) => setCoutChauffeEau(Number(e.target.value))}
+                        className="w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
+                      {totalChauffeEau.toLocaleString("fr-CA")} $
+                    </span>
+                  </td>
+                </tr>
+              )}
+
+              {showVrcStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
+                        <Wind className="w-4 h-4" style={{ color: "#1e3a5f" }} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800">VRC</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Ventilateur récupérateur de chaleur</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" style={{ backgroundColor: "#1e3a5f10", color: "#1e3a5f" }}>
+                      {nbUnits}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutVrc}
+                        onChange={(e) => setCoutVrc(Number(e.target.value))}
+                        className="w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
+                      {totalVrc.toLocaleString("fr-CA")} $
+                    </span>
+                  </td>
+                </tr>
+              )}
+
+              {showLedStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
+                        <Lightbulb className="w-4 h-4" style={{ color: "#1e3a5f" }} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800">Éclairage DEL</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Remplacement des luminaires existants</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutLed}
+                        onChange={(e) => setCoutLed(Number(e.target.value))}
+                        placeholder="0"
+                        className="w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    {totalLed > 0
+                      ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalLed.toLocaleString("fr-CA")} $</span>
+                      : <span className="text-slate-400 text-sm">—</span>
+                    }
+                  </td>
+                </tr>
+              )}
+
+              {!showHeatingStrategy && !showHeatPumpWaterHeaterStrategy && !showVrcStrategy && !showLedStrategy && (
+                <tr>
+                  <td colSpan={4} className="px-5 py-8 text-center text-slate-400 text-sm">
+                    Aucune stratégie de travaux détectée
+                  </td>
+                </tr>
+              )}
+            </tbody>
+
+            <tfoot>
+              <tr style={{ backgroundColor: "#f8fafc", borderTop: "2px solid #e2e8f0" }}>
+                <td colSpan={3} className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Total brut des travaux
+                </td>
+                <td className="px-5 py-3 text-right font-bold text-slate-800 text-base">
+                  {totalBrut.toLocaleString("fr-CA")} $
+                </td>
+              </tr>
+
+              {totalSubvention > 0 && (
+                <>
+                  <tr className="bg-green-50">
+                    <td className="px-5 py-3" colSpan={2}>
+                      <div className="flex items-center gap-2">
+                        <TrendingDown className="w-3.5 h-3.5 text-green-600" />
+                        <div>
+                          <p className="text-xs font-semibold text-green-800">Possibilité de subvention — Thermopompes</p>
+                          <p className="text-xs text-green-600 mt-0.5">
+                            {nbThermo} unité{nbThermo > 1 ? "s" : ""} × {SUBVENTION_THERMO.toLocaleString("fr-CA")} $/unité — Programme Hydro-Québec
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-right text-sm text-green-600 font-medium" colSpan={2}>
+                      − {totalSubvention.toLocaleString("fr-CA")} $
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: "#1e3a5f" }}>
+                    <td colSpan={3} className="px-5 py-4 text-right text-white font-semibold text-xs uppercase tracking-wider">
+                      Montant estimé après subvention
+                    </td>
+                    <td className="px-5 py-4 text-right text-white font-bold text-xl">
+                      {totalApresSubvention.toLocaleString("fr-CA")} $
+                    </td>
+                  </tr>
+                </>
+              )}
+
+              {totalSubvention === 0 && totalBrut > 0 && (
+                <tr style={{ backgroundColor: "#1e3a5f" }}>
+                  <td colSpan={3} className="px-5 py-4 text-right text-white font-semibold text-xs uppercase tracking-wider">
+                    Total estimé des travaux
+                  </td>
+                  <td className="px-5 py-4 text-right text-white font-bold text-xl">
+                    {totalBrut.toLocaleString("fr-CA")} $
+                  </td>
+                </tr>
+              )}
+            </tfoot>
+          </table>
+        </CardContent>
+      </Card>
+
+      {/* Summary KPI row */}
+      {totalBrut > 0 && (
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Coût brut</p>
+              <p className="text-lg font-bold" style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}>
+                {totalBrut.toLocaleString("fr-CA")} $
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Subventions possibles</p>
+              <p className="text-lg font-bold text-green-600" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {totalSubvention > 0 ? `${totalSubvention.toLocaleString("fr-CA")} $` : "—"}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Net après subvention</p>
+              <p className="text-lg font-bold" style={{ color: "#16a34a", fontFamily: "'Playfair Display', serif" }}>
+                {totalApresSubvention.toLocaleString("fr-CA")} $
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <p className="text-xs text-slate-400 italic pb-2">
+        * Les montants présentés sont des estimations à titre indicatif afin de planifier les travaux.
+        Un devis détaillé doit être obtenu auprès d'entrepreneurs qualifiés avant de procéder.
+      </p>
+    </div>
+  );
+}
