@@ -6,23 +6,55 @@ Web application for energy efficiency qualification under the APH SELECT program
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui, Tailwind CSS, wouter routing, TanStack Query
 - **Backend**: Express.js with PostgreSQL (Drizzle ORM)
+- **Auth**: express-session + connect-pg-simple + bcryptjs (session-based auth, no JWTs)
 - **Key Feature**: HOT2000 French-language report parser (`server/parser.ts`)
 - **PDF Support**: Uses pdftotext (poppler_utils) for PDF text extraction
 
 ## Project Structure
-- `shared/schema.ts` - Data models (projects table, report data schemas)
+- `shared/schema.ts` - Data models (users, audit_logs, projects, report data schemas)
+- `server/auth.ts` - Auth utilities (hashPassword, verifyPassword, requireAuth, requireAdmin)
 - `server/parser.ts` - HOT2000 report text parsing engine (French-language, line-by-line)
-- `server/routes.ts` - API endpoints (text and PDF upload)
-- `server/storage.ts` - Database CRUD operations
+- `server/routes.ts` - API endpoints (auth, projects, audit logs)
+- `server/storage.ts` - Database CRUD operations (users, audit_logs, projects)
 - `server/db.ts` - Database connection
-- `client/src/pages/home.tsx` - Project list / home page
+- `server/index.ts` - Express app + session middleware setup
+- `client/src/contexts/auth-context.tsx` - Auth context with useAuth hook
+- `client/src/pages/landing.tsx` - Hero landing page for unauthenticated users
+- `client/src/pages/login.tsx` - Login form page
+- `client/src/pages/register.tsx` - Register form page
+- `client/src/pages/profile.tsx` - User profile + own audit logs
+- `client/src/pages/admin.tsx` - Admin dashboard (all audit logs, stats)
+- `client/src/pages/home.tsx` - Project list (protected, user-scoped, delete modal)
 - `client/src/pages/project.tsx` - Project detail with tabs
+- `client/src/components/delete-confirm-dialog.tsx` - Safe deletion modal (requires typing "Supprimer"/project name/acronym)
 - `client/src/components/upload-tab.tsx` - Upload PRE/POST reports (PDF or text)
 - `client/src/components/dashboard-tab.tsx` - Comparison dashboard with charts
 - `client/src/components/report-tab.tsx` - Generated qualification report view
 
+## Auth System
+- Session-based (express-session + connect-pg-simple PostgreSQL store)
+- `users` table: id (uuid), email, name, passwordHash, role (user|admin), createdAt
+- `audit_logs` table: id, userId, userEmail, userName, action, projectId, projectName, details, createdAt
+- `projects.userId` FK: projects are scoped to their creator (admins see all)
+- User roles: "user" (default) and "admin"
+- Auth endpoints: POST /api/auth/register|login|logout, GET /api/auth/me
+- Audit log endpoints: GET /api/audit-logs/mine (own), GET /api/audit-logs/all (admin only)
+- Logged actions: create_project, upload_pre, upload_post, update_project, delete_project
+- Frontend: Landing page → login/register → home (protected), profile, admin (admin role only)
+
+## Delete Confirmation Dialog
+- `DeleteConfirmDialog` component: requires user to type "Supprimer" (case-insensitive) OR project name OR acronym (first letters of each word)
+- Shows success card after deletion; user clicks "Fermer" to dismiss
+- Uses `key={project.id}` to reset state when switching between projects
+
 ## API Routes
-- `GET /api/projects` - List all projects
+- `GET /api/auth/me` - Get current session user
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login with email/password
+- `POST /api/auth/logout` - Destroy session
+- `GET /api/audit-logs/mine` - User's own audit logs (auth required)
+- `GET /api/audit-logs/all` - All audit logs (admin only)
+- `GET /api/projects` - List projects (scoped to session user)
 - `POST /api/projects` - Create a new project
 - `GET /api/projects/:id` - Get a project by ID
 - `PATCH /api/projects/:id` - Update a project

@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import { parseHot2000Report, computeComparison } from "./parser";
@@ -13,6 +13,7 @@ import * as os from "os";
 import * as crypto from "crypto";
 import { PDFDocument, rgb, StandardFonts, PDFName } from "pdf-lib";
 import { inflateSync, deflateSync } from "zlib";
+import { hashPassword, verifyPassword } from "./auth";
 
 const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -55,9 +56,111 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  app.get("/api/projects", async (_req, res) => {
+  // ── Auth routes ──────────────────────────────────────────────────────────────
+
+  app.post("/api/auth/register", async (req, res) => {
     try {
-      const projects = await storage.getProjects();
+      const { email, name, password } = req.body;
+      if (!email || !name || !password) {
+        return res.status(400).json({ message: "Tous les champs sont requis" });
+      }
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Le mot de passe doit contenir au moins 6 caractères" });
+      }
+      const existing = await storage.getUserByEmail(email);
+      if (existing) {
+        return res.status(409).json({ message: "Un compte existe déjà avec cette adresse courriel" });
+      }
+      const passwordHash = await hashPassword(password);
+      const user = await storage.createUser({ email, name, passwordHash });
+      const { passwordHash: _, ...safeUser } = user;
+      res.status(201).json(safeUser);
+    } catch (err) {
+      console.error("Register error:", err);
+      res.status(500).json({ message: "Erreur lors de l'inscription" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: "Courriel et mot de passe requis" });
+      }
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: "Identifiants incorrects" });
+      }
+      const valid = await verifyPassword(password, user.passwordHash);
+      if (!valid) {
+        return res.status(401).json({ message: "Identifiants incorrects" });
+      }
+      req.session.userId = user.id;
+      req.session.userRole = user.role;
+      const { passwordHash: _, ...safeUser } = user;
+      res.json({ user: safeUser });
+    } catch (err) {
+      console.error("Login error:", err);
+      res.status(500).json({ message: "Erreur lors de la connexion" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy(() => {
+      res.json({ success: true });
+    });
+  });
+
+  app.get("/api/auth/me", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Non authentifié" });
+    }
+    try {
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) {
+        req.session.destroy(() => {});
+        return res.status(401).json({ message: "Utilisateur introuvable" });
+      }
+      const { passwordHash: _, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (err) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // ── Audit log routes ──────────────────────────────────────────────────────────
+
+  app.get("/api/audit-logs/mine", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Non authentifié" });
+    }
+    try {
+      const logs = await storage.getAuditLogs(req.session.userId);
+      res.json(logs);
+    } catch (err) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  app.get("/api/audit-logs/all", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin") {
+      return res.status(403).json({ message: "Accès refusé" });
+    }
+    try {
+      const logs = await storage.getAuditLogs();
+      res.json(logs);
+    } catch (err) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // ── Projects ──────────────────────────────────────────────────────────────────
+
+  app.get("/api/projects", async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const isAdmin = req.session.userRole === "admin";
+      const projects = await storage.getProjects(userId, isAdmin);
       res.json(projects);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch projects" });
@@ -104,10 +207,25 @@ export async function registerRoutes(
 
   app.post("/api/projects", async (req, res) => {
     try {
+      const userId = req.session.userId;
+      const projectName = req.body.name || "Nouveau projet";
       const project = await storage.createProject({
-        name: req.body.name || "Nouveau projet",
+        name: projectName,
         status: "draft",
+        userId: userId || null,
       });
+      if (userId) {
+        const user = await storage.getUserById(userId);
+        await storage.createAuditLog({
+          userId,
+          userEmail: user?.email,
+          userName: user?.name,
+          action: "create_project",
+          projectId: project.id,
+          projectName: project.name,
+          details: `Projet créé: ${project.name}`,
+        }).catch(() => {});
+      }
       res.json(project);
     } catch (error) {
       res.status(500).json({ message: "Failed to create project" });
@@ -130,7 +248,21 @@ export async function registerRoutes(
   app.delete("/api/projects/:id", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      const userId = req.session.userId;
       await storage.deleteProject(projectId);
+      if (userId && project) {
+        const user = await storage.getUserById(userId);
+        await storage.createAuditLog({
+          userId,
+          userEmail: user?.email,
+          userName: user?.name,
+          action: "delete_project",
+          projectId: project.id,
+          projectName: project.name,
+          details: `Projet supprimé: ${project.name}`,
+        }).catch(() => {});
+      }
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete project" });
@@ -179,6 +311,23 @@ export async function registerRoutes(
     return storage.updateProject(projectId, updateData);
   }
 
+  async function logUploadAudit(req: any, projectId: string, type: "pre" | "post") {
+    const userId = req.session?.userId;
+    if (!userId) return;
+    try {
+      const [project, user] = await Promise.all([storage.getProject(projectId), storage.getUserById(userId)]);
+      await storage.createAuditLog({
+        userId,
+        userEmail: user?.email,
+        userName: user?.name,
+        action: type === "pre" ? "upload_pre" : "upload_post",
+        projectId,
+        projectName: project?.name,
+        details: `Rapport ${type === "pre" ? "PRÉ" : "POST"} chargé pour ${project?.name || projectId}`,
+      });
+    } catch {}
+  }
+
   app.post("/api/projects/:id/upload-pre", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);
@@ -188,6 +337,7 @@ export async function registerRoutes(
       }
       const updated = await handleReportUpload(projectId, content, "pre");
       if (!updated) return res.status(404).json({ message: "Project not found" });
+      logUploadAudit(req, projectId, "pre");
       res.json(updated);
     } catch (error: any) {
       console.error("Error parsing PRE report:", error);
@@ -204,6 +354,7 @@ export async function registerRoutes(
       }
       const updated = await handleReportUpload(projectId, content, "post");
       if (!updated) return res.status(404).json({ message: "Project not found" });
+      logUploadAudit(req, projectId, "post");
       res.json(updated);
     } catch (error: any) {
       console.error("Error parsing POST report:", error);
@@ -220,6 +371,7 @@ export async function registerRoutes(
       const text = await extractTextFromPdf(req.file.buffer);
       const updated = await handleReportUpload(projectId, text, "pre");
       if (!updated) return res.status(404).json({ message: "Project not found" });
+      logUploadAudit(req, projectId, "pre");
       res.json(updated);
     } catch (error: any) {
       console.error("Error parsing PRE PDF:", error);
@@ -236,6 +388,7 @@ export async function registerRoutes(
       const text = await extractTextFromPdf(req.file.buffer);
       const updated = await handleReportUpload(projectId, text, "post");
       if (!updated) return res.status(404).json({ message: "Project not found" });
+      logUploadAudit(req, projectId, "post");
       res.json(updated);
     } catch (error: any) {
       console.error("Error parsing POST PDF:", error);

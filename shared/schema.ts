@@ -1,10 +1,40 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, jsonb, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, jsonb, timestamp, real, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").notNull().default("user"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, passwordHash: true }).extend({
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+});
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  userEmail: text("user_email"),
+  userName: text("user_name"),
+  action: text("action").notNull(),
+  projectId: varchar("project_id"),
+  projectName: text("project_name"),
+  details: text("details"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+
 export const projects = pgTable("projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
   name: text("name").notNull(),
   address: text("address"),
   city: text("city"),
@@ -29,6 +59,9 @@ export const projects = pgTable("projects", {
   annexLedLightingImage: text("annex_led_lighting_image"),
   annexVrcImage: text("annex_vrc_image"),
   annexChauffeEauThermopompeImage: text("annex_chauffe_eau_thermopompe_image"),
+  signatoryName: text("signatory_name"),
+  signatoryTitle: text("signatory_title"),
+  signatoryCoordonnes: text("signatory_coordonnees"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

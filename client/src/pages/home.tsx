@@ -3,11 +3,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import type { Project } from "@shared/schema";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import {
   Plus,
   FileText,
@@ -23,6 +25,9 @@ import {
   ChevronRight,
   LayoutList,
   X,
+  User,
+  LogOut,
+  Shield,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,6 +35,8 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
 type SortKey = "date_desc" | "date_asc" | "city" | "status";
@@ -56,7 +63,7 @@ function ProjectCard({
   onClick,
 }: {
   project: Project;
-  onDelete: (id: string) => void;
+  onDelete: (project: Project) => void;
   onClick: (id: string) => void;
 }) {
   const status = statusConfig[project.status] || statusConfig.draft;
@@ -104,7 +111,7 @@ function ProjectCard({
             className="text-xs text-destructive hover:text-destructive"
             onClick={(e) => {
               e.stopPropagation();
-              onDelete(project.id);
+              onDelete(project);
             }}
             data-testid={`button-delete-${project.id}`}
           >
@@ -128,7 +135,7 @@ function ProjectGrid({
   emptyMessage = "Aucun projet dans cette catégorie.",
 }: {
   projects: Project[];
-  onDelete: (id: string) => void;
+  onDelete: (project: Project) => void;
   onNavigate: (id: string) => void;
   emptyMessage?: string;
 }) {
@@ -148,9 +155,11 @@ function ProjectGrid({
 
 export default function HomePage() {
   const [, navigate] = useLocation();
+  const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date_desc");
   const [viewMode, setViewMode] = useState<ViewMode>("grouped");
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const { data: projects, isLoading } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -221,32 +230,99 @@ export default function HomePage() {
 
   const totalCount = projects?.length ?? 0;
 
-  const handleDelete = (id: string) => deleteMutation.mutate(id);
+  const handleDeleteRequest = (project: Project) => setDeleteTarget(project);
+  const handleDeleteConfirm = () => {
+    if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+  };
   const handleNavigate = (id: string) => navigate(`/project/${id}`);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary-foreground" />
+            <div className="w-9 h-9 rounded-md bg-primary flex items-center justify-center">
+              <Zap className="w-4.5 h-4.5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold tracking-tight" data-testid="text-app-title">
+              <h1 className="text-lg font-semibold tracking-tight" data-testid="text-app-title">
                 EnergiQualif
               </h1>
-              <p className="text-sm text-muted-foreground">Qualification APH SELECT</p>
+              <p className="text-xs text-muted-foreground">Qualification APH SELECT</p>
             </div>
           </div>
-          <Button
-            onClick={() => createMutation.mutate()}
-            disabled={createMutation.isPending}
-            data-testid="button-new-project"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau projet
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => createMutation.mutate()}
+              disabled={createMutation.isPending}
+              data-testid="button-new-project"
+              size="sm"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Nouveau projet
+            </Button>
+
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    data-testid="button-user-menu"
+                  >
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                      style={{ backgroundColor: "#1e3a5f" }}
+                    >
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="hidden sm:inline text-xs max-w-[120px] truncate">{user.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <div className="px-3 py-2">
+                    <p className="text-xs font-medium truncate">{user.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="gap-2 cursor-pointer"
+                    onClick={() => navigate("/profile")}
+                    data-testid="menu-profile"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    Mon profil
+                  </DropdownMenuItem>
+                  {user.role === "admin" && (
+                    <DropdownMenuItem
+                      className="gap-2 cursor-pointer"
+                      onClick={() => navigate("/admin")}
+                      data-testid="menu-admin"
+                    >
+                      <Shield className="w-3.5 h-3.5" />
+                      Administration
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                    onClick={handleLogout}
+                    data-testid="menu-logout"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </header>
 
@@ -285,7 +361,6 @@ export default function HomePage() {
           </Card>
         ) : (
           <>
-            {/* Search + Sort + View toggle */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -336,15 +411,9 @@ export default function HomePage() {
 
             {viewMode === "grouped" ? (
               <div className="space-y-8">
-                {/* Bâtiments existants */}
                 <section>
-                  <div
-                    className="flex items-center gap-3 mb-4 pb-3 border-b"
-                  >
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: "#e8eef6" }}
-                    >
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#e8eef6" }}>
                       <Building2 className="w-5 h-5" style={{ color: "#1e3a5f" }} />
                     </div>
                     <div>
@@ -357,21 +426,15 @@ export default function HomePage() {
                   </div>
                   <ProjectGrid
                     projects={existingProjects}
-                    onDelete={handleDelete}
+                    onDelete={handleDeleteRequest}
                     onNavigate={handleNavigate}
                     emptyMessage="Aucun projet de bâtiment existant."
                   />
                 </section>
 
-                {/* Constructions neuves */}
                 <section>
-                  <div
-                    className="flex items-center gap-3 mb-4 pb-3 border-b"
-                  >
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: "#edf7ed" }}
-                    >
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#edf7ed" }}>
                       <HardHat className="w-5 h-5" style={{ color: "#2e7d32" }} />
                     </div>
                     <div>
@@ -384,7 +447,7 @@ export default function HomePage() {
                   </div>
                   <ProjectGrid
                     projects={newProjects}
-                    onDelete={handleDelete}
+                    onDelete={handleDeleteRequest}
                     onNavigate={handleNavigate}
                     emptyMessage="Aucun projet de construction neuve."
                   />
@@ -413,7 +476,7 @@ export default function HomePage() {
                 ) : (
                   <ProjectGrid
                     projects={allFiltered}
-                    onDelete={handleDelete}
+                    onDelete={handleDeleteRequest}
                     onNavigate={handleNavigate}
                   />
                 )}
@@ -422,6 +485,17 @@ export default function HomePage() {
           </>
         )}
       </main>
+
+      {deleteTarget && (
+        <DeleteConfirmDialog
+          key={deleteTarget.id}
+          open={!!deleteTarget}
+          projectName={deleteTarget.name}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+          isPending={deleteMutation.isPending}
+        />
+      )}
     </div>
   );
 }
