@@ -147,7 +147,12 @@ export default function StrategyTab({ project }: StrategyTabProps) {
     postItems.push({ icon: <Flame className="w-4 h-4" />, label: "Conversion fossile vers électricité" });
   }
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    const prev = document.title;
+    document.title = `Cahier de stratégie - ${fullAddress || address}`;
+    window.print();
+    document.title = prev;
+  };
 
   const ghgBefore = pre.annualSummary?.ghgTotal ?? 0;
   const ghgAfter = post.annualSummary?.ghgTotal ?? 0;

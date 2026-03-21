@@ -510,7 +510,8 @@ export async function registerRoutes(
 
       const pdfBuffer = await buildCollectivePdf(cmp);
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="immeubles-collectifs-${project.id}.pdf"`);
+      const collectifAddr = sanitizeFileName((project.preReportData as any)?.buildingInfo?.address || "") || project.id;
+      res.setHeader("Content-Disposition", `attachment; filename="Immeuble collectif - ${collectifAddr}.pdf"`);
       res.send(pdfBuffer);
     } catch (error: any) {
       console.error("Error generating collective PDF:", error);
@@ -675,7 +676,8 @@ export async function registerRoutes(
 
       const pdfBuffer = await buildAttestationPdf(project);
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="attestation-aph-${project.id}.pdf"`);
+      const attestAddr = sanitizeFileName((project.preReportData as any)?.buildingInfo?.address || "") || project.id;
+      res.setHeader("Content-Disposition", `attachment; filename="Attestation APH - ${attestAddr}.pdf"`);
       res.send(pdfBuffer);
     } catch (error: any) {
       console.error("Error generating attestation PDF:", error);

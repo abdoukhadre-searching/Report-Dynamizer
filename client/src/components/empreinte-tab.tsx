@@ -141,7 +141,12 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
             </div>
             <div className="flex flex-col items-end gap-3">
               <button
-                onClick={() => window.print()}
+                onClick={() => {
+                  const prev = document.title;
+                  document.title = `Empreinte économique - ${fullAddress || address}`;
+                  window.print();
+                  document.title = prev;
+                }}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-80 print:hidden"
                 style={{ backgroundColor: "#1e3a5f" }}
               >

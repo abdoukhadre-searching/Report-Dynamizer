@@ -516,7 +516,8 @@ export default function ReportTab({
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `${project.name || "cahier-qualification"}.pdf`;
+      const dlAddress = pre.buildingInfo?.address || project.name || "cahier-qualification";
+      link.download = `Cahier de Qualification - ${dlAddress}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -3360,12 +3361,6 @@ export default function ReportTab({
               </div>
             </section>
 
-            <div className="pt-8 border-t text-center">
-              <p className="text-xs text-muted-foreground">
-                Document généré automatiquement par EnergiQualif — Qualification
-                APH SELECT
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
