@@ -449,6 +449,30 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/projects/:id/annex-image/:annexType", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const annexType = req.params.annexType;
+      const validTypes = ["climateZone", "thermopompes", "robineterie", "ledLighting", "vrc", "chauffeEauThermopompe"];
+      if (!validTypes.includes(annexType)) {
+        return res.status(400).json({ message: "Invalid annex type" });
+      }
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const updateData: any = {};
+      if (annexType === "climateZone") updateData.annexClimateZoneImage = null;
+      else if (annexType === "thermopompes") updateData.annexThermopompesImage = null;
+      else if (annexType === "robineterie") updateData.annexRobineterieImage = null;
+      else if (annexType === "ledLighting") updateData.annexLedLightingImage = null;
+      else if (annexType === "vrc") updateData.annexVrcImage = null;
+      else if (annexType === "chauffeEauThermopompe") updateData.annexChauffeEauThermopompeImage = null;
+      const updated = await storage.updateProject(projectId, updateData);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to delete image" });
+    }
+  });
+
   async function buildCollectivePdf(cmp: ComparisonData): Promise<Buffer> {
     const templatePath = path.join(process.cwd(), "server/templates/immeubles-collectifs-template.pdf");
     const templateBytes = fs.readFileSync(templatePath);

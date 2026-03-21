@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import type { Project, ReportData, ComparisonData } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Printer, Upload, Loader2, ImageIcon } from "lucide-react";
+import { FileText, Printer, Upload, Loader2, ImageIcon, Trash2 } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import buildingCoverPath from "@assets/building-cover.png";
 import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
@@ -14,6 +14,7 @@ import faibleDebitPath from "@assets/ECD_Faible_Débit_page-0001_1773707805841.j
 import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
 import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
 import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
+import chauffeEauInstallPath from "@assets/Cahier_Recommandations_750_B_Rue_Georges_Vanier,_Chicoutimi-7__1774066082289.jpg";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -67,6 +68,21 @@ function AnnexImageUpload({
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/annex-image/${annexType}`, { method: "DELETE" });
+      if (!res.ok) { const data = await res.json(); throw new Error(data.message || "Erreur"); }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
+      toast({ title: "Image supprimée" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    },
+  });
+
   if (currentImage) {
     return (
       <div className="mt-3 space-y-2 flex flex-col items-center">
@@ -76,11 +92,22 @@ function AnnexImageUpload({
           className="max-w-full rounded-md border"
           style={{ maxHeight: maxImageHeight ? `${maxImageHeight}px` : "500px" }}
         />
-        <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
-          <Upload className="w-3 h-3" />
-          Remplacer l'image
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadMutation.mutate({ file, annexType }); }} />
-        </label>
+        <div className="flex gap-2 print:hidden">
+          <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30">
+            <Upload className="w-3 h-3" />
+            Remplacer l'image
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadMutation.mutate({ file, annexType }); }} />
+          </label>
+          <button
+            type="button"
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending}
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-xs text-red-500 transition-colors hover:border-red-400 hover:bg-red-50"
+          >
+            <Trash2 className="w-3 h-3" />
+            Supprimer
+          </button>
+        </div>
       </div>
     );
   }
@@ -733,6 +760,7 @@ export default function RecommandationsTab({ project }: RecommandationsTabProps)
                             <img src={rheemPage1Path} alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1" className="w-full rounded border" />
                             <img src={rheemPage2Path} alt="Données techniques Rheem ProTerra — page 2" className="w-full rounded border" />
                             <img src={rheemSpecPath} alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star" className="w-full rounded border" />
+                            <img src={chauffeEauInstallPath} alt="Schéma d'installation chauffe-eau thermopompe" className="w-full rounded border" />
                           </div>
                         </div>
                       )}
