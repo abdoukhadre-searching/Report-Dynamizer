@@ -130,7 +130,7 @@ export default function StrategyTab({ project }: StrategyTabProps) {
 
   const postItems: { icon: React.ReactNode; label: string }[] = [];
   if (showAirTightnessStrategy && postCah !== undefined) {
-    postItems.push({ icon: <Wind className="w-4 h-4" />, label: `Étanchéité améliorée — CAH : ${postCah}` });
+    postItems.push({ icon: <Wind className="w-4 h-4" />, label: `Améliorer l'étanchéité à ${postCah} CAH @ 50 Pa` });
   }
   if (showHeatingStrategy) {
     postItems.push({ icon: <Zap className="w-4 h-4" />, label: `${thermopompeCount} Thermopompe${thermopompeCount > 1 ? "s" : ""} haute efficacité` });
@@ -359,9 +359,6 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                         </tr>
                       </tfoot>
                     </table>
-                    <p className="text-xs text-slate-400 mt-2 italic">
-                      * Estimation à titre indicatif. Les montants réels peuvent varier selon les programmes en vigueur.
-                    </p>
                   </div>
                 )}
 
