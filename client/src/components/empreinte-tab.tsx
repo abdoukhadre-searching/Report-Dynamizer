@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer } from "lucide-react";
 import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
 import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
-import ashpPage1Path from "@assets/ASHP_page-0001_1773974895557.jpg";
-import ashpPage2Path from "@assets/ASHP_page-0002_1773974895559.jpg";
+import ashpPage1Path from "@assets/ASHP_page-0001_1774063357553.jpg";
+import ashpPage2Path from "@assets/ASHP_page-0002_1774063357552.jpg";
 import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
 import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
 import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
@@ -60,7 +60,7 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
   const [coutEtancheite, setCoutEtancheite] = useState(5000);
   const [coutThermo, setCoutThermo] = useState(2995);
   const [coutChauffeEau, setCoutChauffeEau] = useState(2305);
-  const [coutVrc, setCoutVrc] = useState(1800);
+  const [coutVrc, setCoutVrc] = useState(0);
   const [coutFaibleDebit, setCoutFaibleDebit] = useState(0);
   const [coutLed, setCoutLed] = useState(0);
 
