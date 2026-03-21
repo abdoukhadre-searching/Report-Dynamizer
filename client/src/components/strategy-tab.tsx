@@ -209,12 +209,12 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                 {/* Energy banner */}
                 <div className="mx-8 mb-6 rounded-lg overflow-hidden border" style={{ borderColor: "#1e3a5f33" }}>
                   <div className="grid grid-cols-3 divide-x divide-slate-200">
-                    <div className="px-6 py-5 text-center bg-slate-50">
-                      <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">PRÉ-travaux</p>
-                      <p className="text-3xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#1e3a5f" }}>
+                    <div className="px-6 py-5 text-center bg-white">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">PRÉ-travaux</p>
+                      <p style={{ fontFamily: "'Playfair Display', serif", color: "#1e3a5f", fontSize: "2.6rem", fontWeight: 800, lineHeight: 1 }}>
                         {preGJ.toFixed(1)}
                       </p>
-                      <p className="text-xs text-slate-400 mt-0.5">GJ / an</p>
+                      <p className="text-xs font-medium text-slate-500 mt-1">GJ / an</p>
                     </div>
                     <div className="px-6 py-5 text-center" style={{ backgroundColor: "#1e3a5f", boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.18)" }}>
                       <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#fff", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "4px" }}>AMÉLIORATION</p>
@@ -223,12 +223,12 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                       </p>
                       <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.82)", marginTop: "6px" }}>de réduction énergétique</p>
                     </div>
-                    <div className="px-6 py-5 text-center bg-slate-50">
-                      <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">POST-travaux</p>
-                      <p className="text-3xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#16a34a" }}>
+                    <div className="px-6 py-5 text-center bg-white">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">POST-travaux</p>
+                      <p style={{ fontFamily: "'Playfair Display', serif", color: "#16a34a", fontSize: "2.6rem", fontWeight: 800, lineHeight: 1 }}>
                         {postGJ.toFixed(1)}
                       </p>
-                      <p className="text-xs text-slate-400 mt-0.5">GJ / an</p>
+                      <p className="text-xs font-medium text-slate-500 mt-1">GJ / an</p>
                     </div>
                   </div>
                 </div>

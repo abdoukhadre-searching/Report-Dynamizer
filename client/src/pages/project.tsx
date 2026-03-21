@@ -100,13 +100,13 @@ export default function ProjectPage() {
               <LayoutDashboard className="w-3.5 h-3.5" />
               Tableau de bord
             </TabsTrigger>
-            <TabsTrigger value="report" disabled={!hasBothReports} data-testid="tab-report" className="gap-1.5">
-              <BookOpen className="w-3.5 h-3.5" />
-              Rapports
-            </TabsTrigger>
             <TabsTrigger value="strategie" disabled={!hasBothReports} data-testid="tab-strategie" className="gap-1.5">
               <BarChart2 className="w-3.5 h-3.5" />
               Stratégie et Empreinte
+            </TabsTrigger>
+            <TabsTrigger value="report" disabled={!hasBothReports} data-testid="tab-report" className="gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" />
+              Rapports
             </TabsTrigger>
           </TabsList>
 
