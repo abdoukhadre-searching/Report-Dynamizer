@@ -288,9 +288,10 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                     </div>
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
-                      {totalVrc.toLocaleString("fr-CA")} $
-                    </span>
+                    {totalVrc > 0
+                      ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalVrc.toLocaleString("fr-CA")} $</span>
+                      : <span className="text-xs italic text-slate-400">Variable</span>
+                    }
                   </td>
                 </tr>
               )}
@@ -322,7 +323,7 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 <td className="px-5 py-4 text-right">
                   {totalFaibleDebit > 0
                     ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalFaibleDebit.toLocaleString("fr-CA")} $</span>
-                    : <span className="text-slate-400 text-sm">—</span>
+                    : <span className="text-xs italic text-slate-400">Variable</span>
                   }
                 </td>
               </tr>
@@ -355,7 +356,7 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                   <td className="px-5 py-4 text-right">
                     {totalLed > 0
                       ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalLed.toLocaleString("fr-CA")} $</span>
-                      : <span className="text-slate-400 text-sm">—</span>
+                      : <span className="text-xs italic text-slate-400">Variable</span>
                     }
                   </td>
                 </tr>
@@ -453,24 +454,34 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
           {/* Fiche technique thermopompe */}
           <Card className="overflow-hidden border shadow-sm">
             <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
-                <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                  Fiche technique — Thermopompe Innovair
-                </h3>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
+                  <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                    Fiche technique — Thermopompe Innovair
+                  </h3>
+                </div>
+                <a
+                  href="/defaults/thermopompe-innovair.pdf"
+                  download="thermopompe-innovair.pdf"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "#1e3a5f" }}
+                >
+                  ↓ Télécharger le PDF
+                </a>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <object
-                data="/defaults/thermopompe-innovair.pdf"
-                type="application/pdf"
-                className="w-full"
-                style={{ height: "700px" }}
-              >
-                <div className="flex items-center justify-center h-40 text-slate-400 text-sm">
-                  Aperçu PDF non disponible — <a href="/defaults/thermopompe-innovair.pdf" target="_blank" rel="noopener noreferrer" className="ml-1 underline" style={{ color: "#1e3a5f" }}>Ouvrir la fiche technique</a>
-                </div>
-              </object>
+            <CardContent className="p-4 space-y-3">
+              <img
+                src="/defaults/thermopompe-innovair-p1.png"
+                alt="Fiche technique Innovair — page 1"
+                className="w-full rounded border border-slate-200 shadow-sm"
+              />
+              <img
+                src="/defaults/thermopompe-innovair-p2.png"
+                alt="Fiche technique Innovair — page 2"
+                className="w-full rounded border border-slate-200 shadow-sm"
+              />
             </CardContent>
           </Card>
 
