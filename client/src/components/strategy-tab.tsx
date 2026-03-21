@@ -215,11 +215,11 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                       <p className="text-xs text-slate-400 mt-0.5">GJ / an</p>
                     </div>
                     <div className="px-6 py-5 text-center" style={{ backgroundColor: "#1e3a5f" }}>
-                      <p className="text-xs text-blue-200 uppercase tracking-wider mb-1">Amélioration</p>
+                      <p className="text-xs text-white uppercase tracking-wider mb-1 opacity-80">Amélioration</p>
                       <p className="text-3xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
                         {improvPct.toFixed(1)} %
                       </p>
-                      <p className="text-xs text-blue-300 mt-0.5">de réduction</p>
+                      <p className="text-xs text-white mt-0.5 opacity-70">de réduction</p>
                     </div>
                     <div className="px-6 py-5 text-center bg-slate-50">
                       <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">POST-travaux</p>
@@ -305,15 +305,6 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                       </div>
                     )}
 
-                    {showAirTightnessStrategy && postCah !== undefined && preCah !== undefined && (
-                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
-                        <TrendingDown className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-                        <span>
-                          Étanchéité : {preCah} →{" "}
-                          <span className="font-semibold text-slate-700">{postCah} CAH @ 50 Pa</span>
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -325,7 +316,7 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                       style={{ color: "#1e3a5f", fontFamily: "'Inter', sans-serif" }}
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      Subventions estimées
+                      Subventions
                     </h3>
                     <table className="w-full text-xs border rounded-lg overflow-hidden">
                       <thead>
@@ -351,7 +342,7 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                       <tfoot>
                         <tr style={{ backgroundColor: "#1e3a5f" }}>
                           <td colSpan={3} className="px-4 py-2.5 text-white font-bold text-right">
-                            Total estimé
+                            Total
                           </td>
                           <td className="px-4 py-2.5 text-white font-bold text-right">
                             {subventionThermopompe.toLocaleString("fr-CA")} $
