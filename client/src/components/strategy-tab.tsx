@@ -216,12 +216,12 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">GJ / an</p>
                     </div>
-                    <div className="px-6 py-5 text-center" style={{ backgroundColor: "#1e3a5f" }}>
-                      <p className="text-xs text-white uppercase tracking-wider mb-1">Amélioration</p>
-                      <p className="text-3xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    <div className="px-6 py-5 text-center ring-2 ring-inset ring-white/20" style={{ backgroundColor: "#1e3a5f" }}>
+                      <p className="text-xs font-bold text-white uppercase tracking-widest mb-1">AMÉLIORATION</p>
+                      <p className="text-4xl font-extrabold text-white leading-none">
                         {improvPct.toFixed(1)} %
                       </p>
-                      <p className="text-xs text-white mt-0.5">de réduction</p>
+                      <p className="text-xs text-white/80 mt-1.5">de réduction énergétique</p>
                     </div>
                     <div className="px-6 py-5 text-center bg-slate-50">
                       <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">POST-travaux</p>
