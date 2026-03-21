@@ -16,8 +16,9 @@ import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066
 import ashpPage1Path from "@assets/ASHP_page-0001_1773974895557.jpg";
 import ashpPage2Path from "@assets/ASHP_page-0002_1773974895559.jpg";
 import faibleDebitPath from "@assets/ECD_Faible_Débit_page-0001_1773707805841.jpg";
-import rheemProductPath from "@assets/RHEEM_2_page-0001_1773727074851.jpg";
-import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1773727074852.jpg";
+import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
+import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
+import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -3273,34 +3274,25 @@ export default function ReportTab({
                             Chauffe-eaux Thermopompe Rheem Hybrid electric water
                             heater PROPH40 T2 RH375-30.
                           </p>
-                          <div className="flex flex-row gap-6 items-start print:break-inside-avoid">
-                            <div className="flex-shrink-0">
-                              <p className="text-xs font-medium text-muted-foreground mb-2">
-                                Appareil — Rheem ProTerra
-                              </p>
-                              <img
-                                src={rheemProductPath}
-                                alt="Chauffe-eau thermopompe Rheem ProTerra"
-                                className="w-auto object-contain rounded border mx-auto block"
-                                style={{
-                                  maxHeight: "480px",
-                                  maxWidth: "220px",
-                                }}
-                                data-testid="img-annex-rheem-product"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-muted-foreground mb-2">
-                                Fiche technique — ENERGY STAR
-                              </p>
-                              <img
-                                src={rheemSpecPath}
-                                alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star"
-                                className="w-full object-contain rounded border"
-                                style={{ maxHeight: "480px" }}
-                                data-testid="img-annex-rheem-spec"
-                              />
-                            </div>
+                          <div className="space-y-4 print:break-inside-avoid">
+                            <img
+                              src={rheemPage1Path}
+                              alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1"
+                              className="w-full rounded border"
+                              data-testid="img-annex-rheem-page1"
+                            />
+                            <img
+                              src={rheemPage2Path}
+                              alt="Données techniques Rheem ProTerra — page 2"
+                              className="w-full rounded border"
+                              data-testid="img-annex-rheem-page2"
+                            />
+                            <img
+                              src={rheemSpecPath}
+                              alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star"
+                              className="w-full rounded border"
+                              data-testid="img-annex-rheem-spec"
+                            />
                           </div>
                         </div>
                       )}

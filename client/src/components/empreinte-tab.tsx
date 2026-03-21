@@ -6,8 +6,9 @@ import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066
 import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
 import ashpPage1Path from "@assets/ASHP_page-0001_1773974895557.jpg";
 import ashpPage2Path from "@assets/ASHP_page-0002_1773974895559.jpg";
-import rheemProductPath from "@assets/RHEEM_2_page-0001_1773727074851.jpg";
-import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1773727074852.jpg";
+import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
+import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
+import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
 const thermoSubventionImg = "/thermo-subvention-hydro.jpg";
 
 interface EmpreinteTabProps {
@@ -515,13 +516,18 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
               </CardHeader>
               <CardContent className="p-4 space-y-4">
                 <img
-                  src={rheemProductPath}
-                  alt="Rheem — Chauffe-eau thermopompe"
+                  src={rheemPage1Path}
+                  alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1"
+                  className="w-full rounded border border-slate-200 shadow-sm"
+                />
+                <img
+                  src={rheemPage2Path}
+                  alt="Données techniques Rheem ProTerra — page 2"
                   className="w-full rounded border border-slate-200 shadow-sm"
                 />
                 <img
                   src={rheemSpecPath}
-                  alt="Rheem — Spécifications techniques"
+                  alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star"
                   className="w-full rounded border border-slate-200 shadow-sm"
                 />
               </CardContent>
