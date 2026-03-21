@@ -13,11 +13,12 @@ import CollectiveBuildingTab from "@/components/collective-building-tab";
 import AttestationTab from "@/components/attestation-tab";
 import StrategyTab from "@/components/strategy-tab";
 import EmpreinteTab from "@/components/empreinte-tab";
+import RecommandationsTab from "@/components/recommandations-tab";
 
 export default function ProjectPage() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
-  const [reportSubTab, setReportSubTab] = useState<"qualification" | "collective" | "attestation">("qualification");
+  const [reportSubTab, setReportSubTab] = useState<"qualification" | "collective" | "attestation" | "recommandations">("qualification");
   const [strategieSubTab, setStrategieSubTab] = useState<"cahier" | "empreinte">("cahier");
 
   const { data: project, isLoading } = useQuery<Project>({
@@ -202,6 +203,19 @@ export default function ProjectPage() {
                     <ClipboardCheck className="w-4 h-4" />
                     Attestation APH
                   </button>
+                  <button
+                    type="button"
+                    data-testid="subtab-recommandations"
+                    onClick={() => setReportSubTab("recommandations")}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                      reportSubTab === "recommandations"
+                        ? "border-[#1e3a5f] text-[#1e3a5f]"
+                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Cahier de recommandations
+                  </button>
                 </div>
 
                 {reportSubTab === "qualification" && (
@@ -214,6 +228,11 @@ export default function ProjectPage() {
                 )}
                 {reportSubTab === "attestation" && (
                   <AttestationTab project={project} />
+                )}
+                {reportSubTab === "recommandations" && (
+                  <div className="-mx-6 -mb-6 px-6 pb-6 bg-white">
+                    <RecommandationsTab project={project} />
+                  </div>
                 )}
               </div>
             )}
