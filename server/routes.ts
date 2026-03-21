@@ -205,6 +205,69 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/projects/:id/export-recommandations-pdf", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      if (!project.preReportData || !project.postReportData) {
+        return res.status(400).json({ message: "Project report is not ready for export" });
+      }
+      const origin = `${req.protocol}://${req.get("host")}`;
+      const reportUrl = `${origin}/project/${projectId}/print-recommandations`;
+      const pdfBuffer = await renderProjectPdf(reportUrl, "#recommandations-content");
+      const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="Cahier de Recommandations - ${baseName}.pdf"`);
+      return res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error("Error exporting recommandations PDF:", error);
+      return res.status(500).json({ message: error.message || "Failed to export PDF" });
+    }
+  });
+
+  app.get("/api/projects/:id/export-strategie-pdf", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      if (!project.preReportData || !project.postReportData) {
+        return res.status(400).json({ message: "Project report is not ready for export" });
+      }
+      const origin = `${req.protocol}://${req.get("host")}`;
+      const reportUrl = `${origin}/project/${projectId}/print-strategie`;
+      const pdfBuffer = await renderProjectPdf(reportUrl, "#strategy-content");
+      const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="Cahier de Stratégie - ${baseName}.pdf"`);
+      return res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error("Error exporting strategie PDF:", error);
+      return res.status(500).json({ message: error.message || "Failed to export PDF" });
+    }
+  });
+
+  app.get("/api/projects/:id/export-empreinte-pdf", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      if (!project.preReportData || !project.postReportData) {
+        return res.status(400).json({ message: "Project report is not ready for export" });
+      }
+      const origin = `${req.protocol}://${req.get("host")}`;
+      const reportUrl = `${origin}/project/${projectId}/print-empreinte`;
+      const pdfBuffer = await renderProjectPdf(reportUrl, "#empreinte-content");
+      const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="Empreinte Économique - ${baseName}.pdf"`);
+      return res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error("Error exporting empreinte PDF:", error);
+      return res.status(500).json({ message: error.message || "Failed to export PDF" });
+    }
+  });
+
   app.post("/api/projects", async (req, res) => {
     try {
       const userId = req.session.userId;

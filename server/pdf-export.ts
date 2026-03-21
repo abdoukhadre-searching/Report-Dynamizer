@@ -13,7 +13,7 @@ function findChromiumExecutable(): string | undefined {
   }
 }
 
-export async function renderProjectPdf(reportUrl: string): Promise<Buffer> {
+export async function renderProjectPdf(reportUrl: string, waitForSelector = "#report-content"): Promise<Buffer> {
   const executablePath = findChromiumExecutable();
 
   const browser = await puppeteer.launch({
@@ -32,7 +32,7 @@ export async function renderProjectPdf(reportUrl: string): Promise<Buffer> {
     const page = await browser.newPage();
     try {
       await page.goto(reportUrl, { waitUntil: "networkidle0", timeout: 120000 });
-      await page.waitForSelector("#report-content", { timeout: 30000 });
+      await page.waitForSelector(waitForSelector, { timeout: 30000 });
       await page.emulateMediaType("print");
 
       await page.evaluate(async () => {

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { Project, ReportData } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer } from "lucide-react";
+import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
 import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
 import ashpPage1Path from "@assets/ASHP_page-0001_1774063357553.jpg";
@@ -13,6 +14,7 @@ const thermoSubventionImg = "/thermo-subvention-hydro.jpg";
 
 interface EmpreinteTabProps {
   project: Project;
+  exportMode?: boolean;
 }
 
 function getOccupantCount(occupants?: string): number {
@@ -53,7 +55,9 @@ function hasHeatPumpWaterHeater(post: ReportData): boolean {
 
 const SUBVENTION_THERMO = 1296;
 
-export default function EmpreinteTab({ project }: EmpreinteTabProps) {
+export default function EmpreinteTab({ project, exportMode = false }: EmpreinteTabProps) {
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
 
@@ -116,7 +120,7 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div id="empreinte-content" className="space-y-6 max-w-4xl mx-auto">
 
       {/* Header Card */}
       <Card className="overflow-hidden border-0 shadow-sm" style={{ borderTop: "4px solid #1e3a5f" }}>
@@ -140,19 +144,40 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
               )}
             </div>
             <div className="flex flex-col items-end gap-3">
-              <button
-                onClick={() => {
-                  const prev = document.title;
-                  document.title = `Empreinte économique - ${fullAddress || address}`;
-                  window.addEventListener("afterprint", () => { document.title = prev; }, { once: true });
-                  window.print();
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-80 print:hidden"
-                style={{ backgroundColor: "#1e3a5f" }}
-              >
-                <Printer className="w-4 h-4" />
-                Télécharger (PDF)
-              </button>
+              {!exportMode && (
+                <button
+                  onClick={async () => {
+                    if (isExporting) return;
+                    setIsExporting(true);
+                    try {
+                      const response = await fetch(`/api/projects/${project.id}/export-empreinte-pdf`);
+                      if (!response.ok) {
+                        const data = await response.json().catch(() => null);
+                        throw new Error(data?.message || "Échec de génération du PDF");
+                      }
+                      const blob = await response.blob();
+                      const downloadUrl = window.URL.createObjectURL(blob);
+                      const link = document.createElement("a");
+                      link.href = downloadUrl;
+                      link.download = `Empreinte Économique - ${fullAddress || address || project.name}.pdf`;
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                      window.URL.revokeObjectURL(downloadUrl);
+                    } catch (error: any) {
+                      toast({ title: "Erreur export PDF", description: error.message || "Impossible d'exporter le rapport", variant: "destructive" });
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  }}
+                  disabled={isExporting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-80 print:hidden disabled:opacity-60"
+                  style={{ backgroundColor: "#1e3a5f" }}
+                >
+                  {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                  {isExporting ? "Génération..." : "Télécharger (PDF)"}
+                </button>
+              )}
               <div className="text-center px-5 py-3 rounded-xl" style={{ backgroundColor: "#1e3a5f" }}>
                 <p className="text-xs text-white uppercase tracking-wider mb-0.5">Amélioration</p>
                 <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>

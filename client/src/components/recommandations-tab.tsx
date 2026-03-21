@@ -21,6 +21,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 interface RecommandationsTabProps {
   project: Project;
+  exportMode?: boolean;
 }
 
 function getAnnexImageForType(imageUrl: string | null | undefined, annexType: string): string | null {
@@ -235,7 +236,7 @@ function Watermark() {
   );
 }
 
-export default function RecommandationsTab({ project }: RecommandationsTabProps) {
+export default function RecommandationsTab({ project, exportMode = false }: RecommandationsTabProps) {
   const { toast } = useToast();
   const [isPrinting, setIsPrinting] = useState(false);
   const pre = project.preReportData as ReportData | null;
@@ -253,12 +254,30 @@ export default function RecommandationsTab({ project }: RecommandationsTabProps)
 
   if (!pre || !post || !comparison) return null;
 
-  const handlePrint = () => {
-    const originalTitle = document.title;
-    const address = pre.buildingInfo?.address || project.name || "recommandations";
-    document.title = `Cahier de Recommandations - ${address}`;
-    window.addEventListener("afterprint", () => { document.title = originalTitle; }, { once: true });
-    window.print();
+  const handlePrint = async () => {
+    if (isPrinting) return;
+    setIsPrinting(true);
+    const addressLabel = pre.buildingInfo?.address || project.name || "recommandations";
+    try {
+      const response = await fetch(`/api/projects/${project.id}/export-recommandations-pdf`);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || "Échec de génération du PDF");
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `Cahier de Recommandations - ${addressLabel}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error: any) {
+      toast({ title: "Erreur export PDF", description: error.message || "Impossible d'exporter le rapport", variant: "destructive" });
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
@@ -336,16 +355,18 @@ export default function RecommandationsTab({ project }: RecommandationsTabProps)
 
   return (
     <div className="space-y-4" style={{ "--card": "0 0% 100%", "--background": "0 0% 100%" } as React.CSSProperties}>
-      <div className="flex items-center justify-between gap-4 mb-4 print:hidden">
-        <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-muted-foreground" />
-          <h2 className="font-medium">Cahier de recommandations APH SELECT</h2>
+      {!exportMode && (
+        <div className="flex items-center justify-between gap-4 mb-4 print:hidden">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-muted-foreground" />
+            <h2 className="font-medium">Cahier de recommandations APH SELECT</h2>
+          </div>
+          <Button variant="secondary" size="sm" onClick={handlePrint} disabled={isPrinting} data-testid="button-print-recommandations">
+            {isPrinting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Printer className="w-4 h-4 mr-2" />}
+            {isPrinting ? "Génération..." : "Télécharger (PDF)"}
+          </Button>
         </div>
-        <Button variant="secondary" size="sm" onClick={handlePrint} data-testid="button-print-recommandations">
-          <Printer className="w-4 h-4 mr-2" />
-          Imprimer / PDF
-        </Button>
-      </div>
+      )}
 
       <div className="print:p-0" id="recommandations-content">
 

@@ -8,6 +8,9 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
 import ProjectPage from "@/pages/project";
 import ProjectPrintPage from "@/pages/project-print";
+import ProjectPrintRecommandationsPage from "@/pages/project-print-recommandations";
+import ProjectPrintStrategiePage from "@/pages/project-print-strategie";
+import ProjectPrintEmpreintePage from "@/pages/project-print-empreinte";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
@@ -55,6 +58,9 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/project/:id/print" component={ProjectPrintPage} />
+      <Route path="/project/:id/print-recommandations" component={ProjectPrintRecommandationsPage} />
+      <Route path="/project/:id/print-strategie" component={ProjectPrintStrategiePage} />
+      <Route path="/project/:id/print-empreinte" component={ProjectPrintEmpreintePage} />
       <Route path="/project/:id">
         {() => <ProtectedRoute component={ProjectPage} />}
       </Route>

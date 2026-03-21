@@ -1,11 +1,14 @@
+import { useState } from "react";
 import type { Project, ReportData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Printer, TrendingDown, Zap, Droplets, Wind, Lightbulb, Flame } from "lucide-react";
+import { Printer, TrendingDown, Zap, Droplets, Wind, Lightbulb, Flame, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 
 interface StrategyTabProps {
   project: Project;
+  exportMode?: boolean;
 }
 
 function getOccupantCount(occupants?: string): number {
@@ -89,7 +92,9 @@ function getHotWaterLabel(data: ReportData): string {
 }
 
 
-export default function StrategyTab({ project }: StrategyTabProps) {
+export default function StrategyTab({ project, exportMode = false }: StrategyTabProps) {
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
 
@@ -147,11 +152,29 @@ export default function StrategyTab({ project }: StrategyTabProps) {
     postItems.push({ icon: <Flame className="w-4 h-4" />, label: "Conversion fossile vers électricité" });
   }
 
-  const handlePrint = () => {
-    const prev = document.title;
-    document.title = `Cahier de stratégie - ${fullAddress || address}`;
-    window.addEventListener("afterprint", () => { document.title = prev; }, { once: true });
-    window.print();
+  const handlePrint = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/export-strategie-pdf`);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || "Échec de génération du PDF");
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `Cahier de Stratégie - ${fullAddress || address || project.name}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error: any) {
+      toast({ title: "Erreur export PDF", description: error.message || "Impossible d'exporter le rapport", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const ghgBefore = pre.annualSummary?.ghgTotal ?? 0;
@@ -166,13 +189,15 @@ export default function StrategyTab({ project }: StrategyTabProps) {
       className="space-y-4"
       style={{ "--card": "0 0% 100%", "--background": "0 0% 100%" } as React.CSSProperties}
     >
-      <div className="flex items-center justify-between gap-4 mb-4 print:hidden">
-        <h2 className="font-medium" style={{ color: "#1e3a5f" }}>Cahier de stratégie APH SELECT</h2>
-        <Button variant="secondary" size="sm" onClick={handlePrint} className="gap-2" data-testid="button-print-strategy">
-          <Printer className="w-4 h-4" />
-          Imprimer / PDF
-        </Button>
-      </div>
+      {!exportMode && (
+        <div className="flex items-center justify-between gap-4 mb-4 print:hidden">
+          <h2 className="font-medium" style={{ color: "#1e3a5f" }}>Cahier de stratégie APH SELECT</h2>
+          <Button variant="secondary" size="sm" onClick={handlePrint} disabled={isExporting} className="gap-2" data-testid="button-print-strategy">
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+            {isExporting ? "Génération..." : "Télécharger (PDF)"}
+          </Button>
+        </div>
+      )}
 
       <div id="strategy-content">
         {/* ── PAGE PRINCIPALE ── */}
