@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { Project, ReportData } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2 } from "lucide-react";
+import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves } from "lucide-react";
+const thermoSubventionImg = "/thermo-subvention-hydro.jpg";
 
 interface EmpreinteTabProps {
   project: Project;
@@ -27,12 +28,6 @@ function hasThermopompe(data: ReportData): boolean {
   return equip.includes("thermopompe") || equip.includes("source d'air");
 }
 
-function hasHotWaterChanged(pre: ReportData, post: ReportData): boolean {
-  const preDailyHW = pre.hotWater?.dailyConsumption;
-  const postDailyHW = post.hotWater?.dailyConsumption;
-  return preDailyHW !== undefined && postDailyHW !== undefined && preDailyHW !== postDailyHW;
-}
-
 function hasLedImprovement(pre: ReportData, post: ReportData): boolean {
   const preLighting = pre.interiorLightingKWh;
   const postLighting = post.interiorLightingKWh;
@@ -49,47 +44,44 @@ function hasHeatPumpWaterHeater(post: ReportData): boolean {
   return /thermopompe/i.test(post.hotWater?.equipmentType || "");
 }
 
-function hasAirTightnessChanged(pre: ReportData, post: ReportData): boolean {
-  const preCah = pre.airLeakage?.cah50;
-  const postCah = post.airLeakage?.cah50;
-  return preCah !== undefined && postCah !== undefined && preCah !== postCah;
-}
-
 const SUBVENTION_THERMO = 1296;
 
 export default function EmpreinteTab({ project }: EmpreinteTabProps) {
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
 
+  const [coutEtancheite, setCoutEtancheite] = useState(5000);
   const [coutThermo, setCoutThermo] = useState(2995);
   const [coutChauffeEau, setCoutChauffeEau] = useState(2305);
   const [coutVrc, setCoutVrc] = useState(1800);
+  const [coutFaibleDebit, setCoutFaibleDebit] = useState(0);
   const [coutLed, setCoutLed] = useState(0);
 
   if (!pre || !post) return null;
 
   const occupants = pre.buildingInfo?.occupants;
   const numUnits = getNumUnitsFromOccupants(occupants);
-  const thermopompeCount = getThermopompeCount(occupants);
 
   const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
   const showVrcStrategy = hasVrcInstallation(post);
   const showLedStrategy = hasLedImprovement(pre, post);
 
-  const nbThermo = thermopompeCount;
+  const nbThermo = getThermopompeCount(occupants);
   const nbUnits = numUnits > 0 ? numUnits : 1;
 
   const preGJ = pre.annualSummary?.totalGJ ?? 0;
   const postGJ = post.annualSummary?.totalGJ ?? 0;
   const improvPct = preGJ > 0 ? ((preGJ - postGJ) / preGJ) * 100 : 0;
 
+  const totalEtancheite = coutEtancheite;
   const totalThermo = showHeatingStrategy ? nbThermo * coutThermo : 0;
   const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbUnits * coutChauffeEau : 0;
   const totalVrc = showVrcStrategy ? nbUnits * coutVrc : 0;
+  const totalFaibleDebit = coutFaibleDebit;
   const totalLed = showLedStrategy ? coutLed : 0;
 
-  const totalBrut = totalThermo + totalChauffeEau + totalVrc + totalLed;
+  const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed;
   const totalSubvention = showHeatingStrategy ? nbThermo * SUBVENTION_THERMO : 0;
   const totalApresSubvention = totalBrut - totalSubvention;
 
@@ -97,6 +89,24 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
   const city = project.city || pre.buildingInfo?.city || "";
   const province = project.province || pre.buildingInfo?.province || "";
   const fullAddress = [address, city, province].filter(Boolean).join(", ");
+
+  const inputCls = "w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400";
+
+  function UnitBadge({ n }: { n: number }) {
+    return (
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" style={{ backgroundColor: "#1e3a5f10", color: "#1e3a5f" }}>
+        {n}
+      </span>
+    );
+  }
+
+  function IconBox({ children }: { children: React.ReactNode }) {
+    return (
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -122,7 +132,6 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 </div>
               )}
             </div>
-            {/* Improvement badge */}
             <div className="flex-shrink-0 text-center px-5 py-3 rounded-xl" style={{ backgroundColor: "#1e3a5f" }}>
               <p className="text-xs text-white uppercase tracking-wider mb-0.5">Amélioration</p>
               <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
@@ -159,31 +168,57 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
             </thead>
             <tbody className="divide-y divide-slate-100">
 
+              {/* Étanchéité — always shown */}
+              <tr className="hover:bg-blue-50/40 transition-colors">
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <IconBox><Lock className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
+                    <div>
+                      <p className="font-semibold text-slate-800">Étanchéité à l'air</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Travaux d'étanchéisation de l'enveloppe</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                <td className="px-5 py-4 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <input
+                      type="number"
+                      value={coutEtancheite}
+                      onChange={(e) => setCoutEtancheite(Number(e.target.value))}
+                      className={inputCls}
+                    />
+                    <span className="text-slate-400 text-xs">$</span>
+                  </div>
+                </td>
+                <td className="px-5 py-4 text-right">
+                  {totalEtancheite > 0
+                    ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalEtancheite.toLocaleString("fr-CA")} $</span>
+                    : <span className="text-slate-400 text-sm">—</span>
+                  }
+                </td>
+              </tr>
+
+              {/* Thermopompes — conditional */}
               {showHeatingStrategy && (
                 <tr className="hover:bg-blue-50/40 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
-                        <Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} />
-                      </div>
+                      <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Thermopompes</p>
                         <p className="text-xs text-slate-400 mt-0.5">Innovair QHW12H2UZRA / QOS12H2BM5A</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" style={{ backgroundColor: "#1e3a5f10", color: "#1e3a5f" }}>
-                      {nbThermo}
-                    </span>
-                  </td>
+                  <td className="px-5 py-4 text-center"><UnitBadge n={nbThermo} /></td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
                         type="number"
                         value={coutThermo}
                         onChange={(e) => setCoutThermo(Number(e.target.value))}
-                        className="w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                        className={inputCls}
                       />
                       <span className="text-slate-400 text-xs">$</span>
                     </div>
@@ -196,31 +231,26 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 </tr>
               )}
 
+              {/* Chauffe-eau thermopompe — conditional */}
               {showHeatPumpWaterHeaterStrategy && (
                 <tr className="hover:bg-blue-50/40 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
-                        <Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} />
-                      </div>
+                      <IconBox><Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Chauffe-eau thermopompe</p>
                         <p className="text-xs text-slate-400 mt-0.5">Remplacement chauffe-eau existant</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" style={{ backgroundColor: "#1e3a5f10", color: "#1e3a5f" }}>
-                      {nbUnits}
-                    </span>
-                  </td>
+                  <td className="px-5 py-4 text-center"><UnitBadge n={nbUnits} /></td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
                         type="number"
                         value={coutChauffeEau}
                         onChange={(e) => setCoutChauffeEau(Number(e.target.value))}
-                        className="w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                        className={inputCls}
                       />
                       <span className="text-slate-400 text-xs">$</span>
                     </div>
@@ -233,31 +263,26 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 </tr>
               )}
 
+              {/* VRC — conditional */}
               {showVrcStrategy && (
                 <tr className="hover:bg-blue-50/40 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
-                        <Wind className="w-4 h-4" style={{ color: "#1e3a5f" }} />
-                      </div>
+                      <IconBox><Wind className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">VRC</p>
                         <p className="text-xs text-slate-400 mt-0.5">Ventilateur récupérateur de chaleur</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" style={{ backgroundColor: "#1e3a5f10", color: "#1e3a5f" }}>
-                      {nbUnits}
-                    </span>
-                  </td>
+                  <td className="px-5 py-4 text-center"><UnitBadge n={nbUnits} /></td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
                         type="number"
                         value={coutVrc}
                         onChange={(e) => setCoutVrc(Number(e.target.value))}
-                        className="w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                        className={inputCls}
                       />
                       <span className="text-slate-400 text-xs">$</span>
                     </div>
@@ -270,13 +295,44 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 </tr>
               )}
 
+              {/* Faible débit — always shown, like DEL */}
+              <tr className="hover:bg-blue-50/40 transition-colors">
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <IconBox><Waves className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
+                    <div>
+                      <p className="font-semibold text-slate-800">Robinetterie faible débit</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Pommeaux de douche et aérateurs ECD</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                <td className="px-5 py-4 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <input
+                      type="number"
+                      value={coutFaibleDebit}
+                      onChange={(e) => setCoutFaibleDebit(Number(e.target.value))}
+                      placeholder="0"
+                      className={inputCls}
+                    />
+                    <span className="text-slate-400 text-xs">$</span>
+                  </div>
+                </td>
+                <td className="px-5 py-4 text-right">
+                  {totalFaibleDebit > 0
+                    ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalFaibleDebit.toLocaleString("fr-CA")} $</span>
+                    : <span className="text-slate-400 text-sm">—</span>
+                  }
+                </td>
+              </tr>
+
+              {/* Éclairage DEL — conditional */}
               {showLedStrategy && (
                 <tr className="hover:bg-blue-50/40 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1e3a5f15" }}>
-                        <Lightbulb className="w-4 h-4" style={{ color: "#1e3a5f" }} />
-                      </div>
+                      <IconBox><Lightbulb className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Éclairage DEL</p>
                         <p className="text-xs text-slate-400 mt-0.5">Remplacement des luminaires existants</p>
@@ -291,7 +347,7 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                         value={coutLed}
                         onChange={(e) => setCoutLed(Number(e.target.value))}
                         placeholder="0"
-                        className="w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                        className={inputCls}
                       />
                       <span className="text-slate-400 text-xs">$</span>
                     </div>
@@ -305,13 +361,6 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
                 </tr>
               )}
 
-              {!showHeatingStrategy && !showHeatPumpWaterHeaterStrategy && !showVrcStrategy && !showLedStrategy && (
-                <tr>
-                  <td colSpan={4} className="px-5 py-8 text-center text-slate-400 text-sm">
-                    Aucune stratégie de travaux détectée
-                  </td>
-                </tr>
-              )}
             </tbody>
 
             <tfoot>
@@ -396,6 +445,54 @@ export default function EmpreinteTab({ project }: EmpreinteTabProps) {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Thermopompe spec sheet + subvention image — only when thermopompe strategy active */}
+      {showHeatingStrategy && (
+        <>
+          {/* Fiche technique thermopompe */}
+          <Card className="overflow-hidden border shadow-sm">
+            <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
+                <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                  Fiche technique — Thermopompe Innovair
+                </h3>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <object
+                data="/defaults/thermopompe-innovair.pdf"
+                type="application/pdf"
+                className="w-full"
+                style={{ height: "700px" }}
+              >
+                <div className="flex items-center justify-center h-40 text-slate-400 text-sm">
+                  Aperçu PDF non disponible — <a href="/defaults/thermopompe-innovair.pdf" target="_blank" rel="noopener noreferrer" className="ml-1 underline" style={{ color: "#1e3a5f" }}>Ouvrir la fiche technique</a>
+                </div>
+              </object>
+            </CardContent>
+          </Card>
+
+          {/* Subvention Hydro-Québec image */}
+          <Card className="overflow-hidden border shadow-sm">
+            <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#16a34a" }} />
+                <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                  Programme de subvention — Hydro-Québec
+                </h3>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4">
+              <img
+                src={thermoSubventionImg}
+                alt="Tableau des subventions Hydro-Québec pour thermopompes Innovair"
+                className="w-full rounded-md border border-slate-200 shadow-sm"
+              />
+            </CardContent>
+          </Card>
+        </>
       )}
 
       <p className="text-xs text-slate-400 italic pb-2">
