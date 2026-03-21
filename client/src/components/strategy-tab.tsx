@@ -1,7 +1,7 @@
 import type { Project, ReportData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Printer, TrendingDown, Zap, Droplets, Wind, Lightbulb, Flame, CheckCircle2 } from "lucide-react";
+import { Printer, TrendingDown, Zap, Droplets, Wind, Lightbulb, Flame } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 
 interface StrategyTabProps {
@@ -88,7 +88,6 @@ function getHotWaterLabel(data: ReportData): string {
   return equip || "N/A";
 }
 
-const SUBVENTION_THERMOPOMPE = 1296;
 
 export default function StrategyTab({ project }: StrategyTabProps) {
   const pre = project.preReportData as ReportData | null;
@@ -126,7 +125,6 @@ export default function StrategyTab({ project }: StrategyTabProps) {
   const heatingPre = getHeatingLabel(pre);
   const hotWaterPre = getHotWaterLabel(pre);
 
-  const subventionThermopompe = showHeatingStrategy ? thermopompeCount * SUBVENTION_THERMOPOMPE : 0;
 
   const postItems: { icon: React.ReactNode; label: string }[] = [];
   if (showAirTightnessStrategy && postCah !== undefined) {
@@ -215,11 +213,11 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                       <p className="text-xs text-slate-400 mt-0.5">GJ / an</p>
                     </div>
                     <div className="px-6 py-5 text-center" style={{ backgroundColor: "#1e3a5f" }}>
-                      <p className="text-xs text-white uppercase tracking-wider mb-1 opacity-80">Amélioration</p>
+                      <p className="text-xs text-white uppercase tracking-wider mb-1">Amélioration</p>
                       <p className="text-3xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
                         {improvPct.toFixed(1)} %
                       </p>
-                      <p className="text-xs text-white mt-0.5 opacity-70">de réduction</p>
+                      <p className="text-xs text-white mt-0.5">de réduction</p>
                     </div>
                     <div className="px-6 py-5 text-center bg-slate-50">
                       <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">POST-travaux</p>
@@ -308,50 +306,6 @@ export default function StrategyTab({ project }: StrategyTabProps) {
                   </div>
                 </div>
 
-                {/* Subventions — thermopompes only */}
-                {subventionThermopompe > 0 && (
-                  <div className="mx-8 mb-6 border-t border-slate-100 pt-5">
-                    <h3
-                      className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"
-                      style={{ color: "#1e3a5f", fontFamily: "'Inter', sans-serif" }}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      Subventions
-                    </h3>
-                    <table className="w-full text-xs border rounded-lg overflow-hidden">
-                      <thead>
-                        <tr className="text-left" style={{ backgroundColor: "#1e3a5f0d" }}>
-                          <th className="px-4 py-2 font-semibold text-slate-500">Mesure</th>
-                          <th className="px-4 py-2 font-semibold text-slate-500 text-center">Unités</th>
-                          <th className="px-4 py-2 font-semibold text-slate-500 text-right">Montant / unité</th>
-                          <th className="px-4 py-2 font-semibold text-slate-500 text-right">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium">Thermopompes</td>
-                          <td className="px-4 py-2.5 text-center text-slate-500">{thermopompeCount}</td>
-                          <td className="px-4 py-2.5 text-right text-slate-500">
-                            {SUBVENTION_THERMOPOMPE.toLocaleString("fr-CA")} $
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-bold">
-                            {subventionThermopompe.toLocaleString("fr-CA")} $
-                          </td>
-                        </tr>
-                      </tbody>
-                      <tfoot>
-                        <tr style={{ backgroundColor: "#1e3a5f" }}>
-                          <td colSpan={3} className="px-4 py-2.5 text-white font-bold text-right">
-                            Total
-                          </td>
-                          <td className="px-4 py-2.5 text-white font-bold text-right">
-                            {subventionThermopompe.toLocaleString("fr-CA")} $
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                )}
 
                 {/* GES reduction */}
                 {ghgBefore > 0 && (
