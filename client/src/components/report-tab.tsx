@@ -19,6 +19,7 @@ import faibleDebitPath from "@assets/ECD_Faible_Débit_page-0001_1773707805841.j
 import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
 import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
 import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
+import chauffeEauInstallPath from "@assets/Cahier_Recommandations_750_B_Rue_Georges_Vanier,_Chicoutimi-7__1774066082289.jpg";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -2211,7 +2212,14 @@ export default function ReportTab({
                         {numUnits > 0 ? numUnits : "—"}
                       </span>{" "}
                       Chauffe-eaux Thermopompe Rheem Hybrid electric water
-                      heater PROPH40 T2 RH375-30.
+                      heater PROPH40 T2 RH375-30.{" "}
+                      <a
+                        href="#annex-chauffe-eau-thermopompe"
+                        className="text-xs font-medium text-primary underline cursor-pointer print:hidden"
+                        onClick={(e) => { e.preventDefault(); document.getElementById("annex-chauffe-eau-thermopompe")?.scrollIntoView({ behavior: "smooth" }); }}
+                      >
+                        [Voir détails]
+                      </a>
                     </p>
                   </div>
                 )}
@@ -3293,6 +3301,12 @@ export default function ReportTab({
                               alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star"
                               className="w-full rounded border"
                               data-testid="img-annex-rheem-spec"
+                            />
+                            <img
+                              src={chauffeEauInstallPath}
+                              alt="Schéma d'installation chauffe-eau thermopompe"
+                              className="w-full rounded border"
+                              data-testid="img-annex-chauffe-eau-install"
                             />
                           </div>
                         </div>

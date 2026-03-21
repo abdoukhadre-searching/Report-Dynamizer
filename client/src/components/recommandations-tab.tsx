@@ -609,7 +609,9 @@ export default function RecommandationsTab({ project }: RecommandationsTabProps)
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("hwt")}</span>
                       Chauffe-eaux Thermopompe
                     </h3>
-                    <p>Installation de <span className="font-semibold">{numUnits > 0 ? numUnits : "—"}</span> Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.</p>
+                    <p>Installation de <span className="font-semibold">{numUnits > 0 ? numUnits : "—"}</span> Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.{" "}
+                      <a href="#rec-annex-chauffe-eau-thermopompe" className="text-xs font-medium text-primary underline cursor-pointer print:hidden" onClick={(e) => { e.preventDefault(); document.getElementById("rec-annex-chauffe-eau-thermopompe")?.scrollIntoView({ behavior: "smooth" }); }}>[Voir détails]</a>
+                    </p>
                   </div>
                 )}
 
@@ -690,14 +692,9 @@ export default function RecommandationsTab({ project }: RecommandationsTabProps)
               </h2>
 
               <div className="space-y-8">
-                <div className="print:break-after-page">
-                  <h3 className="text-sm font-semibold mb-2">1. Zone climatique</h3>
-                  <p className="text-xs text-muted-foreground mb-2">Données climatiques: {pre.buildingInfo?.climateData || "-"}</p>
-                  <AnnexImageUpload key="rec-annex-climate-zone" projectId={project.id} annexType="climateZone" label="Zone climatique" currentImage={annexImages.climateZone} />
-                </div>
 
                 {(() => {
-                  let annexNum = 2;
+                  let annexNum = 1;
                   return (
                     <>
                       {showHeatingStrategy && (
@@ -740,27 +737,6 @@ export default function RecommandationsTab({ project }: RecommandationsTabProps)
                         </div>
                       )}
 
-                      <div className="print:break-before-page">
-                        <h3 className="text-sm font-semibold mb-2">{annexNum++}. Pertes thermiques par composante</h3>
-                        <p className="text-xs text-muted-foreground mb-3">Comparaison des pertes thermiques annuelles par composante du bâtiment, avant et après travaux (GJ/an).</p>
-                        {heatLossComponents.length > 0 && (
-                          <div className="flex justify-center">
-                            <div className="h-[350px] w-full max-w-[600px]">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={heatLossComponents} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                  <CartesianGrid strokeDasharray="3 3" />
-                                  <XAxis type="number" tick={{ fontSize: 11 }} unit=" GJ" />
-                                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
-                                  <Tooltip formatter={(value: number) => `${value} GJ`} />
-                                  <Legend />
-                                  <Bar dataKey="avant" name="Avant travaux" fill="hsl(var(--chart-1))" barSize={12} />
-                                  <Bar dataKey="apres" name="Après travaux" fill="hsl(var(--chart-4))" barSize={12} />
-                                </BarChart>
-                              </ResponsiveContainer>
-                            </div>
-                          </div>
-                        )}
-                      </div>
                     </>
                   );
                 })()}

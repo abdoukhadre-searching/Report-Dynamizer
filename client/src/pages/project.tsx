@@ -102,7 +102,7 @@ export default function ProjectPage() {
             </TabsTrigger>
             <TabsTrigger value="report" disabled={!hasBothReports} data-testid="tab-report" className="gap-1.5">
               <BookOpen className="w-3.5 h-3.5" />
-              Rapport
+              Rapports
             </TabsTrigger>
             <TabsTrigger value="strategie" disabled={!hasBothReports} data-testid="tab-strategie" className="gap-1.5">
               <BarChart2 className="w-3.5 h-3.5" />
@@ -179,6 +179,19 @@ export default function ProjectPage() {
                   </button>
                   <button
                     type="button"
+                    data-testid="subtab-recommandations"
+                    onClick={() => setReportSubTab("recommandations")}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                      reportSubTab === "recommandations"
+                        ? "border-[#1e3a5f] text-[#1e3a5f]"
+                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Cahier de recommandations
+                  </button>
+                  <button
+                    type="button"
                     data-testid="subtab-collective"
                     onClick={() => setReportSubTab("collective")}
                     className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
@@ -202,19 +215,6 @@ export default function ProjectPage() {
                   >
                     <ClipboardCheck className="w-4 h-4" />
                     Attestation APH
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="subtab-recommandations"
-                    onClick={() => setReportSubTab("recommandations")}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
-                      reportSubTab === "recommandations"
-                        ? "border-[#1e3a5f] text-[#1e3a5f]"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                    }`}
-                  >
-                    <FileText className="w-4 h-4" />
-                    Cahier de recommandations
                   </button>
                 </div>
 
