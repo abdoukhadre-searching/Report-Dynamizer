@@ -107,7 +107,7 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const preCah = pre.airLeakage?.cah50;
   const postCah = post.airLeakage?.cah50;
 
-  const preRoofRsi = pre.zone1?.find((z) => /plafond/i.test(z.element))?.rsi;
+  const preRoofRsi = pre.buildingInfo?.roofMaxRsi ?? pre.zone1?.find((z) => /plafond/i.test(z.element))?.rsi;
   const preWallRsi = pre.buildingInfo?.wallMaxRsi;
 
   const occupants = pre.buildingInfo?.occupants;
@@ -282,14 +282,14 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
                         )}
                         {preRoofRsi !== undefined && (
                           <tr>
-                            <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">RSI toit</td>
-                            <td className="px-3 py-2 font-semibold">{preRoofRsi.toFixed(2)}</td>
+                            <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">R toit</td>
+                            <td className="px-3 py-2 font-semibold">{(preRoofRsi * 5.678).toFixed(1)}</td>
                           </tr>
                         )}
                         {preWallRsi !== undefined && (
                           <tr>
-                            <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">RSI murs</td>
-                            <td className="px-3 py-2 font-semibold">{preWallRsi.toFixed(2)}</td>
+                            <td className="px-3 py-2 bg-slate-50 text-slate-500 font-medium">R murs</td>
+                            <td className="px-3 py-2 font-semibold">{(preWallRsi * 5.678).toFixed(1)}</td>
                           </tr>
                         )}
                         <tr>
