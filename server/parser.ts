@@ -274,52 +274,53 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     info.windowFraction = `${winFracMatch[1]} %`;
   }
 
-  // Wall max RSI: try RAPPORT DE LA CONSTRUCTION section first, then ÉLÉMENTS DU MUR
+  // Wall RSI: use zone1 "Murs principaux" RSI as primary source (most reliable),
+  // then fall back to RAPPORT DE LA CONSTRUCTION section, then ÉLÉMENTS DU MUR.
   let wallMaxRsi: number | null = null;
 
-  // Strategy 1: RAPPORT DE LA CONSTRUCTION DU BATIMENT section
-  const rapportIdx = findLineIndex(lines, "RAPPORT DE LA CONSTRUCTION DU BATIMENT");
-  const elPlafondIdx = findLineIndex(lines, "ÉLÉMENTS DU PLAFOND");
-  if (rapportIdx >= 0 && elPlafondIdx > rapportIdx) {
-    for (let i = rapportIdx + 1; i < elPlafondIdx; i++) {
-      const line = lines[i];
-      // Wall designation: short line containing at least one letter AND one digit (like "2E", "RDC", "RC-2E")
-      // or purely alphabetic short label (like "RDC")
-      if (line.length > 0 && line.length <= 15 && /[A-Za-z]/.test(line) &&
-          !/^(Désignation|Code|nominale|install|effective|ÉLÉMENTS|Type|Horaire|Portes|Plancher|Sous|Fond)/.test(line) &&
-          !line.includes(":")) {
-        // Collect next 3 numbers (code line like "16E1009940" is skipped by collectNumbers regex)
-        const nums = collectNumbers(lines, i + 1, 3);
-        if (nums.length === 3 && nums[2] > 0.1 && nums[2] <= 20) {
-          if (wallMaxRsi === null || nums[2] > wallMaxRsi) wallMaxRsi = nums[2];
-        }
-      }
-    }
-  }
-
-  // Strategy 2: ÉLÉMENTS DU MUR section (alternate PDF layout)
-  const elMurIdx = findLineIndex(lines, "ÉLÉMENTS DU MUR");
-  if (elMurIdx >= 0) {
-    const sectionEnd = Math.min(elMurIdx + 120, lines.length);
-    for (let i = elMurIdx + 1; i < sectionEnd; i++) {
-      const line = lines[i];
-      if (!line || /^(Désignation|Type de|Orient|Nombre|Hauteur|Périmètre|Superfi|Valeur|Horaire|Portes)/.test(line)) continue;
-      // Look for lines that end with a decimal RSI value
-      const decimalMatches = line.match(/(\d+\.\d+)/g);
-      if (decimalMatches && decimalMatches.length >= 3) {
-        const lastVal = parseFloat(decimalMatches[decimalMatches.length - 1]);
-        if (lastVal > 0.1 && lastVal <= 20) {
-          if (wallMaxRsi === null || lastVal > wallMaxRsi) wallMaxRsi = lastVal;
-        }
-      }
-    }
-  }
-
-  // Strategy 3: fallback from zone1 Murs principaux RSI
-  if (wallMaxRsi === null) {
+  // Strategy 1 (primary): zone1 Murs principaux RSI directly from heat loss table
+  {
     const zone1 = parseZone1(lines);
     const murRsi = zone1.find(z => /murs principaux/i.test(z.element))?.rsi;
-    if (murRsi) wallMaxRsi = murRsi;
+    if (murRsi && murRsi > 0.1 && murRsi <= 15) wallMaxRsi = murRsi;
+  }
+
+  // Strategy 2: RAPPORT DE LA CONSTRUCTION DU BATIMENT section (only if zone1 gave nothing)
+  if (wallMaxRsi === null) {
+    const rapportIdx = findLineIndex(lines, "RAPPORT DE LA CONSTRUCTION DU BATIMENT");
+    const elPlafondIdx = findLineIndex(lines, "ÉLÉMENTS DU PLAFOND");
+    if (rapportIdx >= 0 && elPlafondIdx > rapportIdx) {
+      for (let i = rapportIdx + 1; i < elPlafondIdx; i++) {
+        const line = lines[i];
+        if (line.length > 0 && line.length <= 15 && /[A-Za-z]/.test(line) &&
+            !/^(Désignation|Code|nominale|install|effective|ÉLÉMENTS|Type|Horaire|Portes|Plancher|Sous|Fond)/.test(line) &&
+            !line.includes(":")) {
+          const nums = collectNumbers(lines, i + 1, 3);
+          if (nums.length === 3 && nums[2] > 0.1 && nums[2] <= 10) {
+            if (wallMaxRsi === null || nums[2] > wallMaxRsi) wallMaxRsi = nums[2];
+          }
+        }
+      }
+    }
+  }
+
+  // Strategy 3: ÉLÉMENTS DU MUR section (alternate PDF layout, only if still null)
+  if (wallMaxRsi === null) {
+    const elMurIdx = findLineIndex(lines, "ÉLÉMENTS DU MUR");
+    if (elMurIdx >= 0) {
+      const sectionEnd = Math.min(elMurIdx + 120, lines.length);
+      for (let i = elMurIdx + 1; i < sectionEnd; i++) {
+        const line = lines[i];
+        if (!line || /^(Désignation|Type de|Orient|Nombre|Hauteur|Périmètre|Superfi|Valeur|Horaire|Portes)/.test(line)) continue;
+        const decimalMatches = line.match(/(\d+\.\d+)/g);
+        if (decimalMatches && decimalMatches.length >= 3) {
+          const lastVal = parseFloat(decimalMatches[decimalMatches.length - 1]);
+          if (lastVal > 0.1 && lastVal <= 10) {
+            if (wallMaxRsi === null || lastVal > wallMaxRsi) wallMaxRsi = lastVal;
+          }
+        }
+      }
+    }
   }
 
   if (wallMaxRsi !== null) {
