@@ -1519,7 +1519,7 @@ export default function ReportTab({
                 })();
                 const roofRsi = pre.buildingInfo?.roofMaxRsi
                   ?? pre.zone1?.find((z) => /plafond/i.test(z.element))?.rsi;
-                const roofThermal = roofRsi ? `${(roofRsi * 5.678).toFixed(1)}` : "N/A";
+                const roofThermal = roofRsi ? `${roofRsi.toFixed(2)}` : "N/A";
                 const chars = [
                   { label: "Nombre d'étages", value: floorsLabel || "N/A" },
                   {
@@ -1530,14 +1530,14 @@ export default function ReportTab({
                       "N/A",
                   },
                   {
-                    label: "Valeur thermique du toit (R)",
+                    label: "Valeur thermique du toit (RSI)",
                     value: roofThermal,
                   },
                   {
-                    label: "Valeur thermique des murs extérieurs (R)",
+                    label: "Valeur thermique des murs extérieurs (RSI)",
                     value:
                       pre.buildingInfo?.wallMaxRsi != null
-                        ? (pre.buildingInfo.wallMaxRsi * 5.678).toFixed(1)
+                        ? pre.buildingInfo.wallMaxRsi.toFixed(2)
                         : "N/A",
                   },
                   {

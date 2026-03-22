@@ -531,12 +531,12 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                 })();
                 const roofRsi = pre.buildingInfo?.roofMaxRsi
                   ?? pre.zone1?.find((z) => /plafond/i.test(z.element))?.rsi;
-                const roofThermal = roofRsi ? `${(roofRsi * 5.678).toFixed(1)}` : "N/A";
+                const roofThermal = roofRsi ? `${roofRsi.toFixed(2)}` : "N/A";
                 const chars = [
                   { label: "Nombre d'étages", value: floorsLabel || "N/A" },
                   { label: "Lieu climatique", value: pre.buildingInfo?.climateData || post.buildingInfo?.climateData || "N/A" },
-                  { label: "Valeur thermique du toit (R)", value: roofThermal },
-                  { label: "Valeur thermique des murs extérieurs (R)", value: pre.buildingInfo?.wallMaxRsi != null ? (pre.buildingInfo.wallMaxRsi * 5.678).toFixed(1) : "N/A" },
+                  { label: "Valeur thermique du toit (RSI)", value: roofThermal },
+                  { label: "Valeur thermique des murs extérieurs (RSI)", value: pre.buildingInfo?.wallMaxRsi != null ? pre.buildingInfo.wallMaxRsi.toFixed(2) : "N/A" },
                   { label: "Taux de renouvellement d'air", value: cah50 !== null ? `${cah50} CAH à 50 Pa` : "N/A" },
                   { label: "Système de chauffage", value: heatingLabel },
                   { label: "Système de production d'eau chaude domestique", value: hotWaterLabel },
