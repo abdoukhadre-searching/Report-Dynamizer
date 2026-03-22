@@ -687,7 +687,7 @@ function parseHeating(text: string): ReportData["heating"] {
   // Helper: strips a label prefix like "Chauffage des espaces:   " or "Equipment:   " from a line
   function stripHeatingLabel(line: string): string {
     return line
-      .replace(/^(?:Chauffage des espaces|Equipment|Énergie PRIMAIRE pour chauffage)\s*:\s*/i, "")
+      .replace(/^(?:Chauffage des espaces|Equipment|Énergie PRIMAIRE pour chauffage|PRIMAIRE Énergie pour chauffage)\s*:\s*/i, "")
       .trim();
   }
 
@@ -708,8 +708,15 @@ function parseHeating(text: string): ReportData["heating"] {
         continue;
       }
 
+      // Format A-bis: "PRIMAIRE Énergie pour chauffage:   Gaz naturel" on same line
+      const primaireSameLine = l.match(/^(?:Énergie PRIMAIRE pour chauffage|PRIMAIRE Énergie pour chauffage)\s*:\s+(.+)$/i);
+      if (primaireSameLine && !result.primaryType) {
+        result.primaryType = primaireSameLine[1].trim();
+        continue;
+      }
+
       // Format B: energy type label + next non-label line is the fuel type
-      if (!result.primaryType && (l === "Énergie PRIMAIRE pour chauffage:" || l.match(/^nergie PRIMAIRE/i))) {
+      if (!result.primaryType && (l === "Énergie PRIMAIRE pour chauffage:" || l === "PRIMAIRE Énergie pour chauffage:" || l.match(/^(?:nergie|PRIMAIRE)\s+(?:PRIMAIRE|Énergie)/i))) {
         for (let j = i + 1; j < Math.min(i + 5, sectionEnd); j++) {
           const next = lines[j].trim();
           if (!next) continue;
