@@ -242,38 +242,6 @@ export default function CollectiveBuildingTab({ project }: CollectiveBuildingTab
           </Card>
         </div>
 
-        {/* Signature block */}
-        <div className="w-64 flex-shrink-0">
-          <Card className="overflow-hidden border shadow-sm">
-            <CardHeader className="px-5 py-3 border-b" style={{ backgroundColor: "#f8fafc" }}>
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-4 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
-                <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                  Signature de l'évaluateur
-                </h3>
-              </div>
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex justify-center">
-                <img src={mabLogoPath} alt="MAB" style={{ height: "44px", width: "auto", objectFit: "contain", borderRadius: "6px" }} />
-              </div>
-              <div className="border-b border-dashed border-slate-300 pb-4">
-                <div className="h-10" />
-                <p className="text-xs text-slate-400 text-center mt-1">Signature</p>
-              </div>
-              <div className="space-y-1 text-center">
-                <p className="font-semibold text-sm" style={{ color: "#1e3a5f" }}>Marc-André Boucher</p>
-                <p className="text-xs text-slate-500">Évaluateur en efficacité énergétique</p>
-                <p className="text-xs text-slate-400">438 521-9645</p>
-              </div>
-              <div className="text-center pt-2 border-t border-slate-100">
-                <p className="text-xs text-slate-400">
-                  {new Date().toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
       </div>
 
