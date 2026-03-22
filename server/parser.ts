@@ -331,18 +331,23 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     if (roofVals.length > 0) info.roofMaxRsi = roofVals[0]; // first row = Plafond
   }
 
-  // Wall: from ÉLÉMENTS DU MUR to PLANCHERS (or fallback)
+  // Wall RSI: use zone1 "Murs principaux" as primary source (most reliable —
+  // explicitly labeled in SOMMAIRE DES PARAMETRES). Fall back to ÉLÉMENTS DU MUR
+  // section only when zone1 gives nothing.
   let wallMaxRsi: number | null = null;
-  if (elMurIdx >= 0) {
-    const wallVals = extractEffectiveRsi(elMurIdx, planchersIdx);
-    if (wallVals.length > 0) wallMaxRsi = Math.max(...wallVals);
+
+  // Primary: zone1 Murs principaux
+  const zone1ForWall = parseZone1(lines);
+  const murRsiZone1 = zone1ForWall.find(z => /murs principaux/i.test(z.element))?.rsi;
+  if (murRsiZone1 && murRsiZone1 > 0.05 && murRsiZone1 <= 15) {
+    wallMaxRsi = murRsiZone1;
   }
 
-  // Fallback: zone1 Murs principaux RSI if RAPPORT section gave nothing
-  if (wallMaxRsi === null) {
-    const zone1 = parseZone1(lines);
-    const murRsi = zone1.find(z => /murs principaux/i.test(z.element))?.rsi;
-    if (murRsi && murRsi > 0.05 && murRsi <= 15) wallMaxRsi = murRsi;
+  // Fallback: ÉLÉMENTS DU MUR → PLANCHERS (max effective RSI, capped at 10)
+  if (wallMaxRsi === null && elMurIdx >= 0) {
+    const wallVals = extractEffectiveRsi(elMurIdx, planchersIdx);
+    const plausible = wallVals.filter(v => v <= 10);
+    if (plausible.length > 0) wallMaxRsi = Math.max(...plausible);
   }
 
   if (wallMaxRsi !== null) {
