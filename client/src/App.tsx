@@ -41,17 +41,20 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
-function Router() {
+function RootRoute() {
   const { user, isLoading } = useAuth();
-  const [, navigate] = useLocation();
-  const [location] = useLocation();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!user) return <LandingPage />;
+  return <HomePage />;
+}
 
-  useEffect(() => {
-    if (!isLoading && !user && location === "/") {
-      navigate("/landing");
-    }
-  }, [user, isLoading, location, navigate]);
-
+function Router() {
   return (
     <Switch>
       <Route path="/landing" component={LandingPage} />
@@ -70,9 +73,7 @@ function Router() {
       <Route path="/admin">
         {() => <ProtectedRoute component={AdminPage} />}
       </Route>
-      <Route path="/">
-        {() => <ProtectedRoute component={HomePage} />}
-      </Route>
+      <Route path="/" component={RootRoute} />
       <Route component={NotFound} />
     </Switch>
   );
