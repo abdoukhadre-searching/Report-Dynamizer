@@ -325,33 +325,28 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     if (/^PLANCHERS/i.test(lines[i].trim())) { planchersIdx = i; break; }
   }
 
-  // Roof: from ÉLÉMENTS DU PLAFOND to ÉLÉMENTS DU MUR
-  if (elPlafondIdx >= 0 && elMurIdx > elPlafondIdx) {
+  // Roof RSI and Wall RSI: always read from SOMMAIRE DES PARAMETRES DU BATIMENT
+  // → ZONE 1 : AU-DESSUS DU NIVEAU DU SOL, Eff.(RSI) column.
+  // "Plafond" row  → roofMaxRsi
+  // "Murs principaux" row → wallMaxRsi
+  const zone1Parsed = parseZone1(lines);
+
+  const plafondRow = zone1Parsed.find(z => /^plafond$/i.test(z.element));
+  if (plafondRow && plafondRow.rsi > 0.05 && plafondRow.rsi <= 15) {
+    info.roofMaxRsi = plafondRow.rsi;
+  } else if (elPlafondIdx >= 0 && elMurIdx > elPlafondIdx) {
+    // Fallback: ÉLÉMENTS DU PLAFOND section
     const roofVals = extractEffectiveRsi(elPlafondIdx, elMurIdx);
-    if (roofVals.length > 0) info.roofMaxRsi = roofVals[0]; // first row = Plafond
+    if (roofVals.length > 0) info.roofMaxRsi = roofVals[0];
   }
 
-  // Wall RSI: use zone1 "Murs principaux" as primary source (most reliable —
-  // explicitly labeled in SOMMAIRE DES PARAMETRES). Fall back to ÉLÉMENTS DU MUR
-  // section only when zone1 gives nothing.
-  let wallMaxRsi: number | null = null;
-
-  // Primary: zone1 Murs principaux
-  const zone1ForWall = parseZone1(lines);
-  const murRsiZone1 = zone1ForWall.find(z => /murs principaux/i.test(z.element))?.rsi;
-  if (murRsiZone1 && murRsiZone1 > 0.05 && murRsiZone1 <= 15) {
-    wallMaxRsi = murRsiZone1;
-  }
-
-  // Fallback: ÉLÉMENTS DU MUR → PLANCHERS (max effective RSI, capped at 10)
-  if (wallMaxRsi === null && elMurIdx >= 0) {
-    const wallVals = extractEffectiveRsi(elMurIdx, planchersIdx);
-    const plausible = wallVals.filter(v => v <= 10);
-    if (plausible.length > 0) wallMaxRsi = Math.max(...plausible);
-  }
-
-  if (wallMaxRsi !== null) {
-    info.wallMaxRsi = wallMaxRsi;
+  const mursPrincipauxRow = zone1Parsed.find(z => /murs principaux/i.test(z.element));
+  if (mursPrincipauxRow && mursPrincipauxRow.rsi > 0.05 && mursPrincipauxRow.rsi <= 15) {
+    info.wallMaxRsi = mursPrincipauxRow.rsi;
+  } else if (elMurIdx >= 0) {
+    // Fallback: ÉLÉMENTS DU MUR section, capped at RSI 10
+    const wallVals = extractEffectiveRsi(elMurIdx, planchersIdx).filter(v => v <= 10);
+    if (wallVals.length > 0) info.wallMaxRsi = Math.max(...wallVals);
   }
 
   return info;
