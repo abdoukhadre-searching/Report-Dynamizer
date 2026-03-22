@@ -3386,6 +3386,46 @@ export default function ReportTab({
                             </div>
                           </div>
                         )}
+
+                        {/* GES table — same page as Pertes thermiques */}
+                        <div className="mt-8">
+                          <h4 className="text-sm font-semibold mb-1" style={{ color: "#1e3a5f" }}>
+                            GES — Gaz à effet de serre (T CO₂/an)
+                          </h4>
+                          <p className="text-xs text-muted-foreground mb-3">
+                            Émissions de gaz à effet de serre estimées avant et après les travaux d'optimisation.
+                          </p>
+                          <div className="overflow-hidden rounded-md border border-slate-200 text-sm" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr style={{ backgroundColor: "#1e3a5f", color: "#ffffff" }}>
+                                  <th className="px-4 py-2 font-semibold text-xs uppercase tracking-wider">Indicateur</th>
+                                  <th className="px-4 py-2 font-semibold text-xs uppercase tracking-wider text-right">Avant travaux</th>
+                                  <th className="px-4 py-2 font-semibold text-xs uppercase tracking-wider text-right">Après travaux</th>
+                                  <th className="px-4 py-2 font-semibold text-xs uppercase tracking-wider text-right">Réduction</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr style={{ backgroundColor: "#f8fafc" }}>
+                                  <td className="px-4 py-3 text-slate-700 font-medium">Émissions totales (T CO₂/an)</td>
+                                  <td className="px-4 py-3 text-right font-semibold text-slate-800">{ghsBefore.toFixed(3)}</td>
+                                  <td className="px-4 py-3 text-right font-semibold text-slate-800">{ghsAfter.toFixed(3)}</td>
+                                  <td className="px-4 py-3 text-right font-semibold" style={{ color: "#16a34a" }}>
+                                    {(ghsBefore - ghsAfter).toFixed(3)}
+                                  </td>
+                                </tr>
+                                <tr style={{ backgroundColor: "#ffffff" }}>
+                                  <td className="px-4 py-3 text-slate-700 font-medium">Réduction relative</td>
+                                  <td className="px-4 py-3 text-right text-slate-400">—</td>
+                                  <td className="px-4 py-3 text-right text-slate-400">—</td>
+                                  <td className="px-4 py-3 text-right font-bold text-base" style={{ color: "#16a34a" }}>
+                                    {ghsImprovementPct.toFixed(1)} %
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                       </div>
                     </>
                   );
