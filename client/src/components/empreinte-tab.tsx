@@ -99,7 +99,7 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const showLedStrategy = hasLedImprovement(pre, post);
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
-  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType) && !hasThermopompe(post);
+  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !hasThermopompe(post);
   const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && !hasHeatPumpWaterHeater(post);
 
   const nbThermo = getThermopompeCount(occupants);
@@ -227,9 +227,6 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
             <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
               Coût des travaux
             </h3>
-            <span className="text-xs text-slate-400 ml-auto">
-              Cliquez sur un montant pour le modifier
-            </span>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -686,10 +683,6 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
         </>
       )}
 
-      <p className="text-xs text-slate-400 italic pb-2">
-        * Les montants présentés sont des estimations à titre indicatif afin de planifier les travaux.
-        Un devis détaillé doit être obtenu auprès d'entrepreneurs qualifiés avant de procéder.
-      </p>
     </div>
   );
 }
