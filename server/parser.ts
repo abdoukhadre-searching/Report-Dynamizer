@@ -274,53 +274,61 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     info.windowFraction = `${winFracMatch[1]} %`;
   }
 
-  // Wall RSI: use zone1 "Murs principaux" RSI as primary source (most reliable),
-  // then fall back to RAPPORT DE LA CONSTRUCTION section, then ÉLÉMENTS DU MUR.
-  let wallMaxRsi: number | null = null;
+  // ── RAPPORT DE LA CONSTRUCTION DU BATIMENT ──────────────────────────────────
+  // Extract roof RSI (ÉLÉMENTS DU PLAFOND → Plafond row → effective column)
+  // and wall max RSI (ÉLÉMENTS DU MUR → highest effective column value).
+  // Each table row in pdftotext is a single line; codes like "16E0001940" have
+  // no decimal point and won't match /\d+\.\d+/, so the last decimal on each
+  // line is the effective RSI.
 
-  // Strategy 1 (primary): zone1 Murs principaux RSI directly from heat loss table
-  {
+  // Helper: scan lines[start+1..end) for rows with ≥2 decimal values; returns
+  // the last valid effective RSI (0.05–15) per row.
+  const extractEffectiveRsi = (start: number, end: number): number[] => {
+    const vals: number[] = [];
+    const endIdx = end >= 0 ? Math.min(end, lines.length) : Math.min(start + 80, lines.length);
+    for (let i = start + 1; i < endIdx; i++) {
+      const dec = lines[i].match(/\d+\.\d+/g);
+      if (!dec || dec.length < 2) continue;
+      // Effective RSI is the last decimal on the row that is in the plausible range
+      for (let k = dec.length - 1; k >= 0; k--) {
+        const v = parseFloat(dec[k]);
+        if (v > 0.05 && v <= 15) { vals.push(v); break; }
+      }
+    }
+    return vals;
+  };
+
+  const rapportIdx   = findLineIndex(lines, "RAPPORT DE LA CONSTRUCTION DU BATIMENT");
+  const elPlafondIdx = findLineIndex(lines, "ÉLÉMENTS DU PLAFOND");
+  // ÉLÉMENTS DU MUR that comes after ÉLÉMENTS DU PLAFOND (within RAPPORT section)
+  let elMurIdx = -1;
+  for (let i = (elPlafondIdx >= 0 ? elPlafondIdx : rapportIdx >= 0 ? rapportIdx : 0); i < lines.length; i++) {
+    if (/^ÉL[EÉ]MENTS DU MUR$/i.test(lines[i].trim())) { elMurIdx = i; break; }
+  }
+  // PLANCHERS line (end boundary for ÉLÉMENTS DU MUR section)
+  let planchersIdx = -1;
+  for (let i = (elMurIdx >= 0 ? elMurIdx : 0); i < lines.length; i++) {
+    if (/^PLANCHERS/i.test(lines[i].trim())) { planchersIdx = i; break; }
+  }
+
+  // Roof: from ÉLÉMENTS DU PLAFOND to ÉLÉMENTS DU MUR
+  if (elPlafondIdx >= 0 && elMurIdx > elPlafondIdx) {
+    const roofVals = extractEffectiveRsi(elPlafondIdx, elMurIdx);
+    if (roofVals.length > 0) info.roofMaxRsi = roofVals[0]; // first row = Plafond
+  }
+
+  // Wall: from ÉLÉMENTS DU MUR to PLANCHERS (or fallback)
+  let wallMaxRsi: number | null = null;
+  if (elMurIdx >= 0) {
+    const wallVals = extractEffectiveRsi(elMurIdx, planchersIdx);
+    if (wallVals.length > 0) wallMaxRsi = Math.max(...wallVals);
+  }
+
+  // Fallback: zone1 Murs principaux RSI if RAPPORT section gave nothing
+  if (wallMaxRsi === null) {
     const zone1 = parseZone1(lines);
     const murRsi = zone1.find(z => /murs principaux/i.test(z.element))?.rsi;
-    if (murRsi && murRsi > 0.1 && murRsi <= 15) wallMaxRsi = murRsi;
-  }
-
-  // Strategy 2: RAPPORT DE LA CONSTRUCTION DU BATIMENT section (only if zone1 gave nothing)
-  if (wallMaxRsi === null) {
-    const rapportIdx = findLineIndex(lines, "RAPPORT DE LA CONSTRUCTION DU BATIMENT");
-    const elPlafondIdx = findLineIndex(lines, "ÉLÉMENTS DU PLAFOND");
-    if (rapportIdx >= 0 && elPlafondIdx > rapportIdx) {
-      for (let i = rapportIdx + 1; i < elPlafondIdx; i++) {
-        const line = lines[i];
-        if (line.length > 0 && line.length <= 15 && /[A-Za-z]/.test(line) &&
-            !/^(Désignation|Code|nominale|install|effective|ÉLÉMENTS|Type|Horaire|Portes|Plancher|Sous|Fond)/.test(line) &&
-            !line.includes(":")) {
-          const nums = collectNumbers(lines, i + 1, 3);
-          if (nums.length === 3 && nums[2] > 0.1 && nums[2] <= 10) {
-            if (wallMaxRsi === null || nums[2] > wallMaxRsi) wallMaxRsi = nums[2];
-          }
-        }
-      }
-    }
-  }
-
-  // Strategy 3: ÉLÉMENTS DU MUR section (alternate PDF layout, only if still null)
-  if (wallMaxRsi === null) {
-    const elMurIdx = findLineIndex(lines, "ÉLÉMENTS DU MUR");
-    if (elMurIdx >= 0) {
-      const sectionEnd = Math.min(elMurIdx + 120, lines.length);
-      for (let i = elMurIdx + 1; i < sectionEnd; i++) {
-        const line = lines[i];
-        if (!line || /^(Désignation|Type de|Orient|Nombre|Hauteur|Périmètre|Superfi|Valeur|Horaire|Portes)/.test(line)) continue;
-        const decimalMatches = line.match(/(\d+\.\d+)/g);
-        if (decimalMatches && decimalMatches.length >= 3) {
-          const lastVal = parseFloat(decimalMatches[decimalMatches.length - 1]);
-          if (lastVal > 0.1 && lastVal <= 10) {
-            if (wallMaxRsi === null || lastVal > wallMaxRsi) wallMaxRsi = lastVal;
-          }
-        }
-      }
-    }
+    if (murRsi && murRsi > 0.05 && murRsi <= 15) wallMaxRsi = murRsi;
   }
 
   if (wallMaxRsi !== null) {

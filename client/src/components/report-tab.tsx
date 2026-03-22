@@ -1499,9 +1499,8 @@ export default function ReportTab({
                   if (/gaz/i.test(type)) return "chauffe-eau au gaz naturel";
                   return equip || "N/A";
                 })();
-                const roofRsi = pre.zone1?.find((z) =>
-                  /plafond/i.test(z.element),
-                )?.rsi;
+                const roofRsi = pre.buildingInfo?.roofMaxRsi
+                  ?? pre.zone1?.find((z) => /plafond/i.test(z.element))?.rsi;
                 const roofThermal = roofRsi ? `${(roofRsi * 5.678).toFixed(1)}` : "N/A";
                 const chars = [
                   { label: "Nombre d'étages", value: floorsLabel || "N/A" },
