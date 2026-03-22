@@ -1517,9 +1517,14 @@ export default function ReportTab({
                   if (/gaz/i.test(type)) return "chauffe-eau au gaz naturel";
                   return equip || "N/A";
                 })();
-                const roofRsi = pre.buildingInfo?.roofMaxRsi
-                  ?? pre.zone1?.find((z) => /plafond/i.test(z.element))?.rsi;
+                const roofRsi =
+                  pre.zone1?.find((z) => /^plafond$/i.test(z.element))?.rsi
+                  ?? pre.buildingInfo?.roofMaxRsi;
+                const wallRsi =
+                  pre.zone1?.find((z) => /murs principaux/i.test(z.element))?.rsi
+                  ?? pre.buildingInfo?.wallMaxRsi;
                 const roofThermal = roofRsi ? `${(roofRsi * 5.678).toFixed(1)}` : "N/A";
+                const wallThermal = wallRsi != null ? `${(wallRsi * 5.678).toFixed(1)}` : "N/A";
                 const chars = [
                   { label: "Nombre d'étages", value: floorsLabel || "N/A" },
                   {
@@ -1535,10 +1540,7 @@ export default function ReportTab({
                   },
                   {
                     label: "Valeur thermique des murs extérieurs (R)",
-                    value:
-                      pre.buildingInfo?.wallMaxRsi != null
-                        ? (pre.buildingInfo.wallMaxRsi * 5.678).toFixed(1)
-                        : "N/A",
+                    value: wallThermal,
                   },
                   {
                     label: "Taux de renouvellement d'air",

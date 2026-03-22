@@ -107,8 +107,12 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const preCah = pre.airLeakage?.cah50;
   const postCah = post.airLeakage?.cah50;
 
-  const preRoofRsi = pre.buildingInfo?.roofMaxRsi ?? pre.zone1?.find((z) => /plafond/i.test(z.element))?.rsi;
-  const preWallRsi = pre.buildingInfo?.wallMaxRsi;
+  const preRoofRsi =
+    pre.zone1?.find((z) => /^plafond$/i.test(z.element))?.rsi
+    ?? pre.buildingInfo?.roofMaxRsi;
+  const preWallRsi =
+    pre.zone1?.find((z) => /murs principaux/i.test(z.element))?.rsi
+    ?? pre.buildingInfo?.wallMaxRsi;
 
   const occupants = pre.buildingInfo?.occupants;
   const numUnits = getNumUnitsFromOccupants(occupants);
