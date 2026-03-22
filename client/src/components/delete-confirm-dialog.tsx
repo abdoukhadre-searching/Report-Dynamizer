@@ -8,8 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 interface DeleteConfirmDialogProps {
@@ -20,14 +18,6 @@ interface DeleteConfirmDialogProps {
   isPending?: boolean;
 }
 
-function getAcronym(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0] || "")
-    .join("")
-    .toUpperCase();
-}
-
 export function DeleteConfirmDialog({
   open,
   projectName,
@@ -35,23 +25,14 @@ export function DeleteConfirmDialog({
   onCancel,
   isPending = false,
 }: DeleteConfirmDialogProps) {
-  const [input, setInput] = useState("");
   const [deleted, setDeleted] = useState(false);
 
-  const acronym = getAcronym(projectName);
-  const isValid =
-    input.trim().toLowerCase() === "supprimer" ||
-    input.trim().toLowerCase() === projectName.trim().toLowerCase() ||
-    (acronym.length >= 2 && input.trim().toUpperCase() === acronym);
-
   const handleConfirm = () => {
-    if (!isValid) return;
     onConfirm();
     setDeleted(true);
   };
 
   const handleClose = () => {
-    setInput("");
     setDeleted(false);
     onCancel();
   };
@@ -88,42 +69,23 @@ export function DeleteConfirmDialog({
             <DialogTitle>Supprimer le projet</DialogTitle>
           </div>
           <DialogDescription className="text-sm leading-relaxed">
-            Cette action est <span className="font-semibold text-foreground">irréversible</span>. Le projet{" "}
-            <span className="font-semibold text-foreground">«&nbsp;{projectName}&nbsp;»</span> et toutes ses données
-            seront définitivement supprimés.
+            Êtes-vous sûr de vouloir supprimer le projet{" "}
+            <span className="font-semibold text-foreground">«&nbsp;{projectName}&nbsp;»</span> ?
+            Cette action est <span className="font-semibold text-foreground">irréversible</span> et toutes les données seront définitivement perdues.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 py-2">
-          <Label className="text-xs text-muted-foreground">
-            Pour confirmer, tapez{" "}
-            <code className="bg-muted px-1.5 py-0.5 rounded text-foreground font-mono">Supprimer</code>
-            {", le nom du projet, ou l'acronyme "}
-            <code className="bg-muted px-1.5 py-0.5 rounded text-foreground font-mono">{acronym}</code>
-          </Label>
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Tapez pour confirmer…"
-            className={isValid ? "border-red-400 focus-visible:ring-red-400" : ""}
-            data-testid="input-delete-confirm"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && isValid) handleConfirm();
-            }}
-          />
-        </div>
-
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="gap-2 sm:gap-2 mt-2">
           <Button variant="outline" onClick={handleClose} disabled={isPending} data-testid="button-cancel-delete">
-            Annuler
+            Non
           </Button>
           <Button
             variant="destructive"
             onClick={handleConfirm}
-            disabled={!isValid || isPending}
+            disabled={isPending}
             data-testid="button-confirm-delete"
           >
-            {isPending ? "Suppression…" : "Supprimer définitivement"}
+            {isPending ? "Suppression…" : "Oui, supprimer"}
           </Button>
         </DialogFooter>
       </DialogContent>
