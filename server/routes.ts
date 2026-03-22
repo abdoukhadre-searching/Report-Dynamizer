@@ -588,15 +588,17 @@ export async function registerRoutes(
     drawCell(COL_S_X1, COL_S_X2, GES_ROW_Y_TOP, GES_ROW_Y_BOT, `${fmt(ghgSavings, 1)} %`, TEAL);
 
     // ── Signature numérique (zone droite du tableau) ──────────────────────────
-    // Érase whatever the template has in that zone (incl. "Signature de l'évaluateur")
-    const SIG_X1 = COL_S_X2 + 2;
-    const SIG_X2 = width - 8;
-    const SIG_Y_TOP = 60;   // extends above table to cover any template label
-    const SIG_Y_BOT = 215;
+    // Use the same Y range as the two data rows + extend above for label
+    const SIG_X1 = COL_S_X2 + 4;
+    const SIG_X2 = Math.min(width - 5, SIG_X1 + 220);
+    const SIG_Y_TOP = ENERGY_ROW_Y_TOP - 5;
+    const SIG_Y_BOT = GES_ROW_Y_BOT + 5;
     const sigPdfYBot = toPdfY(SIG_Y_BOT);
     const sigPdfYTop = toPdfY(SIG_Y_TOP);
     const sigZoneH = sigPdfYTop - sigPdfYBot;
-    page.drawRectangle({ x: SIG_X1, y: sigPdfYBot, width: SIG_X2 - SIG_X1, height: sigZoneH, color: WHITE });
+
+    // White-out the signature zone to remove any template content
+    page.drawRectangle({ x: SIG_X1 - 2, y: sigPdfYBot - 2, width: SIG_X2 - SIG_X1 + 4, height: sigZoneH + 4, color: WHITE });
 
     // Format timestamp identical to attestation APH signature
     const yyyy = now.getFullYear();
@@ -607,31 +609,37 @@ export async function registerRoutes(
     const ss = String(now.getSeconds()).padStart(2, "0");
     const sigDateStr = `${yyyy}.${mm}.${dd} ${hh}:${min}:${ss}`;
 
-    // Vertical center of the signature zone
-    const sigCenterY = (sigPdfYBot + sigPdfYTop) / 2;
-    const NAME_SIZE = 11;
-    const DETAIL_SIZE = 6.5;
+    // Layout — vertically centered in the zone
+    const sigCenterY = sigPdfYBot + sigZoneH / 2;
+    const NAME_SIZE = 13;
+    const DETAIL_SIZE = 8;
+    const lineSpacing = DETAIL_SIZE + 2;
 
-    // Left part: "Marc-André Boucher" in bold
+    // "Marc-André Boucher" bold — left part
     const nameText = "Marc-Andr\u00E9 Boucher";
     const nameW = font.widthOfTextAtSize(nameText, NAME_SIZE);
     page.drawText(nameText, {
       x: SIG_X1 + 4,
-      y: sigCenterY + 2,
+      y: sigCenterY - NAME_SIZE / 2 + 2,
       size: NAME_SIZE,
       font,
       color: DARK,
     });
 
-    // Right part: detail lines (name + date)
-    const detailX = SIG_X1 + 4 + nameW + 6;
-    const line1 = "Signature num\u00E9rique de Marc-Andr\u00E9";
-    const line2 = "Boucher";
-    const line3 = `Date : ${sigDateStr}`;
-    const lineH = DETAIL_SIZE + 2;
-    page.drawText(line1, { x: detailX, y: sigCenterY + lineH, size: DETAIL_SIZE, font: fontRegular, color: DARK });
-    page.drawText(line2, { x: detailX, y: sigCenterY, size: DETAIL_SIZE, font: fontRegular, color: DARK });
-    page.drawText(line3, { x: detailX, y: sigCenterY - lineH, size: DETAIL_SIZE, font: fontRegular, color: DARK });
+    // Detail block — right of the name
+    const detailX = SIG_X1 + 4 + nameW + 5;
+    page.drawText("Signature num\u00E9rique de Marc-Andr\u00E9", {
+      x: detailX, y: sigCenterY + lineSpacing * 0.5,
+      size: DETAIL_SIZE, font: fontRegular, color: DARK,
+    });
+    page.drawText("Boucher", {
+      x: detailX, y: sigCenterY - lineSpacing * 0.5,
+      size: DETAIL_SIZE, font: fontRegular, color: DARK,
+    });
+    page.drawText(`Date : ${sigDateStr}`, {
+      x: detailX, y: sigCenterY - lineSpacing * 1.5,
+      size: DETAIL_SIZE, font: fontRegular, color: DARK,
+    });
 
     return Buffer.from(await pdfDoc.save());
   }
