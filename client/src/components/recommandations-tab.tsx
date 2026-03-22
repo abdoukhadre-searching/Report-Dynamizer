@@ -239,6 +239,24 @@ function Watermark() {
 export default function RecommandationsTab({ project, exportMode = false }: RecommandationsTabProps) {
   const { toast } = useToast();
   const [isPrinting, setIsPrinting] = useState(false);
+  const [constructionYear, setConstructionYear] = useState(
+    project.yearBuilt || (project.preReportData as any)?.buildingInfo?.yearBuilt || (project.postReportData as any)?.buildingInfo?.yearBuilt || ""
+  );
+  const yearMutation = useMutation({
+    mutationFn: async (year: string) => {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ yearBuilt: year }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    },
+  });
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
   const comparison = project.comparisonData as ComparisonData | null;
@@ -533,7 +551,20 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                           Le bâtiment analysé correspond à un immeuble résidentiel multifamilial qui sera construit au{" "}
                           <span className="font-semibold">{fullAddress}</span>.{" "}
                           {numUnits > 0 && (<>Il comprendra <span className="font-semibold">{numUnits} logements locatifs</span>{floorsDisplay && (<> répartis sur <span className="font-semibold">{floorsLabel}</span></>)}. </>)}
-                          {(pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt) && (<>Le bâtiment sera construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt}</span>.{" "}</>)}
+                          Le bâtiment sera construit en{" "}
+                          {exportMode ? (
+                            <span className="font-semibold">{constructionYear || "—"}</span>
+                          ) : (
+                            <input
+                              type="text"
+                              value={constructionYear}
+                              onChange={e => setConstructionYear(e.target.value)}
+                              onBlur={() => yearMutation.mutate(constructionYear)}
+                              placeholder="2026"
+                              style={{ display: "inline", width: "60px", border: "none", borderBottom: "1px solid #1e3a5f", fontWeight: "600", textAlign: "center", background: "transparent", outline: "none", fontSize: "inherit" }}
+                            />
+                          )}
+                          .{" "}
                           La façade principale du bâtiment est présentée ci-dessous à partir des plans architecturaux du projet.
                         </p>
                         <div className="print:break-inside-avoid">
@@ -555,7 +586,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                           Le bâtiment analysé est un immeuble résidentiel situé au{" "}
                           <span className="font-semibold">{fullAddress}</span>
                           {numUnits > 0 && (<>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>)}, construit en{" "}
-                          <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt || "N/A"}</span>.
+                          <span className="font-semibold">{constructionYear || "N/A"}</span>.
                           {floorsDisplay && (<> Le bâtiment comporte <span className="font-semibold">{floorsLabel}</span>.</>)}{" "}
                           La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
                         </p>

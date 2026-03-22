@@ -482,6 +482,24 @@ export default function ReportTab({
 }: ReportTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const [constructionYear, setConstructionYear] = useState(
+    project.yearBuilt || (project.preReportData as any)?.buildingInfo?.yearBuilt || (project.postReportData as any)?.buildingInfo?.yearBuilt || ""
+  );
+  const yearMutation = useMutation({
+    mutationFn: async (year: string) => {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ yearBuilt: year }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    },
+  });
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
   const comparison = project.comparisonData as ComparisonData | null;
@@ -1563,14 +1581,20 @@ export default function ReportTab({
                               .{" "}
                             </>
                           )}
-                          {(pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt) && (
-                            <>
-                              Le bâtiment sera construit en{" "}
-                              <span className="font-semibold">
-                                {pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt}
-                              </span>.{" "}
-                            </>
+                          Le bâtiment sera construit en{" "}
+                          {exportMode ? (
+                            <span className="font-semibold">{constructionYear || "—"}</span>
+                          ) : (
+                            <input
+                              type="text"
+                              value={constructionYear}
+                              onChange={e => setConstructionYear(e.target.value)}
+                              onBlur={() => yearMutation.mutate(constructionYear)}
+                              placeholder="2026"
+                              style={{ display: "inline", width: "60px", border: "none", borderBottom: "1px solid #1e3a5f", fontWeight: "600", textAlign: "center", background: "transparent", outline: "none", fontSize: "inherit" }}
+                            />
                           )}
+                          .{" "}
                           La façade principale du bâtiment est présentée
                           ci-dessous à partir des plans architecturaux du
                           projet.
@@ -1636,9 +1660,7 @@ export default function ReportTab({
                           )}
                           , construit en{" "}
                           <span className="font-semibold">
-                            {pre.buildingInfo?.yearBuilt ||
-                              post.buildingInfo?.yearBuilt ||
-                              "N/A"}
+                            {constructionYear || "N/A"}
                           </span>
                           .
                           {floorsDisplay && (
