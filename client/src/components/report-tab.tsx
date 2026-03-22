@@ -3387,45 +3387,39 @@ export default function ReportTab({
                           </div>
                         )}
 
-                        {/* GES table — same page as Pertes thermiques */}
-                        <div className="mt-8">
-                          <h4 className="text-sm font-semibold mb-1" style={{ color: "#1e3a5f" }}>
-                            GES — Gaz à effet de serre (T CO₂/an)
-                          </h4>
-                          <p className="text-xs text-muted-foreground mb-3">
-                            Émissions de gaz à effet de serre estimées avant et après les travaux d'optimisation.
-                          </p>
-                          <div className="overflow-hidden rounded-md border border-slate-200 text-sm" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr style={{ backgroundColor: "#1e3a5f", color: "#ffffff" }}>
-                                  <th className="px-4 py-2 font-semibold text-xs uppercase tracking-wider">Indicateur</th>
-                                  <th className="px-4 py-2 font-semibold text-xs uppercase tracking-wider text-right">Avant travaux</th>
-                                  <th className="px-4 py-2 font-semibold text-xs uppercase tracking-wider text-right">Après travaux</th>
-                                  <th className="px-4 py-2 font-semibold text-xs uppercase tracking-wider text-right">Réduction</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr style={{ backgroundColor: "#f8fafc" }}>
-                                  <td className="px-4 py-3 text-slate-700 font-medium">Émissions totales (T CO₂/an)</td>
-                                  <td className="px-4 py-3 text-right font-semibold text-slate-800">{ghsBefore.toFixed(3)}</td>
-                                  <td className="px-4 py-3 text-right font-semibold text-slate-800">{ghsAfter.toFixed(3)}</td>
-                                  <td className="px-4 py-3 text-right font-semibold" style={{ color: "#16a34a" }}>
-                                    {(ghsBefore - ghsAfter).toFixed(3)}
-                                  </td>
-                                </tr>
-                                <tr style={{ backgroundColor: "#ffffff" }}>
-                                  <td className="px-4 py-3 text-slate-700 font-medium">Réduction relative</td>
-                                  <td className="px-4 py-3 text-right text-slate-400">—</td>
-                                  <td className="px-4 py-3 text-right text-slate-400">—</td>
-                                  <td className="px-4 py-3 text-right font-bold text-base" style={{ color: "#16a34a" }}>
-                                    {ghsImprovementPct.toFixed(1)} %
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
+                        {/* GES bar chart — same page as Pertes thermiques */}
+                        {(() => {
+                          const gesData: { name: string; Avant: number; Après: number }[] = [
+                            { name: "GES Total", Avant: Number(ghsBefore.toFixed(4)), Après: Number(ghsAfter.toFixed(4)) },
+                          ];
+                          if ((comparison.ghsElectricityBefore ?? 0) > 0 || (comparison.ghsElectricityAfter ?? 0) > 0)
+                            gesData.push({ name: "GES Électricité", Avant: Number((comparison.ghsElectricityBefore ?? 0).toFixed(4)), Après: Number((comparison.ghsElectricityAfter ?? 0).toFixed(4)) });
+                          if ((comparison.ghsGasBefore ?? 0) > 0 || (comparison.ghsGasAfter ?? 0) > 0)
+                            gesData.push({ name: "GES Combustible", Avant: Number((comparison.ghsGasBefore ?? 0).toFixed(4)), Après: Number((comparison.ghsGasAfter ?? 0).toFixed(4)) });
+                          return (
+                            <div className="mt-8">
+                              <h4 className="text-sm font-semibold mb-1" style={{ color: "#1e3a5f" }}>
+                                GES — Gaz à effet de serre (T CO₂/an)
+                              </h4>
+                              <p className="text-xs text-muted-foreground mb-3">
+                                Émissions de gaz à effet de serre estimées avant et après les travaux d'optimisation.
+                              </p>
+                              <div className="h-[250px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={gesData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                                    <YAxis tick={{ fontSize: 10 }} />
+                                    <Tooltip formatter={(value: number) => `${value} T CO₂/an`} />
+                                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                                    <Bar dataKey="Avant" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="Après" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </>
                   );
