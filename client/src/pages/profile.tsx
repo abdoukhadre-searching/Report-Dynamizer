@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, LogOut, ArrowLeft, Clock, FolderOpen, Plus, Upload, Trash2, Edit2, Eye } from "lucide-react";
+import { LogOut, ArrowLeft, Clock, Plus, Upload, Trash2, Edit2, Eye, RefreshCw } from "lucide-react";
 import type { AuditLog } from "@shared/schema";
 
 const actionConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const { user, logout } = useAuth();
   const [, navigate] = useLocation();
 
-  const { data: logs, isLoading } = useQuery<AuditLog[]>({
+  const { data: logs, isLoading, isFetching, refetch } = useQuery<AuditLog[]>({
     queryKey: ["/api/audit-logs/mine"],
   });
 
@@ -88,9 +88,22 @@ export default function ProfilePage() {
         {/* Audit logs */}
         <Card>
           <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <CardTitle className="text-base">Historique d'activité</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <CardTitle className="text-base">Historique d'activité</CardTitle>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="gap-1.5 h-8 text-xs"
+                data-testid="button-refresh-logs"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+                Actualiser
+              </Button>
             </div>
             <p className="text-sm text-muted-foreground">Toutes vos actions sur la plateforme</p>
           </CardHeader>

@@ -28,12 +28,27 @@ app.use(express.urlencoded({ extended: false }));
 
 const PgSession = connectPgSimple(session);
 
-const sessionStore = process.env.DATABASE_URL
-  ? new PgSession({
-      pool: new pg.Pool({ connectionString: process.env.DATABASE_URL }),
-      createTableIfMissing: true,
-    })
+const sessionPool = process.env.DATABASE_URL
+  ? new pg.Pool({ connectionString: process.env.DATABASE_URL })
   : undefined;
+
+if (sessionPool) {
+  sessionPool.query(`
+    CREATE TABLE IF NOT EXISTS "session" (
+      "sid" varchar NOT NULL COLLATE "default",
+      "sess" json NOT NULL,
+      "expire" timestamp(6) NOT NULL,
+      CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE
+    );
+    CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+  `).catch((err) => console.error("[session] Failed to ensure session table:", err));
+}
+
+const sessionStore = sessionPool
+  ? new PgSession({ pool: sessionPool })
+  : undefined;
+
+app.set("trust proxy", 1);
 
 app.use(
   session({
@@ -44,6 +59,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),
