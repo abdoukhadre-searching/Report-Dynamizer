@@ -338,6 +338,13 @@ export async function registerRoutes(
 
     const reportData = parseHot2000Report(content);
 
+    // DEBUG: log heating section to diagnose primaryType parsing
+    console.log("[DEBUG] heating parsed:", JSON.stringify(reportData.heating));
+    const chauffageIdx = content.indexOf("INSTALLATION DE CHAUFFAGE");
+    if (chauffageIdx >= 0) {
+      console.log("[DEBUG] raw heating section:\n" + content.slice(chauffageIdx, chauffageIdx + 400));
+    }
+
     if (!reportData.annualSummary || (reportData.annualSummary.totalGJ === 0 && (!reportData.monthlyEnergy || reportData.monthlyEnergy.length === 0))) {
       throw new Error("Le rapport ne contient pas de données énergétiques valides. Vérifiez que le fichier est un rapport HOT2000 complet.");
     }
