@@ -5,7 +5,7 @@ import type { Project, ReportData, ComparisonData } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Printer, Upload, Loader2, ImageIcon, Trash2 } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
-import buildingCoverPath from "@assets/building-cover.png";
+import buildingCoverPath from "@assets/pexels-pixabay-273252_1774070044267.jpg";
 import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
 import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
 import ashpPage1Path from "@assets/ASHP_page-0001_1774063357553.jpg";

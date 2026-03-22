@@ -54,6 +54,23 @@ function hasHeatPumpWaterHeater(post: ReportData): boolean {
   return /thermopompe/i.test(post.hotWater?.equipmentType || "");
 }
 
+function hasAirTightnessChanged(pre: ReportData, post: ReportData): boolean {
+  const preCah = pre.airLeakage?.cah50;
+  const postCah = post.airLeakage?.cah50;
+  return preCah !== undefined && postCah !== undefined && preCah !== postCah;
+}
+
+function hasHotWaterChanged(pre: ReportData, post: ReportData): boolean {
+  const preDailyHW = pre.hotWater?.dailyConsumption;
+  const postDailyHW = post.hotWater?.dailyConsumption;
+  return preDailyHW !== undefined && postDailyHW !== undefined && preDailyHW !== postDailyHW;
+}
+
+function isFossilFuel(fuelType?: string): boolean {
+  if (!fuelType) return false;
+  return /gaz\s*naturel|mazout|propane|diesel|butane|charbon|kérosène|bois|granules|lignite|essence/i.test(fuelType);
+}
+
 const SUBVENTION_THERMO = 1296;
 
 export default function EmpreinteTab({ project, exportMode = false }: EmpreinteTabProps) {
@@ -68,6 +85,8 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const [coutVrc, setCoutVrc] = useState(0);
   const [coutFaibleDebit, setCoutFaibleDebit] = useState(0);
   const [coutLed, setCoutLed] = useState(0);
+  const [coutPlinthes, setCoutPlinthes] = useState(1500);
+  const [coutChauffeEauElecInd, setCoutChauffeEauElecInd] = useState(800);
 
   if (!pre || !post) return null;
 
@@ -78,6 +97,10 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
   const showVrcStrategy = hasVrcInstallation(post);
   const showLedStrategy = hasLedImprovement(pre, post);
+  const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
+  const showHotWaterStrategy = hasHotWaterChanged(pre, post);
+  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType) && !hasThermopompe(post);
+  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && !hasHeatPumpWaterHeater(post);
 
   const nbThermo = getThermopompeCount(occupants);
   const nbUnits = numUnits > 0 ? numUnits : 1;
@@ -86,14 +109,16 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const postGJ = post.annualSummary?.totalGJ ?? 0;
   const improvPct = preGJ > 0 ? ((preGJ - postGJ) / preGJ) * 100 : 0;
 
-  const totalEtancheite = coutEtancheite;
+  const totalEtancheite = showAirTightnessStrategy ? coutEtancheite : 0;
   const totalThermo = showHeatingStrategy ? nbThermo * coutThermo : 0;
   const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbUnits * coutChauffeEau : 0;
   const totalVrc = showVrcStrategy ? coutVrc : 0;
-  const totalFaibleDebit = coutFaibleDebit;
+  const totalFaibleDebit = showHotWaterStrategy ? coutFaibleDebit : 0;
   const totalLed = showLedStrategy ? coutLed : 0;
+  const totalPlinthes = showGasConversionHeatingToElec ? nbUnits * coutPlinthes : 0;
+  const totalChauffeEauElecInd = showGasConversionHotWaterToElec ? nbUnits * coutChauffeEauElecInd : 0;
 
-  const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed;
+  const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd;
   const totalSubvention = showHeatingStrategy ? nbThermo * SUBVENTION_THERMO : 0;
   const totalApresSubvention = totalBrut - totalSubvention;
 
@@ -219,36 +244,38 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
             </thead>
             <tbody className="divide-y divide-slate-100">
 
-              {/* Étanchéité — always shown */}
-              <tr className="hover:bg-blue-50/40 transition-colors">
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <IconBox><Lock className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
-                    <div>
-                      <p className="font-semibold text-slate-800">Étanchéité à l'air</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Travaux d'étanchéisation de l'enveloppe</p>
+              {/* Étanchéité — conditional on air tightness change */}
+              {showAirTightnessStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <IconBox><Lock className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
+                      <div>
+                        <p className="font-semibold text-slate-800">Étanchéité à l'air</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Travaux d'étanchéisation de l'enveloppe</p>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
-                <td className="px-5 py-4 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <input
-                      type="number"
-                      value={coutEtancheite}
-                      onChange={(e) => setCoutEtancheite(Number(e.target.value))}
-                      className={inputCls}
-                    />
-                    <span className="text-slate-400 text-xs">$</span>
-                  </div>
-                </td>
-                <td className="px-5 py-4 text-right">
-                  {totalEtancheite > 0
-                    ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalEtancheite.toLocaleString("fr-CA")} $</span>
-                    : <span className="text-slate-400 text-sm">—</span>
-                  }
-                </td>
-              </tr>
+                  </td>
+                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutEtancheite}
+                        onChange={(e) => setCoutEtancheite(Number(e.target.value))}
+                        className={inputCls}
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    {totalEtancheite > 0
+                      ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalEtancheite.toLocaleString("fr-CA")} $</span>
+                      : <span className="text-slate-400 text-sm">—</span>
+                    }
+                  </td>
+                </tr>
+              )}
 
               {/* Thermopompes — conditional */}
               {showHeatingStrategy && (
@@ -348,37 +375,103 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                 </tr>
               )}
 
-              {/* Faible débit — always shown, like DEL */}
-              <tr className="hover:bg-blue-50/40 transition-colors">
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <IconBox><Waves className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
-                    <div>
-                      <p className="font-semibold text-slate-800">Robinetterie faible débit</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Pommeaux de douche et aérateurs ECD</p>
+              {/* Faible débit — conditional on hot water change */}
+              {showHotWaterStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <IconBox><Waves className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
+                      <div>
+                        <p className="font-semibold text-slate-800">Robinetterie faible débit</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Pommeaux de douche et aérateurs ECD</p>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
-                <td className="px-5 py-4 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <input
-                      type="number"
-                      value={coutFaibleDebit}
-                      onChange={(e) => setCoutFaibleDebit(Number(e.target.value))}
-                      placeholder="0"
-                      className={inputCls}
-                    />
-                    <span className="text-slate-400 text-xs">$</span>
-                  </div>
-                </td>
-                <td className="px-5 py-4 text-right">
-                  {totalFaibleDebit > 0
-                    ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalFaibleDebit.toLocaleString("fr-CA")} $</span>
-                    : <span className="text-xs italic text-slate-400">Variable</span>
-                  }
-                </td>
-              </tr>
+                  </td>
+                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutFaibleDebit}
+                        onChange={(e) => setCoutFaibleDebit(Number(e.target.value))}
+                        placeholder="0"
+                        className={inputCls}
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    {totalFaibleDebit > 0
+                      ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalFaibleDebit.toLocaleString("fr-CA")} $</span>
+                      : <span className="text-xs italic text-slate-400">Variable</span>
+                    }
+                  </td>
+                </tr>
+              )}
+
+              {/* Plinthes électriques — conversion fossile chauffage */}
+              {showGasConversionHeatingToElec && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
+                      <div>
+                        <p className="font-semibold text-slate-800">Installation de plinthes électriques</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Conversion système de chauffage fossile vers électrique</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center"><UnitBadge n={nbUnits} /></td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutPlinthes}
+                        onChange={(e) => setCoutPlinthes(Number(e.target.value))}
+                        className={inputCls}
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
+                      {totalPlinthes.toLocaleString("fr-CA")} $
+                    </span>
+                  </td>
+                </tr>
+              )}
+
+              {/* Chauffe-eau électrique indépendant — conversion fossile eau chaude */}
+              {showGasConversionHotWaterToElec && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <IconBox><Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
+                      <div>
+                        <p className="font-semibold text-slate-800">Installation d'un chauffe-eau électrique indépendant dans chaque unité</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Conversion du système de production d'eau chaude fossile</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center"><UnitBadge n={nbUnits} /></td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutChauffeEauElecInd}
+                        onChange={(e) => setCoutChauffeEauElecInd(Number(e.target.value))}
+                        className={inputCls}
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
+                      {totalChauffeEauElecInd.toLocaleString("fr-CA")} $
+                    </span>
+                  </td>
+                </tr>
+              )}
 
               {/* Éclairage DEL — conditional */}
               {showLedStrategy && (

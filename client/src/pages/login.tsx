@@ -24,6 +24,10 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(email, password);
+      toast({
+        title: "Connexion réussie !",
+        description: "Bienvenue sur EnergiQualif.",
+      });
       navigate("/");
     } catch (err: any) {
       toast({

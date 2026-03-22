@@ -38,6 +38,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type SortKey = "date_desc" | "date_asc" | "city" | "status";
 type ViewMode = "grouped" | "all";
@@ -160,6 +170,7 @@ export default function HomePage() {
   const [sortKey, setSortKey] = useState<SortKey>("date_desc");
   const [viewMode, setViewMode] = useState<ViewMode>("grouped");
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const { data: projects, isLoading } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -313,7 +324,7 @@ export default function HomePage() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-                    onClick={handleLogout}
+                    onClick={() => setShowLogoutConfirm(true)}
                     data-testid="menu-logout"
                   >
                     <LogOut className="w-3.5 h-3.5" />
@@ -327,6 +338,12 @@ export default function HomePage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
+        {user?.role === "admin" && (
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-lg border text-sm" style={{ backgroundColor: "#f0f4ff", borderColor: "#c7d2fe", color: "#3730a3" }}>
+            <Shield className="w-4 h-4 flex-shrink-0" />
+            <span><strong>Vue administrateur</strong> — Vous voyez l'ensemble des projets de tous les utilisateurs.</span>
+          </div>
+        )}
         {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
@@ -496,6 +513,27 @@ export default function HomePage() {
           isPending={deleteMutation.isPending}
         />
       )}
+
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la déconnexion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir vous déconnecter ? Votre session sera fermée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              style={{ backgroundColor: "#1e3a5f" }}
+              data-testid="confirm-logout"
+            >
+              Se déconnecter
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

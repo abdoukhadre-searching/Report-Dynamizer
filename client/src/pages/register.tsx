@@ -7,12 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/auth-context";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 
 export default function RegisterPage() {
   const [, navigate] = useLocation();
-  const { login } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,8 +28,11 @@ export default function RegisterPage() {
         const err = await res.json();
         throw new Error(err.message || "Erreur lors de l'inscription");
       }
-      await login(email, password);
-      navigate("/");
+      toast({
+        title: "Compte créé avec succès !",
+        description: "Vous pouvez maintenant vous connecter avec vos identifiants.",
+      });
+      navigate("/login");
     } catch (err: any) {
       toast({
         title: "Échec de l'inscription",
