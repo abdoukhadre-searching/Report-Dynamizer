@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
@@ -46,9 +46,18 @@ export default function RegisterPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="min-h-screen flex items-center justify-center px-4 relative"
       style={{ background: "linear-gradient(135deg, #0f2340 0%, #1e3a5f 60%, #2a4f7c 100%)" }}
     >
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-4 left-4 flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm"
+        data-testid="link-back-landing"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Retour
+      </button>
+
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-6">
           <div className="bg-white rounded-xl p-2.5 shadow-lg">
