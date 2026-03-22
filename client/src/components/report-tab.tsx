@@ -3165,8 +3165,14 @@ export default function ReportTab({
                   className="mt-8 pt-6"
                   style={{ borderTop: "1px solid #e2e8f0" }}
                 >
-                  <p className="text-sm font-bold mb-4">
+                  <p className="text-sm font-bold mb-1">
                     Document approuvé par :
+                  </p>
+                  <p className="text-sm text-slate-700">
+                    Marc-André Boucher
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Évaluateur en efficacité énergétique agréé
                   </p>
                 </div>
               </div>
