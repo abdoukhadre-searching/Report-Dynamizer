@@ -249,7 +249,7 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                       <IconBox><Lock className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Étanchéité à l'air</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Travaux d'étanchéisation de l'enveloppe</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Travaux d'étanchéisation pour réduire les fuites d'air</p>
                       </div>
                     </div>
                   </td>
