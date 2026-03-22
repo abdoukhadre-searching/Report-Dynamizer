@@ -533,6 +533,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                           Le bâtiment analysé correspond à un immeuble résidentiel multifamilial qui sera construit au{" "}
                           <span className="font-semibold">{fullAddress}</span>.{" "}
                           {numUnits > 0 && (<>Il comprendra <span className="font-semibold">{numUnits} logements locatifs</span>{floorsDisplay && (<> répartis sur <span className="font-semibold">{floorsLabel}</span></>)}. </>)}
+                          {(pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt) && (<>Le bâtiment sera construit en <span className="font-semibold">{pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt}</span>.{" "}</>)}
                           La façade principale du bâtiment est présentée ci-dessous à partir des plans architecturaux du projet.
                         </p>
                         <div className="print:break-inside-avoid">

@@ -202,15 +202,29 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
           info.orientation = l;
         }
       }
-      if (!info.yearBuilt && /^\d{4}$/.test(l)) {
-        info.yearBuilt = l;
+      if (!info.yearBuilt) {
+        if (/^\d{4}$/.test(l)) {
+          info.yearBuilt = l;
+        } else if (/^\d{2}$/.test(l)) {
+          // HOT2000 uses 2-digit years: "26" → 2026, "66" → 1966
+          const n = parseInt(l, 10);
+          info.yearBuilt = n <= 30 ? `20${l}` : `19${l}`;
+        }
       }
     }
   }
 
   if (!info.yearBuilt) {
-    const yearMatch = text.match(/Année construite:\s*\n?\s*(\d{4})/);
-    if (yearMatch) info.yearBuilt = yearMatch[1];
+    const yearMatch = text.match(/Année construite:\s*\n?\s*(\d{2,4})/);
+    if (yearMatch) {
+      const yr = yearMatch[1];
+      if (yr.length === 4) {
+        info.yearBuilt = yr;
+      } else {
+        const n = parseInt(yr, 10);
+        info.yearBuilt = n <= 30 ? `20${yr}` : `19${yr}`;
+      }
+    }
   }
 
   if (!info.numFloors) {

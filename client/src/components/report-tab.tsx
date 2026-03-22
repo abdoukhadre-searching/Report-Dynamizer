@@ -1563,6 +1563,14 @@ export default function ReportTab({
                               .{" "}
                             </>
                           )}
+                          {(pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt) && (
+                            <>
+                              Le bâtiment sera construit en{" "}
+                              <span className="font-semibold">
+                                {pre.buildingInfo?.yearBuilt || post.buildingInfo?.yearBuilt}
+                              </span>.{" "}
+                            </>
+                          )}
                           La façade principale du bâtiment est présentée
                           ci-dessous à partir des plans architecturaux du
                           projet.
