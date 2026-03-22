@@ -99,8 +99,8 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const showLedStrategy = hasLedImprovement(pre, post);
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
-  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !hasThermopompe(post);
-  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && !hasHeatPumpWaterHeater(post);
+  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType);
+  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType);
 
   const nbThermo = getThermopompeCount(occupants);
   const nbUnits = numUnits > 0 ? numUnits : 1;

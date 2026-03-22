@@ -120,8 +120,8 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post);
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
-  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !hasThermopompe(post);
-  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && !hasHeatPumpWaterHeater(post);
+  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType);
+  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType);
 
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";

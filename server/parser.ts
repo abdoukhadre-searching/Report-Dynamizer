@@ -831,7 +831,8 @@ function parseHotWater(text: string): ReportData["hotWater"] {
       if (!primaryType) {
         for (const key of Object.keys(EMISSION_FACTORS)) {
           if (lLower.includes(key)) {
-            primaryType = l;
+            // Strip any label prefix (e.g. "Énergie PRIMAIRE du chauffe-eau:  Gaz naturel" → "Gaz naturel")
+            primaryType = l.includes(":") ? l.slice(l.lastIndexOf(":") + 1).trim() : l;
             break;
           }
         }
