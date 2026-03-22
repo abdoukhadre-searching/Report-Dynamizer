@@ -1,6 +1,6 @@
 # Guide de déploiement — EnergiQualif sur VM Hostinger + Cloudflare Tunnel
 
-> **Domaine cible :** `lab-sws.com`  
+> **Domaine cible :** `energiqualif.lab-sws.com`  
 > **Stack :** Node.js 20 + Express + PostgreSQL + React (Vite)  
 > **Port interne :** `5000`
 
@@ -280,19 +280,19 @@ pm2 startup
 ### 8.3 Commandes PM2 utiles
 
 ```bash
-pm2 status                    # État des processus
-pm2 logs energiqualif         # Logs en temps réel
+pm2 status                         # État des processus
+pm2 logs energiqualif              # Logs en temps réel
 pm2 logs energiqualif --lines 100  # 100 dernières lignes
-pm2 restart energiqualif      # Redémarrage
-pm2 stop energiqualif         # Arrêt
-pm2 delete energiqualif       # Suppression
+pm2 restart energiqualif           # Redémarrage
+pm2 stop energiqualif              # Arrêt
+pm2 delete energiqualif            # Suppression
 ```
 
 ---
 
 ## 9. Configuration du tunnel Cloudflare
 
-Le tunnel Cloudflare (`cloudflared`) permet d'exposer l'application sur `lab-sws.com` **sans ouvrir de port sur le firewall de la VM**.
+Le tunnel Cloudflare (`cloudflared`) permet d'exposer l'application sur `energiqualif.lab-sws.com` **sans ouvrir de port entrant sur le firewall de la VM**.
 
 ### 9.1 Installer `cloudflared`
 
@@ -341,9 +341,7 @@ tunnel: a1b2c3d4-e5f6-7890-abcd-ef1234567890   # Remplacer par votre UUID
 credentials-file: /home/energiqualif/.cloudflared/a1b2c3d4-e5f6-7890-abcd-ef1234567890.json
 
 ingress:
-  - hostname: lab-sws.com
-    service: http://localhost:5000
-  - hostname: www.lab-sws.com
+  - hostname: energiqualif.lab-sws.com
     service: http://localhost:5000
   - service: http_status:404
 ```
@@ -370,33 +368,34 @@ sudo systemctl status cloudflared
 
 ## 10. Configuration DNS sur lab-sws.com
 
-### 10.1 Ajouter les enregistrements CNAME dans Cloudflare
+### 10.1 Ajouter l'enregistrement CNAME dans Cloudflare
 
-Dans le tableau de bord Cloudflare → **DNS** → **Records** :
+Dans le tableau de bord Cloudflare → **DNS** → **Records** → **Add record** :
 
 | Type | Nom | Cible | Proxy |
 |------|-----|-------|-------|
-| `CNAME` | `@` (ou `lab-sws.com`) | `a1b2c3d4-e5f6-7890-abcd-ef1234567890.cfargotunnel.com` | ✅ Proxied (orange) |
-| `CNAME` | `www` | `a1b2c3d4-e5f6-7890-abcd-ef1234567890.cfargotunnel.com` | ✅ Proxied (orange) |
+| `CNAME` | `energiqualif` | `a1b2c3d4-e5f6-7890-abcd-ef1234567890.cfargotunnel.com` | ✅ Proxied (orange) |
 
-> Remplacer `a1b2c3d4-...` par l'UUID réel de votre tunnel.
+> - **Nom** `energiqualif` correspond au sous-domaine → `energiqualif.lab-sws.com`  
+> - Remplacer `a1b2c3d4-...` par l'UUID réel de votre tunnel.
 
 **OU** — via CLI cloudflared (crée le CNAME automatiquement) :
 
 ```bash
-cloudflared tunnel route dns energiqualif-tunnel lab-sws.com
-cloudflared tunnel route dns energiqualif-tunnel www.lab-sws.com
+cloudflared tunnel route dns energiqualif-tunnel energiqualif.lab-sws.com
 ```
 
 ### 10.2 Paramètres SSL/TLS Cloudflare recommandés
 
 Dans Cloudflare → **SSL/TLS** :
-- Mode chiffrement : **Full** (pas Full Strict, car le tunnel gère le TLS en interne)
+- Mode chiffrement : **Full** (pas Full Strict, le tunnel gère le TLS en interne)
 
 Dans Cloudflare → **SSL/TLS** → **Edge Certificates** :
 - ✅ Always Use HTTPS
 - ✅ Automatic HTTPS Rewrites
 - ✅ HTTP Strict Transport Security (HSTS) — optionnel mais recommandé
+
+> Le certificat SSL pour `energiqualif.lab-sws.com` est émis automatiquement par Cloudflare (Let's Encrypt) — aucune configuration supplémentaire requise.
 
 ---
 
@@ -424,11 +423,11 @@ cloudflared tunnel info energiqualif-tunnel
 ### 11.3 Tester l'URL publique
 
 ```bash
-curl https://lab-sws.com
+curl https://energiqualif.lab-sws.com
 # Doit retourner le HTML de l'app
 ```
 
-Ou simplement ouvrir `https://lab-sws.com` dans un navigateur.
+Ou simplement ouvrir `https://energiqualif.lab-sws.com` dans un navigateur.
 
 ---
 
@@ -471,12 +470,16 @@ sudo journalctl -u postgresql -f
 ### 12.3 Sauvegarder la base de données
 
 ```bash
+# Créer le dossier de sauvegardes
+mkdir -p /home/energiqualif/backups
+
 # Dump complet
-pg_dump -U energiqualif_user -d energiqualif_db -h localhost -F c -f /home/energiqualif/backups/energiqualif_$(date +%Y%m%d).dump
+pg_dump -U energiqualif_user -d energiqualif_db -h localhost -F c \
+  -f /home/energiqualif/backups/energiqualif_$(date +%Y%m%d).dump
 
 # Automatiser via cron (sauvegarde quotidienne à 2h00)
 crontab -e
-# Ajouter :
+# Ajouter la ligne suivante :
 # 0 2 * * * pg_dump -U energiqualif_user -d energiqualif_db -h localhost -F c -f /home/energiqualif/backups/energiqualif_$(date +\%Y\%m\%d).dump
 ```
 
@@ -512,7 +515,18 @@ cloudflared tunnel --config /etc/cloudflared/config.yml run
 Causes fréquentes :
 - UUID du tunnel incorrect dans `config.yml`
 - Fichier JSON credentials introuvable
-- CNAME DNS pas encore propagé (attendre 5 min)
+- CNAME DNS pas encore propagé (attendre 5 à 10 min)
+
+### Le sous-domaine ne répond pas
+
+```bash
+# Vérifier que le CNAME est bien créé dans Cloudflare
+cloudflared tunnel route list
+
+# Vérifier la résolution DNS
+nslookup energiqualif.lab-sws.com
+# Doit retourner une adresse Cloudflare (104.x.x.x ou 172.x.x.x)
+```
 
 ### Erreur PostgreSQL "connection refused"
 
@@ -535,10 +549,9 @@ chromium-browser --version
 echo $PUPPETEER_EXECUTABLE_PATH
 ```
 
-Si Puppeteer cherche Chromium dans le mauvais chemin :
+Si Puppeteer cherche Chromium dans le mauvais chemin, ajouter dans `.env` :
 
-```bash
-# Ajouter dans .env
+```env
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ```
 
@@ -551,7 +564,7 @@ PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 | Application Node.js | `5000` | Localhost uniquement (via tunnel) |
 | PostgreSQL | `5432` | Localhost uniquement |
 | Cloudflare Tunnel | — | Sortant vers Cloudflare |
-| HTTPS public | `443` | Via Cloudflare → `lab-sws.com` |
+| HTTPS public | `443` | Via Cloudflare → `energiqualif.lab-sws.com` |
 
 > **Aucun port entrant n'est requis sur le firewall de la VM** grâce au tunnel Cloudflare.
 
