@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "H_7N6StvjnHAFcR292OJ5"
+uri = "file://DEPLOIEMENT.md"
+type = "text"
+title = "Guide de déploiement — VM Hostinger + Cloudflare Tunnel (lab-sws.com)"
