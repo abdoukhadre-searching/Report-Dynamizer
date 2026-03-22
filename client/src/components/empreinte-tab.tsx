@@ -85,8 +85,8 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const [coutVrc, setCoutVrc] = useState(0);
   const [coutFaibleDebit, setCoutFaibleDebit] = useState(0);
   const [coutLed, setCoutLed] = useState(0);
-  const [coutPlinthes, setCoutPlinthes] = useState(1500);
-  const [coutChauffeEauElecInd, setCoutChauffeEauElecInd] = useState(800);
+  const [coutPlinthes, setCoutPlinthes] = useState(0);
+  const [coutChauffeEauElecInd, setCoutChauffeEauElecInd] = useState(0);
 
   if (!pre || !post) return null;
 
@@ -414,7 +414,7 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Installation de plinthes électriques</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Conversion système de chauffage fossile vers électrique</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Conversion du système de chauffage : gaz naturel vers électricité</p>
                       </div>
                     </div>
                   </td>
@@ -431,9 +431,10 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                     </div>
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
-                      {totalPlinthes.toLocaleString("fr-CA")} $
-                    </span>
+                    {totalPlinthes > 0
+                      ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalPlinthes.toLocaleString("fr-CA")} $</span>
+                      : <span className="text-xs italic text-slate-400">Variable</span>
+                    }
                   </td>
                 </tr>
               )}
@@ -445,8 +446,8 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                     <div className="flex items-center gap-3">
                       <IconBox><Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">Installation d'un chauffe-eau électrique indépendant dans chaque unité</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Conversion du système de production d'eau chaude fossile</p>
+                        <p className="font-semibold text-slate-800">Installation d'un chauffe-eau électrique indépendant dans chaque unité ou d'une chaudière électrique commune</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Conversion énergie primaire du chauffe-eau : gaz naturel vers électricité</p>
                       </div>
                     </div>
                   </td>
@@ -463,9 +464,10 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                     </div>
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
-                      {totalChauffeEauElecInd.toLocaleString("fr-CA")} $
-                    </span>
+                    {totalChauffeEauElecInd > 0
+                      ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalChauffeEauElecInd.toLocaleString("fr-CA")} $</span>
+                      : <span className="text-xs italic text-slate-400">Variable</span>
+                    }
                   </td>
                 </tr>
               )}
