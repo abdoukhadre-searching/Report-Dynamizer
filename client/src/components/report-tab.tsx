@@ -1502,7 +1502,7 @@ export default function ReportTab({
                 const roofRsi = pre.zone1?.find((z) =>
                   /plafond/i.test(z.element),
                 )?.rsi;
-                const roofThermal = roofRsi ? `${roofRsi.toFixed(2)}` : "N/A";
+                const roofThermal = roofRsi ? `${(roofRsi * 5.678).toFixed(1)}` : "N/A";
                 const chars = [
                   { label: "Nombre d'étages", value: floorsLabel || "N/A" },
                   {
@@ -1513,14 +1513,14 @@ export default function ReportTab({
                       "N/A",
                   },
                   {
-                    label: "Valeur thermique du toit (RSI)",
+                    label: "Valeur thermique du toit (R)",
                     value: roofThermal,
                   },
                   {
-                    label: "Valeur thermique des murs extérieurs (RSI)",
+                    label: "Valeur thermique des murs extérieurs (R)",
                     value:
                       pre.buildingInfo?.wallMaxRsi != null
-                        ? pre.buildingInfo.wallMaxRsi.toFixed(2)
+                        ? (pre.buildingInfo.wallMaxRsi * 5.678).toFixed(1)
                         : "N/A",
                   },
                   {
@@ -3268,28 +3268,30 @@ export default function ReportTab({
                         </>
                       )}
 
-                      <div
-                        id="annex-robineterie"
-                        className="print:break-after-page"
-                      >
-                        <h3 className="text-sm font-semibold mb-2">
-                          {annexNum++}. Robinetterie faible débit
-                        </h3>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Installation de pommeaux de douche et de robinets à
-                          faible débit afin de réduire la consommation d'eau
-                          chaude domestique et, par conséquent, la charge
-                          associée à sa production.
-                        </p>
-                        <AnnexImageUpload
-                          key="annex-robineterie"
-                          projectId={project.id}
-                          annexType="robineterie"
-                          label="Robinetterie faible débit"
-                          currentImage={annexImages.robineterie}
-                          defaultImageUrl={faibleDebitPath}
-                        />
-                      </div>
+                      {showHotWaterStrategy && !showHeatPumpWaterHeaterStrategy && (
+                        <div
+                          id="annex-robineterie"
+                          className="print:break-after-page"
+                        >
+                          <h3 className="text-sm font-semibold mb-2">
+                            {annexNum++}. Robinetterie faible débit
+                          </h3>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Installation de pommeaux de douche et de robinets à
+                            faible débit afin de réduire la consommation d'eau
+                            chaude domestique et, par conséquent, la charge
+                            associée à sa production.
+                          </p>
+                          <AnnexImageUpload
+                            key="annex-robineterie"
+                            projectId={project.id}
+                            annexType="robineterie"
+                            label="Robinetterie faible débit"
+                            currentImage={annexImages.robineterie}
+                            defaultImageUrl={faibleDebitPath}
+                          />
+                        </div>
+                      )}
 
                       {showHeatPumpWaterHeaterStrategy && (
                         <div

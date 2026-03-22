@@ -774,11 +774,13 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                         </>
                       )}
 
-                      <div id="rec-annex-robineterie" className="print:break-after-page">
-                        <h3 className="text-sm font-semibold mb-2">{annexNum++}. Robinetterie faible débit</h3>
-                        <p className="text-xs text-muted-foreground mb-2">Installation de pommeaux de douche et de robinets à faible débit afin de réduire la consommation d'eau chaude domestique et, par conséquent, la charge associée à sa production.</p>
-                        <AnnexImageUpload key="rec-annex-robineterie" projectId={project.id} annexType="robineterie" label="Robinetterie faible débit" currentImage={annexImages.robineterie} defaultImageUrl={faibleDebitPath} />
-                      </div>
+                      {showHotWaterStrategy && !showHeatPumpWaterHeaterStrategy && (
+                        <div id="rec-annex-robineterie" className="print:break-after-page">
+                          <h3 className="text-sm font-semibold mb-2">{annexNum++}. Robinetterie faible débit</h3>
+                          <p className="text-xs text-muted-foreground mb-2">Installation de pommeaux de douche et de robinets à faible débit afin de réduire la consommation d'eau chaude domestique et, par conséquent, la charge associée à sa production.</p>
+                          <AnnexImageUpload key="rec-annex-robineterie" projectId={project.id} annexType="robineterie" label="Robinetterie faible débit" currentImage={annexImages.robineterie} defaultImageUrl={faibleDebitPath} />
+                        </div>
+                      )}
 
                       {showHeatPumpWaterHeaterStrategy && (
                         <div id="rec-annex-chauffe-eau-thermopompe" className="print:break-before-page">

@@ -56,11 +56,11 @@ export default function DashboardTab({ project }: DashboardTabProps) {
   if (!pre || !post || !comparison) return null;
 
   const COLORS: Record<string, string> = {
-    "Chauffage": "hsl(var(--chart-1))",
-    "Eau chaude": "hsl(var(--chart-2))",
-    "Charges de base": "hsl(var(--chart-3))",
-    "Ventilation": "hsl(var(--chart-4))",
-    "Climatisation": "hsl(var(--chart-5))",
+    "Chauffage": "#dc2626",
+    "Eau chaude": "#2563eb",
+    "Charges de base": "#16a34a",
+    "Ventilation": "#d97706",
+    "Climatisation": "#7c3aed",
   };
 
   const summaryCards = [
