@@ -113,7 +113,7 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const totalThermo = showHeatingStrategy ? nbThermo * coutThermo : 0;
   const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbUnits * coutChauffeEau : 0;
   const totalVrc = showVrcStrategy ? coutVrc : 0;
-  const totalFaibleDebit = showHotWaterStrategy ? coutFaibleDebit : 0;
+  const totalFaibleDebit = (showHotWaterStrategy && !showHeatPumpWaterHeaterStrategy) ? coutFaibleDebit : 0;
   const totalLed = showLedStrategy ? coutLed : 0;
   const totalPlinthes = showGasConversionHeatingToElec ? nbUnits * coutPlinthes : 0;
   const totalChauffeEauElecInd = showGasConversionHotWaterToElec ? nbUnits * coutChauffeEauElecInd : 0;
@@ -375,8 +375,8 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                 </tr>
               )}
 
-              {/* Faible débit — conditional on hot water change */}
-              {showHotWaterStrategy && (
+              {/* Faible débit — uniquement si stratégie pommeaux (pas de chauffe-eau thermopompe) */}
+              {showHotWaterStrategy && !showHeatPumpWaterHeaterStrategy && (
                 <tr className="hover:bg-blue-50/40 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">

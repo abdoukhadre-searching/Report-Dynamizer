@@ -119,8 +119,9 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post);
-  const showGasConversionStrategy = hasFossilConversion(pre, post);
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
+  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType) && !hasThermopompe(post);
+  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType) && !hasHeatPumpWaterHeater(post);
 
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";
@@ -148,8 +149,11 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   if (showLedStrategy) {
     postItems.push({ icon: <Lightbulb className="w-4 h-4" />, label: "Remplacement des luminaires DEL" });
   }
-  if (showGasConversionStrategy) {
-    postItems.push({ icon: <Flame className="w-4 h-4" />, label: "Conversion fossile vers électricité" });
+  if (showGasConversionHeatingToElec) {
+    postItems.push({ icon: <Flame className="w-4 h-4" />, label: "Conversion du système de chauffage : gaz naturel vers électricité" });
+  }
+  if (showGasConversionHotWaterToElec) {
+    postItems.push({ icon: <Droplets className="w-4 h-4" />, label: "Conversion Énergie primaire du chauffe-eau : Gaz naturel vers Électricité" });
   }
 
   const handlePrint = async () => {
