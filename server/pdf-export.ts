@@ -129,6 +129,43 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
         }
       });
 
+      // Compress all images before PDF generation to reduce file size
+      await page.evaluate(async () => {
+        const MAX_PX = 1200;
+        const QUALITY = 0.72;
+        const imgs = Array.from(document.querySelectorAll("img"));
+        await Promise.all(
+          imgs.map(
+            (img) =>
+              new Promise<void>((resolve) => {
+                function compress() {
+                  try {
+                    if (!img.naturalWidth || img.naturalWidth <= MAX_PX) {
+                      resolve();
+                      return;
+                    }
+                    const canvas = document.createElement("canvas");
+                    const ratio = MAX_PX / img.naturalWidth;
+                    canvas.width = MAX_PX;
+                    canvas.height = Math.round(img.naturalHeight * ratio);
+                    const ctx = canvas.getContext("2d");
+                    if (!ctx) { resolve(); return; }
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    img.src = canvas.toDataURL("image/jpeg", QUALITY);
+                    resolve();
+                  } catch { resolve(); }
+                }
+                if (img.complete && img.naturalWidth > 0) {
+                  compress();
+                } else {
+                  img.onload = compress;
+                  img.onerror = () => resolve();
+                }
+              })
+          )
+        );
+      });
+
       const pdf = await page.pdf({
         format: "A4",
         printBackground: true,
