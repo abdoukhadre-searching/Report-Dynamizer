@@ -134,55 +134,49 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
         const MAX_PX = 900;
         const QUALITY = 0.60;
 
-        function compressImg(img: HTMLImageElement): Promise<void> {
-          return new Promise<void>((resolve) => {
-            function doCompress() {
-              try {
-                const w = img.naturalWidth;
-                const h = img.naturalHeight;
-                if (!w || !h) { resolve(); return; }
-                const scale = w > MAX_PX ? MAX_PX / w : 1;
-                const tw = Math.round(w * scale);
-                const th = Math.round(h * scale);
-                const c = document.createElement("canvas");
-                c.width = tw;
-                c.height = th;
-                const ctx = c.getContext("2d");
-                if (!ctx) { resolve(); return; }
-                ctx.drawImage(img, 0, 0, tw, th);
-                const dataUrl = c.toDataURL("image/jpeg", QUALITY);
-                const newImg = new Image();
-                newImg.onload = () => {
-                  img.src = dataUrl;
-                  resolve();
-                };
-                newImg.onerror = () => resolve();
-                newImg.src = dataUrl;
-              } catch { resolve(); }
-            }
-            if (img.complete && img.naturalWidth > 0) doCompress();
-            else { img.onload = doCompress; img.onerror = () => resolve(); }
-          });
-        }
-
         // Compress <img> tags
-        await Promise.all(Array.from(document.querySelectorAll("img")).map(compressImg));
+        await Promise.all(
+          Array.from(document.querySelectorAll("img")).map(
+            (img) =>
+              new Promise<void>((resolve) => {
+                const doCompress = () => {
+                  try {
+                    const w = img.naturalWidth;
+                    const h = img.naturalHeight;
+                    if (!w || !h) { resolve(); return; }
+                    const scale = w > MAX_PX ? MAX_PX / w : 1;
+                    const c = document.createElement("canvas");
+                    c.width = Math.round(w * scale);
+                    c.height = Math.round(h * scale);
+                    const ctx = c.getContext("2d");
+                    if (!ctx) { resolve(); return; }
+                    ctx.drawImage(img, 0, 0, c.width, c.height);
+                    const dataUrl = c.toDataURL("image/jpeg", QUALITY);
+                    const tmp = new Image();
+                    tmp.onload = () => { img.src = dataUrl; resolve(); };
+                    tmp.onerror = () => resolve();
+                    tmp.src = dataUrl;
+                  } catch { resolve(); }
+                };
+                if (img.complete && img.naturalWidth > 0) doCompress();
+                else { img.onload = doCompress; img.onerror = () => resolve(); }
+              })
+          )
+        );
 
-        // Replace <canvas> elements (recharts, etc.) with compressed JPEG images
-        document.querySelectorAll("canvas").forEach((canvas) => {
+        // Replace <canvas> elements (recharts charts) with compressed JPEG images
+        Array.from(document.querySelectorAll("canvas")).forEach((canvas) => {
           try {
             const w = canvas.width;
             const h = canvas.height;
             if (!w || !h) return;
             const scale = w > MAX_PX ? MAX_PX / w : 1;
-            const tw = Math.round(w * scale);
-            const th = Math.round(h * scale);
             const tmp = document.createElement("canvas");
-            tmp.width = tw;
-            tmp.height = th;
+            tmp.width = Math.round(w * scale);
+            tmp.height = Math.round(h * scale);
             const ctx = tmp.getContext("2d");
             if (!ctx) return;
-            ctx.drawImage(canvas, 0, 0, tw, th);
+            ctx.drawImage(canvas, 0, 0, tmp.width, tmp.height);
             const dataUrl = tmp.toDataURL("image/jpeg", QUALITY);
             const img = document.createElement("img");
             img.src = dataUrl;
