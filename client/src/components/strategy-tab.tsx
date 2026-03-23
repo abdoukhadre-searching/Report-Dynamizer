@@ -138,6 +138,8 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const postItems: { icon: React.ReactNode; label: string }[] = [];
   if (showAirTightnessStrategy && postCah !== undefined) {
     postItems.push({ icon: <Wind className="w-4 h-4" />, label: `Améliorer l'étanchéité à ${postCah} CAH @ 50 Pa` });
+  } else if (!showAirTightnessStrategy && postCah !== undefined) {
+    postItems.push({ icon: <Wind className="w-4 h-4" />, label: `Étanchéité : ${postCah} CAH @ 50 Pa` });
   }
   if (showHeatingStrategy) {
     postItems.push({ icon: <Zap className="w-4 h-4" />, label: `${thermopompeCount} Thermopompe${thermopompeCount > 1 ? "s" : ""} haute efficacité` });
