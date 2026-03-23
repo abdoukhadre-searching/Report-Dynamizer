@@ -1,0 +1,19 @@
+0|energiqu | 
+0|energiqu | 2:15:23 AM [express] serving on port 5001
+0|energiqu | 2:15:32 AM [express] GET /api/auth/me 401 in 2ms :: {"message":"Non authentifié"}
+0|energiqu | 2:15:51 AM [express] POST /api/auth/login 401 in 1ms :: {"message":"Identifiants incorrects"}
+0|energiqu | 2:15:51 AM [express] GET /api/auth/me 401 in 1ms :: {"message":"Non authentifié"}
+0|energiqu | 2:15:53 AM [express] POST /api/auth/login 401 in 0ms :: {"message":"Identifiants incorrects"}
+0|energiqu | 2:16:00 AM [express] POST /api/auth/register 201 in 352ms :: {"id":"8399c7d2-512c-4df3-8532-e347a1a249dd","email":"mngom@conseilmab.com","name":"Momar Gueye Ngom","role":"user","createdAt":"2026-03-23T02:16:00.900Z"}
+0|energiqu | 2:16:03 AM [express] POST /api/auth/login 200 in 318ms :: {"user":{"id":"8399c7d2-512c-4df3-8532-e347a1a249dd","email":"mngom@conseilmab.com","name":"Momar Gueye Ngom","role":"user","createdAt":"2026-03-23T02:16:00.900Z"}}
+0|energiqu | 2:16:04 AM [express] GET /api/projects 200 in 2ms :: []
+0|energiqu | 2:16:06 AM [express] POST /api/auth/register 201 in 304ms :: {"id":"95b11b26-b695-45a3-a8d0-4022b821d3e9","email":"gaoussound2@gmail.com","name":"Abdou khadre","role":"user","createdAt":"2026-03-23T02:16:06.880Z"}
+0|energiqu | 2:16:09 AM [express] POST /api/auth/login 200 in 313ms :: {"user":{"id":"95b11b26-b695-45a3-a8d0-4022b821d3e9","email":"gaoussound2@gmail.com","name":"Abdou khadre","role":"user","createdAt":"2026-03-23T02:16:06.880Z"}}
+0|energiqu | 2:16:09 AM [express] GET /api/projects 200 in 1ms :: []
+0|energiqu | 2:16:13 AM [express] GET /api/audit-logs/mine 304 in 2ms :: []
+0|energiqu | 2:16:30 AM [express] GET /api/auth/me 200 in 1ms :: {"id":"8399c7d2-512c-4df3-8532-e347a1a249dd","email":"mngom@conseilmab.com","name":"Momar Gueye Ngom","role":"user","createdAt":"2026-03-23T02:16:00.900Z"}
+0|energiqu | 2:16:30 AM [express] GET /api/projects 304 in 0ms :: []
+
+0|energiqualif  | 2:21:51 AM [express] GET /api/projects 304 in 1ms :: []
+0|energiqualif  | 2:21:56 AM [express] POST /api/auth/logout 200 in 2ms :: {"success":true}
+0|energiqualif  | 2:21:58 AM [express] POST /api/auth/login 200 in 306ms :: {"user":{"id":"95b11b26-b695-45a3-a8d0-4022b821d3e9","email":"gaoussound2@gmail.com","name":"Abdou khadre","role":"user","createdAt":"2026-03-23T02:16:06.880Z"}}
