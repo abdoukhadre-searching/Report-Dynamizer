@@ -60,6 +60,17 @@ function findChromiumExecutable(): string | undefined {
     }
   }
 
+  const localChrome = (() => {
+    try {
+      const cacheDir = path.join(process.cwd(), ".chrome-cache");
+      const { execSync } = require("child_process");
+      const result = execSync(`find "${cacheDir}" -name "chrome-headless-shell" -type f 2>/dev/null | head -1`, { encoding: "utf8" }).trim();
+      if (result && fs.existsSync(result)) return result;
+    } catch {}
+    return undefined;
+  })();
+  if (localChrome) return localChrome;
+
   const headlessShell = findInPuppeteerCache("chrome-headless-shell", "chrome-headless-shell");
   if (headlessShell) return headlessShell;
 

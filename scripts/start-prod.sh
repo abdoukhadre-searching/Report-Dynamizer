@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e
 
-echo "[startup] Installing Playwright Chromium with system dependencies..."
-npx playwright install --with-deps chromium
+if [ -d ".chrome-deps" ]; then
+  export LD_LIBRARY_PATH="$(pwd)/.chrome-deps/usr/lib/x86_64-linux-gnu:$(pwd)/.chrome-deps/usr/lib:${LD_LIBRARY_PATH:-}"
+  echo "[startup] Chrome system libs loaded from .chrome-deps"
+fi
 
-PLAYWRIGHT_CHROMIUM=$(find "$HOME/.cache/ms-playwright" -name "chrome" -type f 2>/dev/null | head -1)
-if [ -n "$PLAYWRIGHT_CHROMIUM" ] && [ -x "$PLAYWRIGHT_CHROMIUM" ]; then
-  export PUPPETEER_EXECUTABLE_PATH="$PLAYWRIGHT_CHROMIUM"
-  echo "[startup] Using Playwright Chromium at: $PLAYWRIGHT_CHROMIUM"
-else
-  echo "[startup] Warning: Playwright Chromium not found at expected path"
+CHROME=$(find "$(pwd)/.chrome-cache" -name "chrome-headless-shell" -type f 2>/dev/null | head -1)
+if [ -n "$CHROME" ] && [ -x "$CHROME" ]; then
+  export PUPPETEER_EXECUTABLE_PATH="$CHROME"
+  echo "[startup] Chrome ready at: $CHROME"
 fi
 
 echo "[startup] Starting app..."
