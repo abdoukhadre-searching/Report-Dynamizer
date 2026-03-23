@@ -39,6 +39,12 @@ function findChromiumExecutable(): string | undefined {
     } catch {}
   }
 
+  try {
+    const { execSync } = require("child_process");
+    const whichChromium = execSync("which chromium 2>/dev/null", { encoding: "utf8" }).trim();
+    if (whichChromium) { fs.accessSync(whichChromium, fs.constants.X_OK); return whichChromium; }
+  } catch {}
+
   const home = process.env.HOME || "/home/runner";
   const nixChromium = path.join(home, ".nix-profile", "bin", "chromium");
   try {
