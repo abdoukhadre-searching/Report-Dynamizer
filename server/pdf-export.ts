@@ -94,6 +94,8 @@ function findChromiumExecutable(): string | undefined {
 
 export async function renderProjectPdf(reportUrl: string, waitForSelector = "#report-content"): Promise<Buffer> {
   const executablePath = findChromiumExecutable();
+  console.log(`[pdf] Launching Chromium: ${executablePath || "puppeteer default"}`);
+  console.log(`[pdf] URL: ${reportUrl}, selector: ${waitForSelector}`);
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -104,15 +106,21 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
       "--disable-dev-shm-usage",
       "--disable-gpu",
       "--no-first-run",
-      "--single-process",
+      "--disable-extensions",
+      "--disable-background-networking",
+      "--disable-default-apps",
     ],
   });
 
   try {
     const page = await browser.newPage();
     try {
-      await page.goto(reportUrl, { waitUntil: "networkidle0", timeout: 120000 });
-      await page.waitForSelector(waitForSelector, { timeout: 30000 });
+      console.log(`[pdf] Navigating to: ${reportUrl}`);
+      await page.goto(reportUrl, { waitUntil: "load", timeout: 60000 });
+      console.log(`[pdf] Page loaded, waiting for selector: ${waitForSelector}`);
+      await page.waitForSelector(waitForSelector, { timeout: 60000 });
+      console.log(`[pdf] Selector found, rendering PDF...`);
+      await new Promise(r => setTimeout(r, 1000));
       await page.emulateMediaType("print");
 
       await page.evaluate(async () => {
