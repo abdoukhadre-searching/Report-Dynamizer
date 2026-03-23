@@ -1,0 +1,37 @@
+/home/runner/.cache/puppeteer/chrome-headless-shell/linux-146.0.7680.76/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libatk-1.0.so.0: cannot open shared object file: No such file or directory
+2026-03-23 03:27:10.79
+06633dec
+User
+3:27:10 AM [express] GET /api/projects/e3588ae4-413b-456d-89a0-c27e69720fc2/export-strategie-pdf 500 in 234ms :: {"message":"Failed to launch the browser process: Code: 127\n\nstderr:\n/home/runner/.cache/puppeteer/chrome-headless-shell/linux-146.0.7680.76/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libatk-1.0.so.0: cannot open shared object file: No such file or directory\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"}
+2026-03-23 03:27:31.29
+06633dec
+User
+at ChildProcess.emit (node:events:536:35)
+2026-03-23 03:27:31.29
+06633dec
+User
+Error exporting strategie PDF: Error: Failed to launch the browser process: Code: 127
+2026-03-23 03:27:31.29
+06633dec
+User
+stderr:
+2026-03-23 03:27:31.29
+06633dec
+User
+TROUBLESHOOTING: https://pptr.dev/troubleshooting
+2026-03-23 03:27:31.29
+06633dec
+User
+at ChildProcess.onClose (/home/runner/workspace/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+2026-03-23 03:27:31.29
+06633dec
+User
+/home/runner/.cache/puppeteer/chrome-headless-shell/linux-146.0.7680.76/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libatk-1.0.so.0: cannot open shared object file: No such file or directory
+2026-03-23 03:27:31.29
+06633dec
+User
+at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+2026-03-23 03:27:31.33
+06633dec
+User
+3:27:31 AM [express] GET /api/projects/e3588ae4-413b-456d-89a0-c27e69720fc2/export-strategie-pdf 500 in 500ms :: {"message":"Failed to launch the browser process: Code: 127\n\nstderr:\n/home/runner/.cache/puppeteer/chrome-headless-shell/linux-146.0.7680.76/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libatk-1.0.so.0: cannot open shared object file: No such file or directory\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"}

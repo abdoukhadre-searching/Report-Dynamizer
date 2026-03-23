@@ -32,6 +32,20 @@ function findInPuppeteerCache(browserName: string, binaryName: string): string |
 }
 
 function findChromiumExecutable(): string | undefined {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    try {
+      fs.accessSync(process.env.PUPPETEER_EXECUTABLE_PATH, fs.constants.X_OK);
+      return process.env.PUPPETEER_EXECUTABLE_PATH;
+    } catch {}
+  }
+
+  const home = process.env.HOME || "/home/runner";
+  const nixChromium = path.join(home, ".nix-profile", "bin", "chromium");
+  try {
+    fs.accessSync(nixChromium, fs.constants.X_OK);
+    return nixChromium;
+  } catch {}
+
   const headlessShell = findInPuppeteerCache("chrome-headless-shell", "chrome-headless-shell");
   if (headlessShell) return headlessShell;
 
