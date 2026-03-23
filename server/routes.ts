@@ -495,8 +495,8 @@ export async function registerRoutes(
       const filePath = path.join(UPLOADS_DIR, fileName);
       const compressed = await sharp(req.file.buffer)
         .rotate()
-        .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 82, mozjpeg: true })
+        .resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 90, mozjpeg: true })
         .toBuffer();
       fs.writeFileSync(filePath, compressed);
 

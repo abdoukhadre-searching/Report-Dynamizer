@@ -133,8 +133,8 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
       await page.addScriptTag({
         content: `
           window.__pdfCompressImages = function() {
-            var MAX_PX = 1600;
-            var QUALITY = 0.78;
+            var MAX_PX = 2400;
+            var QUALITY = 0.90;
             var promises = [];
             var imgs = document.querySelectorAll('img');
             for (var i = 0; i < imgs.length; i++) {
