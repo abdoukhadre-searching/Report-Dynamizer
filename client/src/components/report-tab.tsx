@@ -1602,7 +1602,7 @@ export default function ReportTab({
                           projet.
                         </p>
 
-                        <div className="print:break-inside-avoid">
+                        <div className="print:break-inside-avoid mt-8">
                           <AnnexImageUpload
                             key="description-building-photo"
                             projectId={project.id}
@@ -1682,7 +1682,7 @@ export default function ReportTab({
                           visite d'inspection.
                         </p>
 
-                        <div className="print:break-inside-avoid">
+                        <div className="print:break-inside-avoid mt-8">
                           <AnnexImageUpload
                             key="description-building-photo"
                             projectId={project.id}
