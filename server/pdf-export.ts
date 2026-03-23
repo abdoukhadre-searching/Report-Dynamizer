@@ -2,7 +2,7 @@ import puppeteer from "puppeteer";
 import * as fs from "fs";
 import * as path from "path";
 
-const CHROMIUM_CANDIDATES = [
+const SYSTEM_CHROMIUM_CANDIDATES = [
   "/nix/store/0n9rl5l9syy808xi9bk4f6dhnfrvhkww-playwright-browsers-chromium/chromium-1080/chrome-linux/chrome",
   "/usr/bin/chromium-browser",
   "/usr/bin/chromium",
@@ -10,30 +10,39 @@ const CHROMIUM_CANDIDATES = [
   "/usr/bin/google-chrome-stable",
 ];
 
+function findInPuppeteerCache(browserName: string, binaryName: string): string | undefined {
+  const home = process.env.HOME || "/home/runner";
+  const cacheBase = path.join(home, ".cache", "puppeteer", browserName);
+  if (!fs.existsSync(cacheBase)) return undefined;
+  const versions = fs.readdirSync(cacheBase).sort().reverse();
+  for (const ver of versions) {
+    const candidates = [
+      path.join(cacheBase, ver, `${binaryName}-linux64`, binaryName),
+      path.join(cacheBase, ver, `${binaryName}-linux`, binaryName),
+      path.join(cacheBase, ver, "chrome-linux64", binaryName),
+    ];
+    for (const c of candidates) {
+      try {
+        fs.accessSync(c, fs.constants.X_OK);
+        return c;
+      } catch {}
+    }
+  }
+  return undefined;
+}
+
 function findChromiumExecutable(): string | undefined {
-  for (const p of CHROMIUM_CANDIDATES) {
+  const headlessShell = findInPuppeteerCache("chrome-headless-shell", "chrome-headless-shell");
+  if (headlessShell) return headlessShell;
+
+  const puppeteerChrome = findInPuppeteerCache("chrome", "chrome");
+  if (puppeteerChrome) return puppeteerChrome;
+
+  for (const p of SYSTEM_CHROMIUM_CANDIDATES) {
     try {
       fs.accessSync(p, fs.constants.X_OK);
       return p;
     } catch {}
-  }
-  const cacheBase = process.env.HOME
-    ? path.join(process.env.HOME, ".cache", "puppeteer", "chrome")
-    : "/home/runner/.cache/puppeteer/chrome";
-  if (fs.existsSync(cacheBase)) {
-    const versions = fs.readdirSync(cacheBase).sort().reverse();
-    for (const ver of versions) {
-      const candidates = [
-        path.join(cacheBase, ver, "chrome-linux64", "chrome"),
-        path.join(cacheBase, ver, "chrome-linux", "chrome"),
-      ];
-      for (const c of candidates) {
-        try {
-          fs.accessSync(c, fs.constants.X_OK);
-          return c;
-        } catch {}
-      }
-    }
   }
   return undefined;
 }
@@ -50,6 +59,7 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
       "--disable-dev-shm-usage",
       "--disable-gpu",
       "--no-first-run",
+      "--single-process",
     ],
   });
 
