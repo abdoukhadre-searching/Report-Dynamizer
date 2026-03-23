@@ -46,6 +46,20 @@ function findChromiumExecutable(): string | undefined {
     return nixChromium;
   } catch {}
 
+  const msPlaywrightBase = path.join(home, ".cache", "ms-playwright");
+  if (fs.existsSync(msPlaywrightBase)) {
+    const dirs = fs.readdirSync(msPlaywrightBase).filter(d => d.startsWith("chromium")).sort().reverse();
+    for (const dir of dirs) {
+      const candidates = [
+        path.join(msPlaywrightBase, dir, "chrome-linux", "chrome"),
+        path.join(msPlaywrightBase, dir, "chrome-linux64", "chrome"),
+      ];
+      for (const c of candidates) {
+        try { fs.accessSync(c, fs.constants.X_OK); return c; } catch {}
+      }
+    }
+  }
+
   const headlessShell = findInPuppeteerCache("chrome-headless-shell", "chrome-headless-shell");
   if (headlessShell) return headlessShell;
 

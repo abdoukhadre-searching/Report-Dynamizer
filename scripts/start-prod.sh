@@ -1,16 +1,15 @@
 #!/bin/bash
 set -e
 
-echo "[startup] Installing Chromium via Nix..."
-if nix-env -iA nixpkgs.chromium 2>/dev/null; then
-  NIX_CHROMIUM="$HOME/.nix-profile/bin/chromium"
-  if [ -x "$NIX_CHROMIUM" ]; then
-    export PUPPETEER_EXECUTABLE_PATH="$NIX_CHROMIUM"
-    echo "[startup] Chromium ready at: $NIX_CHROMIUM"
-  fi
+echo "[startup] Installing Playwright Chromium with system dependencies..."
+npx playwright install --with-deps chromium
+
+PLAYWRIGHT_CHROMIUM=$(find "$HOME/.cache/ms-playwright" -name "chrome" -type f 2>/dev/null | head -1)
+if [ -n "$PLAYWRIGHT_CHROMIUM" ] && [ -x "$PLAYWRIGHT_CHROMIUM" ]; then
+  export PUPPETEER_EXECUTABLE_PATH="$PLAYWRIGHT_CHROMIUM"
+  echo "[startup] Using Playwright Chromium at: $PLAYWRIGHT_CHROMIUM"
 else
-  echo "[startup] Nix unavailable, falling back to Puppeteer download..."
-  npx puppeteer browsers install chrome-headless-shell 2>/dev/null || true
+  echo "[startup] Warning: Playwright Chromium not found at expected path"
 fi
 
 echo "[startup] Starting app..."
