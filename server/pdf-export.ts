@@ -131,40 +131,69 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
 
       // Compress all images before PDF generation to reduce file size
       await page.evaluate(async () => {
-        const MAX_PX = 1200;
-        const QUALITY = 0.72;
-        const imgs = Array.from(document.querySelectorAll("img"));
-        await Promise.all(
-          imgs.map(
-            (img) =>
-              new Promise<void>((resolve) => {
-                function compress() {
-                  try {
-                    if (!img.naturalWidth || img.naturalWidth <= MAX_PX) {
-                      resolve();
-                      return;
-                    }
-                    const canvas = document.createElement("canvas");
-                    const ratio = MAX_PX / img.naturalWidth;
-                    canvas.width = MAX_PX;
-                    canvas.height = Math.round(img.naturalHeight * ratio);
-                    const ctx = canvas.getContext("2d");
-                    if (!ctx) { resolve(); return; }
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    img.src = canvas.toDataURL("image/jpeg", QUALITY);
-                    resolve();
-                  } catch { resolve(); }
-                }
-                if (img.complete && img.naturalWidth > 0) {
-                  compress();
-                } else {
-                  img.onload = compress;
-                  img.onerror = () => resolve();
-                }
-              })
-          )
-        );
+        const MAX_PX = 900;
+        const QUALITY = 0.60;
+
+        function compressImg(img: HTMLImageElement): Promise<void> {
+          return new Promise<void>((resolve) => {
+            function doCompress() {
+              try {
+                const w = img.naturalWidth;
+                const h = img.naturalHeight;
+                if (!w || !h) { resolve(); return; }
+                const scale = w > MAX_PX ? MAX_PX / w : 1;
+                const tw = Math.round(w * scale);
+                const th = Math.round(h * scale);
+                const c = document.createElement("canvas");
+                c.width = tw;
+                c.height = th;
+                const ctx = c.getContext("2d");
+                if (!ctx) { resolve(); return; }
+                ctx.drawImage(img, 0, 0, tw, th);
+                const dataUrl = c.toDataURL("image/jpeg", QUALITY);
+                const newImg = new Image();
+                newImg.onload = () => {
+                  img.src = dataUrl;
+                  resolve();
+                };
+                newImg.onerror = () => resolve();
+                newImg.src = dataUrl;
+              } catch { resolve(); }
+            }
+            if (img.complete && img.naturalWidth > 0) doCompress();
+            else { img.onload = doCompress; img.onerror = () => resolve(); }
+          });
+        }
+
+        // Compress <img> tags
+        await Promise.all(Array.from(document.querySelectorAll("img")).map(compressImg));
+
+        // Replace <canvas> elements (recharts, etc.) with compressed JPEG images
+        document.querySelectorAll("canvas").forEach((canvas) => {
+          try {
+            const w = canvas.width;
+            const h = canvas.height;
+            if (!w || !h) return;
+            const scale = w > MAX_PX ? MAX_PX / w : 1;
+            const tw = Math.round(w * scale);
+            const th = Math.round(h * scale);
+            const tmp = document.createElement("canvas");
+            tmp.width = tw;
+            tmp.height = th;
+            const ctx = tmp.getContext("2d");
+            if (!ctx) return;
+            ctx.drawImage(canvas, 0, 0, tw, th);
+            const dataUrl = tmp.toDataURL("image/jpeg", QUALITY);
+            const img = document.createElement("img");
+            img.src = dataUrl;
+            img.style.cssText = `width:${canvas.offsetWidth}px;height:${canvas.offsetHeight}px;display:block;`;
+            canvas.parentNode?.replaceChild(img, canvas);
+          } catch {}
+        });
       });
+
+      // Wait for compressed image sources to fully render
+      await new Promise(r => setTimeout(r, 800));
 
       const pdf = await page.pdf({
         format: "A4",

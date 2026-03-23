@@ -14,6 +14,7 @@ import * as crypto from "crypto";
 import { PDFDocument, rgb, StandardFonts, PDFName } from "pdf-lib";
 import { inflateSync, deflateSync } from "zlib";
 import { hashPassword, verifyPassword } from "./auth";
+import sharp from "sharp";
 
 const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -490,10 +491,14 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Project not found" });
       }
 
-      const ext = path.extname(req.file.originalname) || ".png";
-      const fileName = `${projectId}_${annexType}_${Date.now()}${ext}`;
+      const fileName = `${projectId}_${annexType}_${Date.now()}.jpg`;
       const filePath = path.join(UPLOADS_DIR, fileName);
-      fs.writeFileSync(filePath, req.file.buffer);
+      const compressed = await sharp(req.file.buffer)
+        .rotate()
+        .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 72, mozjpeg: true })
+        .toBuffer();
+      fs.writeFileSync(filePath, compressed);
 
       const imageUrl = `/uploads/${fileName}`;
       const updateData: any = {};
