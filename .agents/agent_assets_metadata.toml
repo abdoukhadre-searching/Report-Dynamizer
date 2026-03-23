@@ -6,3 +6,9 @@ id = "H_7N6StvjnHAFcR292OJ5"
 uri = "file://DEPLOIEMENT.md"
 type = "text"
 title = "Guide de déploiement — energiqualif.lab-sws.com"
+
+[[outputs]]
+id = "D5xLMzP2PS5uzGamJ7749"
+uri = "file://DEPLOY-VM.md"
+type = "text"
+title = "Guide déploiement VM — systemd"
