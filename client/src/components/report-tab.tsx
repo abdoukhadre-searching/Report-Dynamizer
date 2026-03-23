@@ -3335,22 +3335,24 @@ export default function ReportTab({
                           id="annex-chauffe-eau-thermopompe"
                           className="print:break-before-page"
                         >
-                          <h3 className="text-sm font-semibold mb-2">
-                            {annexNum++}. Chauffe-eaux Thermopompe Rheem PROPH40
-                            T2 RH375-30
-                          </h3>
-                          <p className="text-xs text-muted-foreground mb-4">
-                            Installation de {numUnits > 0 ? numUnits : "—"}{" "}
-                            Chauffe-eaux Thermopompe Rheem Hybrid electric water
-                            heater PROPH40 T2 RH375-30.
-                          </p>
-                          <div className="space-y-4 print:break-inside-avoid">
+                          <div className="print:break-inside-avoid">
+                            <h3 className="text-sm font-semibold mb-2">
+                              {annexNum++}. Chauffe-eaux Thermopompe Rheem PROPH40
+                              T2 RH375-30
+                            </h3>
+                            <p className="text-xs text-muted-foreground mb-4">
+                              Installation de {numUnits > 0 ? numUnits : "—"}{" "}
+                              Chauffe-eaux Thermopompe Rheem Hybrid electric water
+                              heater PROPH40 T2 RH375-30.
+                            </p>
                             <img
                               src={rheemPage1Path}
                               alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1"
-                              className="w-full rounded border"
+                              className="w-full rounded border mb-4"
                               data-testid="img-annex-rheem-page1"
                             />
+                          </div>
+                          <div className="space-y-4">
                             <img
                               src={rheemPage2Path}
                               alt="Données techniques Rheem ProTerra — page 2"
