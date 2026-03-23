@@ -1,16 +1,41 @@
 import puppeteer from "puppeteer";
 import * as fs from "fs";
+import * as path from "path";
 
-const PLAYWRIGHT_CHROMIUM =
-  "/nix/store/0n9rl5l9syy808xi9bk4f6dhnfrvhkww-playwright-browsers-chromium/chromium-1080/chrome-linux/chrome";
+const CHROMIUM_CANDIDATES = [
+  "/nix/store/0n9rl5l9syy808xi9bk4f6dhnfrvhkww-playwright-browsers-chromium/chromium-1080/chrome-linux/chrome",
+  "/usr/bin/chromium-browser",
+  "/usr/bin/chromium",
+  "/usr/bin/google-chrome",
+  "/usr/bin/google-chrome-stable",
+];
 
 function findChromiumExecutable(): string | undefined {
-  try {
-    fs.accessSync(PLAYWRIGHT_CHROMIUM, fs.constants.X_OK);
-    return PLAYWRIGHT_CHROMIUM;
-  } catch {
-    return undefined;
+  for (const p of CHROMIUM_CANDIDATES) {
+    try {
+      fs.accessSync(p, fs.constants.X_OK);
+      return p;
+    } catch {}
   }
+  const cacheBase = process.env.HOME
+    ? path.join(process.env.HOME, ".cache", "puppeteer", "chrome")
+    : "/home/runner/.cache/puppeteer/chrome";
+  if (fs.existsSync(cacheBase)) {
+    const versions = fs.readdirSync(cacheBase).sort().reverse();
+    for (const ver of versions) {
+      const candidates = [
+        path.join(cacheBase, ver, "chrome-linux64", "chrome"),
+        path.join(cacheBase, ver, "chrome-linux", "chrome"),
+      ];
+      for (const c of candidates) {
+        try {
+          fs.accessSync(c, fs.constants.X_OK);
+          return c;
+        } catch {}
+      }
+    }
+  }
+  return undefined;
 }
 
 export async function renderProjectPdf(reportUrl: string, waitForSelector = "#report-content"): Promise<Buffer> {

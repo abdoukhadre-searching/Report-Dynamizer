@@ -19,8 +19,8 @@ PORT = "5000"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["node", "./dist/index.cjs"]
-build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]
+build = ["bash", "-c", "npm run build && npx puppeteer browsers install chrome"]
 publicDir = "dist/public"
 
 [workflows]
