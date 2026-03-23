@@ -2685,7 +2685,7 @@ export default function ReportTab({
 
                 <div
                   id="figure-4"
-                  className="my-4 figure-block print:break-inside-avoid"
+                  className="mt-4 mb-1 figure-block print:break-inside-avoid"
                 >
                   <p className="figure-caption text-xs text-center text-muted-foreground mb-2 italic">
                     Figure 5 : Évolution mensuelle de la consommation
