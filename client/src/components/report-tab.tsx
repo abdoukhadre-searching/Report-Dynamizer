@@ -2685,7 +2685,7 @@ export default function ReportTab({
 
                 <div
                   id="figure-4"
-                  className="mt-4 mb-1 figure-block print:break-inside-avoid"
+                  className="mt-4 mb-0 figure-block print:break-inside-avoid"
                 >
                   <p className="figure-caption text-xs text-center text-muted-foreground mb-2 italic">
                     Figure 5 : Évolution mensuelle de la consommation
@@ -2726,8 +2726,7 @@ export default function ReportTab({
                     </div>
                   </div>
                 </div>
-
-                <p>
+                <p className="mt-0">
                   Cette analyse mensuelle confirme que les mesures proposées
                   permettent d'améliorer la performance énergétique du bâtiment
                   tout au long de l'année, avec un impact particulièrement
