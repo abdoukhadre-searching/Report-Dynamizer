@@ -1612,6 +1612,8 @@ export default function ReportTab({
                             maxImageHeight={220}
                           />
 
+                          <div className="mt-8" />
+
                           <p>
                             Le bâtiment de référence est défini conformément aux
                             exigences du Code national de l'énergie pour les
@@ -1690,7 +1692,7 @@ export default function ReportTab({
                             maxImageHeight={220}
                           />
 
-                          <p className="font-bold mt-4 mb-2">
+                          <p className="font-bold mt-10 mb-2">
                             Caractéristiques générales :
                           </p>
                           <ul className="space-y-1.5 ml-1">
