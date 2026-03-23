@@ -2696,7 +2696,7 @@ export default function ReportTab({
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart
                           data={monthlyChartData}
-                          margin={{ top: 10, right: 30, left: 20, bottom: 30 }}
+                          margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" tick={{ fontSize: 11 }} />
@@ -2726,7 +2726,7 @@ export default function ReportTab({
                     </div>
                   </div>
                 </div>
-                <p className="mt-0">
+                <p style={{ marginTop: "-12px" }}>
                   Cette analyse mensuelle confirme que les mesures proposées
                   permettent d'améliorer la performance énergétique du bâtiment
                   tout au long de l'année, avec un impact particulièrement
