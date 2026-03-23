@@ -2154,7 +2154,7 @@ export default function ReportTab({
                       des logements.{" "}
                       <a
                         href="#annex-thermopompes"
-                        className="text-xs font-medium text-primary underline cursor-pointer print:hidden"
+                        className="text-xs font-medium text-primary underline cursor-pointer"
                         onClick={(e) => { e.preventDefault(); document.getElementById("annex-thermopompes")?.scrollIntoView({ behavior: "smooth" }); }}
                       >
                         [Voir détails]
@@ -2186,7 +2186,7 @@ export default function ReportTab({
                       occupants.{" "}
                       <a
                         href="#annex-robineterie"
-                        className="text-xs font-medium text-primary underline cursor-pointer print:hidden"
+                        className="text-xs font-medium text-primary underline cursor-pointer"
                         onClick={(e) => { e.preventDefault(); document.getElementById("annex-robineterie")?.scrollIntoView({ behavior: "smooth" }); }}
                       >
                         [Voir détails]
@@ -2274,7 +2274,7 @@ export default function ReportTab({
                       heater PROPH40 T2 RH375-30.{" "}
                       <a
                         href="#annex-chauffe-eau-thermopompe"
-                        className="text-xs font-medium text-primary underline cursor-pointer print:hidden"
+                        className="text-xs font-medium text-primary underline cursor-pointer"
                         onClick={(e) => { e.preventDefault(); document.getElementById("annex-chauffe-eau-thermopompe")?.scrollIntoView({ behavior: "smooth" }); }}
                       >
                         [Voir détails]
