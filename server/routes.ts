@@ -191,8 +191,8 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
 
-      const origin = `${req.protocol}://${req.get("host")}`;
-      const reportUrl = `${origin}/project/${projectId}/print`;
+      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const reportUrl = `${internalOrigin}/project/${projectId}/print`;
       const pdfBuffer = await renderProjectPdf(reportUrl);
 
       const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
@@ -213,8 +213,8 @@ export async function registerRoutes(
       if (!project.preReportData || !project.postReportData) {
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
-      const origin = `${req.protocol}://${req.get("host")}`;
-      const reportUrl = `${origin}/project/${projectId}/print-recommandations`;
+      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const reportUrl = `${internalOrigin}/project/${projectId}/print-recommandations`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#recommandations-content");
       const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
       res.setHeader("Content-Type", "application/pdf");
@@ -234,8 +234,8 @@ export async function registerRoutes(
       if (!project.preReportData || !project.postReportData) {
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
-      const origin = `${req.protocol}://${req.get("host")}`;
-      const reportUrl = `${origin}/project/${projectId}/print-strategie`;
+      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const reportUrl = `${internalOrigin}/project/${projectId}/print-strategie`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#strategy-content");
       const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
       res.setHeader("Content-Type", "application/pdf");
@@ -255,8 +255,8 @@ export async function registerRoutes(
       if (!project.preReportData || !project.postReportData) {
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
-      const origin = `${req.protocol}://${req.get("host")}`;
-      const reportUrl = `${origin}/project/${projectId}/print-empreinte`;
+      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const reportUrl = `${internalOrigin}/project/${projectId}/print-empreinte`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#empreinte-content");
       const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
       res.setHeader("Content-Type", "application/pdf");
