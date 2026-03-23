@@ -129,65 +129,66 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
         }
       });
 
-      // Compress all images before PDF generation to reduce file size
-      await page.evaluate(async () => {
-        const MAX_PX = 900;
-        const QUALITY = 0.60;
-
-        // Compress <img> tags
-        await Promise.all(
-          Array.from(document.querySelectorAll("img")).map(
-            (img) =>
-              new Promise<void>((resolve) => {
-                const doCompress = () => {
-                  try {
-                    const w = img.naturalWidth;
-                    const h = img.naturalHeight;
-                    if (!w || !h) { resolve(); return; }
-                    const scale = w > MAX_PX ? MAX_PX / w : 1;
-                    const c = document.createElement("canvas");
-                    c.width = Math.round(w * scale);
-                    c.height = Math.round(h * scale);
-                    const ctx = c.getContext("2d");
-                    if (!ctx) { resolve(); return; }
-                    ctx.drawImage(img, 0, 0, c.width, c.height);
-                    const dataUrl = c.toDataURL("image/jpeg", QUALITY);
-                    const tmp = new Image();
-                    tmp.onload = () => { img.src = dataUrl; resolve(); };
-                    tmp.onerror = () => resolve();
-                    tmp.src = dataUrl;
-                  } catch { resolve(); }
-                };
-                if (img.complete && img.naturalWidth > 0) doCompress();
-                else { img.onload = doCompress; img.onerror = () => resolve(); }
-              })
-          )
-        );
-
-        // Replace <canvas> elements (recharts charts) with compressed JPEG images
-        Array.from(document.querySelectorAll("canvas")).forEach((canvas) => {
-          try {
-            const w = canvas.width;
-            const h = canvas.height;
-            if (!w || !h) return;
-            const scale = w > MAX_PX ? MAX_PX / w : 1;
-            const tmp = document.createElement("canvas");
-            tmp.width = Math.round(w * scale);
-            tmp.height = Math.round(h * scale);
-            const ctx = tmp.getContext("2d");
-            if (!ctx) return;
-            ctx.drawImage(canvas, 0, 0, tmp.width, tmp.height);
-            const dataUrl = tmp.toDataURL("image/jpeg", QUALITY);
-            const img = document.createElement("img");
-            img.src = dataUrl;
-            img.style.cssText = `width:${canvas.offsetWidth}px;height:${canvas.offsetHeight}px;display:block;`;
-            canvas.parentNode?.replaceChild(img, canvas);
-          } catch {}
-        });
+      // Inject image compression as a raw script to avoid esbuild __name injection
+      await page.addScriptTag({
+        content: `
+          window.__pdfCompressImages = function() {
+            var MAX_PX = 900;
+            var QUALITY = 0.60;
+            var promises = [];
+            var imgs = document.querySelectorAll('img');
+            for (var i = 0; i < imgs.length; i++) {
+              (function(img) {
+                promises.push(new Promise(function(resolve) {
+                  function compress() {
+                    try {
+                      var w = img.naturalWidth, h = img.naturalHeight;
+                      if (!w || !h) { resolve(); return; }
+                      var scale = w > MAX_PX ? MAX_PX / w : 1;
+                      var c = document.createElement('canvas');
+                      c.width = Math.round(w * scale);
+                      c.height = Math.round(h * scale);
+                      var ctx = c.getContext('2d');
+                      if (!ctx) { resolve(); return; }
+                      ctx.drawImage(img, 0, 0, c.width, c.height);
+                      img.src = c.toDataURL('image/jpeg', QUALITY);
+                    } catch(e) {}
+                    resolve();
+                  }
+                  if (img.complete && img.naturalWidth > 0) compress();
+                  else { img.onload = compress; img.onerror = resolve; }
+                }));
+              })(imgs[i]);
+            }
+            var canvases = document.querySelectorAll('canvas');
+            for (var j = 0; j < canvases.length; j++) {
+              (function(canvas) {
+                try {
+                  var w = canvas.width, h = canvas.height;
+                  if (!w || !h) return;
+                  var scale = w > MAX_PX ? MAX_PX / w : 1;
+                  var tmp = document.createElement('canvas');
+                  tmp.width = Math.round(w * scale);
+                  tmp.height = Math.round(h * scale);
+                  var ctx = tmp.getContext('2d');
+                  if (!ctx) return;
+                  ctx.drawImage(canvas, 0, 0, tmp.width, tmp.height);
+                  var dataUrl = tmp.toDataURL('image/jpeg', QUALITY);
+                  var img = document.createElement('img');
+                  img.src = dataUrl;
+                  img.style.cssText = 'width:' + canvas.offsetWidth + 'px;height:' + canvas.offsetHeight + 'px;display:block;';
+                  if (canvas.parentNode) canvas.parentNode.replaceChild(img, canvas);
+                } catch(e) {}
+              })(canvases[j]);
+            }
+            return Promise.all(promises);
+          };
+        `,
       });
 
-      // Wait for compressed image sources to fully render
-      await new Promise(r => setTimeout(r, 800));
+      // Run the compression and wait for all images to be replaced
+      await page.evaluate(() => (window as any).__pdfCompressImages());
+      await new Promise(r => setTimeout(r, 600));
 
       const pdf = await page.pdf({
         format: "A4",
