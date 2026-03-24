@@ -142,7 +142,7 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
           valueLines.push(l);
         }
       }
-      if (valueLines.length >= 1) info.address = valueLines.length >= 2 ? valueLines[1] : valueLines[0];
+      if (valueLines.length >= 1) info.address = valueLines.join(" ").trim();
     }
   }
 
