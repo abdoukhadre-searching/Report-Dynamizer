@@ -130,6 +130,12 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   if (clientIdx >= 0) {
     const addrIdx = findLineIndex(lines, "Adresse:", clientIdx);
     if (addrIdx >= 0) {
+      // Extract value on the same line as "Adresse:" label (e.g. "Adresse:   5566 Boulevard René")
+      const addrLabelLine = lines[addrIdx] || "";
+      const inlineAddrMatch = addrLabelLine.match(/Adresse:\s*(.+)/i);
+      const inlineAddr = inlineAddrMatch ? inlineAddrMatch[1].trim() : "";
+
+      // Collect continuation lines on the lines after the label
       const valuesStart = addrIdx + 1;
       const nextLabelIdx = Math.min(
         findLineIndex(lines, "Adresse:", valuesStart) >= 0 ? findLineIndex(lines, "Adresse:", valuesStart) : lines.length,
@@ -137,12 +143,15 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
       );
       const valueLines: string[] = [];
       for (let i = valuesStart; i < nextLabelIdx && i < lines.length; i++) {
-        const l = lines[i];
-        if (l && !l.startsWith("Ville:") && !l.startsWith("Code") && !l.startsWith("Province:") && !l.startsWith("Adresse:")) {
+        const l = lines[i].trim();
+        if (l && !l.startsWith("Ville:") && !l.startsWith("Code") && !l.startsWith("Province:") && !l.startsWith("Adresse:") && !l.startsWith("Fichier:") && !l.startsWith("Nom du")) {
           valueLines.push(l);
         }
       }
-      if (valueLines.length >= 1) info.address = valueLines.join(" ").trim();
+
+      // Combine inline part + continuation lines
+      const allParts = [inlineAddr, ...valueLines].filter(Boolean);
+      if (allParts.length >= 1) info.address = allParts.join(" ").trim();
     }
   }
 
