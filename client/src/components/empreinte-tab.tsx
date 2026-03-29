@@ -197,40 +197,26 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                     {programmeType === "remplacement" ? "Optimisation — remplacement de machine" : "Optimisation"}
                   </span>
                 ) : (
-                  <div className="flex items-center gap-1 rounded-lg overflow-hidden border" style={{ borderColor: "#1e3a5f30" }}>
-                    <button
-                      data-testid="btn-programme-optimisation"
-                      onClick={() => saveProgrammeType("optimisation")}
-                      style={{
-                        padding: "3px 12px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        border: "none",
-                        transition: "all 0.15s",
-                        backgroundColor: programmeType === "optimisation" ? "#1e3a5f" : "transparent",
-                        color: programmeType === "optimisation" ? "#ffffff" : "#1e3a5f",
-                      }}
-                    >
-                      Optimisation
-                    </button>
-                    <button
-                      data-testid="btn-programme-remplacement"
-                      onClick={() => saveProgrammeType("remplacement")}
-                      style={{
-                        padding: "3px 12px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        border: "none",
-                        transition: "all 0.15s",
-                        backgroundColor: programmeType === "remplacement" ? "#1e3a5f" : "transparent",
-                        color: programmeType === "remplacement" ? "#ffffff" : "#1e3a5f",
-                      }}
-                    >
-                      Optimisation remplacement de machine
-                    </button>
-                  </div>
+                  <select
+                    data-testid="select-programme-type"
+                    value={programmeType}
+                    onChange={(e) => saveProgrammeType(e.target.value)}
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      padding: "3px 28px 3px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #1e3a5f40",
+                      color: "#1e3a5f",
+                      backgroundColor: "#f8fafc",
+                      cursor: "pointer",
+                      outline: "none",
+                      appearance: "auto",
+                    }}
+                  >
+                    <option value="optimisation">Optimisation</option>
+                    <option value="remplacement">Optimisation remplacement de machine</option>
+                  </select>
                 )}
               </div>
             </div>
