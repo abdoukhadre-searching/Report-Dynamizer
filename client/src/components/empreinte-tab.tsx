@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Project, ReportData } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2, Sparkles } from "lucide-react";
+import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
@@ -187,7 +187,6 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
               )}
               {/* Programme type selector */}
               <div className="flex items-center gap-2 mt-3">
-                <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1e3a5f" }} />
                 {isNewBuilding ? (
                   <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#1e3a5f15", color: "#1e3a5f" }}>
                     Nouvelle construction
