@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { Project, ReportData } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2 } from "lucide-react";
+import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2, Sparkles } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
 import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
@@ -76,8 +77,21 @@ const SUBVENTION_THERMO = 1296;
 export default function EmpreinteTab({ project, exportMode = false }: EmpreinteTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
+
+  const isNewBuilding = project.buildingType === "new";
+
+  async function saveProgrammeType(value: string) {
+    setProgrammeType(value);
+    try {
+      await apiRequest("PATCH", `/api/projects/${project.id}`, { programmeType: value });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder le type de programme.", variant: "destructive" });
+    }
+  }
 
   const [coutEtancheite, setCoutEtancheite] = useState(5000);
   const [coutThermo, setCoutThermo] = useState(2995);
@@ -171,6 +185,54 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                   <p className="text-xs text-slate-400">{fullAddress}</p>
                 </div>
               )}
+              {/* Programme type selector */}
+              <div className="flex items-center gap-2 mt-3">
+                <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1e3a5f" }} />
+                {isNewBuilding ? (
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#1e3a5f15", color: "#1e3a5f" }}>
+                    Nouvelle construction
+                  </span>
+                ) : exportMode ? (
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#1e3a5f15", color: "#1e3a5f" }}>
+                    {programmeType === "remplacement" ? "Optimisation — remplacement de machine" : "Optimisation"}
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1 rounded-lg overflow-hidden border" style={{ borderColor: "#1e3a5f30" }}>
+                    <button
+                      data-testid="btn-programme-optimisation"
+                      onClick={() => saveProgrammeType("optimisation")}
+                      style={{
+                        padding: "3px 12px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        border: "none",
+                        transition: "all 0.15s",
+                        backgroundColor: programmeType === "optimisation" ? "#1e3a5f" : "transparent",
+                        color: programmeType === "optimisation" ? "#ffffff" : "#1e3a5f",
+                      }}
+                    >
+                      Optimisation
+                    </button>
+                    <button
+                      data-testid="btn-programme-remplacement"
+                      onClick={() => saveProgrammeType("remplacement")}
+                      style={{
+                        padding: "3px 12px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        border: "none",
+                        transition: "all 0.15s",
+                        backgroundColor: programmeType === "remplacement" ? "#1e3a5f" : "transparent",
+                        color: programmeType === "remplacement" ? "#ffffff" : "#1e3a5f",
+                      }}
+                    >
+                      Optimisation remplacement de machine
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex flex-col items-end gap-3">
               {!exportMode && (
