@@ -125,7 +125,7 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
 
   const [coutEtancheite, setCoutEtancheite] = useState(5000);
   const [coutThermo, setCoutThermo] = useState(2995);
-  const [coutChauffeEau, setCoutChauffeEau] = useState(2305);
+  const [coutChauffeEau, setCoutChauffeEau] = useState(2485);
   const [coutVrc, setCoutVrc] = useState(0);
   const [coutFaibleDebit, setCoutFaibleDebit] = useState(0);
   const [coutLed, setCoutLed] = useState(0);
