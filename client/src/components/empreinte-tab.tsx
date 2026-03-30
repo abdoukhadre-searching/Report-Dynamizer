@@ -131,11 +131,10 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const [coutLed, setCoutLed] = useState(0);
   const [coutPlinthes, setCoutPlinthes] = useState(0);
   const [coutChauffeEauElecInd, setCoutChauffeEauElecInd] = useState(0);
+  const [nbThermo, setNbThermo] = useState(() => { const n = getThermopompeCount((project.preReportData as ReportData | null)?.buildingInfo?.occupants); return n > 0 ? n : 1; });
+  const [nbUnits, setNbUnits] = useState(() => { const n = getNumUnitsFromOccupants((project.preReportData as ReportData | null)?.buildingInfo?.occupants); return n > 0 ? n : 1; });
 
   if (!pre || !post) return null;
-
-  const occupants = pre.buildingInfo?.occupants;
-  const numUnits = getNumUnitsFromOccupants(occupants);
 
   const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
@@ -145,9 +144,6 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType);
   const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType);
-
-  const nbThermo = getThermopompeCount(occupants);
-  const nbUnits = numUnits > 0 ? numUnits : 1;
 
   const preGJ = pre.annualSummary?.totalGJ ?? 0;
   const postGJ = post.annualSummary?.totalGJ ?? 0;
@@ -364,7 +360,18 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center"><UnitBadge n={nbThermo} /></td>
+                  <td className="px-5 py-4 text-center">
+                    {exportMode ? <UnitBadge n={nbThermo} /> : (
+                      <input
+                        data-testid="input-nb-thermo"
+                        type="number"
+                        min={1}
+                        value={nbThermo}
+                        onChange={(e) => setNbThermo(Math.max(1, Number(e.target.value) || 1))}
+                        style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
+                      />
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
@@ -396,7 +403,18 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center"><UnitBadge n={nbUnits} /></td>
+                  <td className="px-5 py-4 text-center">
+                    {exportMode ? <UnitBadge n={nbUnits} /> : (
+                      <input
+                        data-testid="input-nb-units"
+                        type="number"
+                        min={1}
+                        value={nbUnits}
+                        onChange={(e) => setNbUnits(Math.max(1, Number(e.target.value) || 1))}
+                        style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
+                      />
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
@@ -496,7 +514,18 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center"><UnitBadge n={nbUnits} /></td>
+                  <td className="px-5 py-4 text-center">
+                    {exportMode ? <UnitBadge n={nbUnits} /> : (
+                      <input
+                        data-testid="input-nb-units"
+                        type="number"
+                        min={1}
+                        value={nbUnits}
+                        onChange={(e) => setNbUnits(Math.max(1, Number(e.target.value) || 1))}
+                        style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
+                      />
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
@@ -529,7 +558,18 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center"><UnitBadge n={nbUnits} /></td>
+                  <td className="px-5 py-4 text-center">
+                    {exportMode ? <UnitBadge n={nbUnits} /> : (
+                      <input
+                        data-testid="input-nb-units"
+                        type="number"
+                        min={1}
+                        value={nbUnits}
+                        onChange={(e) => setNbUnits(Math.max(1, Number(e.target.value) || 1))}
+                        style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
+                      />
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
