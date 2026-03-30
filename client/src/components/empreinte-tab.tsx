@@ -78,6 +78,10 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
+  const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>((project.customMeasures as { id: string; name: string; cost: number }[]) || []);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newMeasureName, setNewMeasureName] = useState("");
+  const [newMeasureCost, setNewMeasureCost] = useState<number | "">("");
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
 
@@ -91,6 +95,32 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
     } catch {
       toast({ title: "Erreur", description: "Impossible de sauvegarder le type de programme.", variant: "destructive" });
     }
+  }
+
+  async function saveCustomMeasuresList(updated: Array<{ id: string; name: string; cost: number }>) {
+    setCustomMeasures(updated);
+    try {
+      await apiRequest("PATCH", `/api/projects/${project.id}`, { customMeasures: updated });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder les mesures.", variant: "destructive" });
+    }
+  }
+
+  function addCustomMeasure() {
+    const name = newMeasureName.trim();
+    const cost = Number(newMeasureCost) || 0;
+    if (!name) return;
+    const updated = [...customMeasures, { id: crypto.randomUUID(), name, cost }];
+    saveCustomMeasuresList(updated);
+    setNewMeasureName("");
+    setNewMeasureCost("");
+    setShowAddForm(false);
+  }
+
+  function removeCustomMeasure(id: string) {
+    const updated = customMeasures.filter((m) => m.id !== id);
+    saveCustomMeasuresList(updated);
   }
 
   const [coutEtancheite, setCoutEtancheite] = useState(5000);
@@ -132,7 +162,8 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const totalPlinthes = showGasConversionHeatingToElec ? nbUnits * coutPlinthes : 0;
   const totalChauffeEauElecInd = showGasConversionHotWaterToElec ? nbUnits * coutChauffeEauElecInd : 0;
 
-  const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd;
+  const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
+  const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalCustom;
   const totalSubvention = showHeatingStrategy ? nbThermo * SUBVENTION_THERMO : 0;
   const totalApresSubvention = totalBrut - totalSubvention;
 
@@ -551,6 +582,161 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                     }
                   </td>
                 </tr>
+              )}
+
+              {/* Mesures manuelles */}
+              {customMeasures.map((measure) => (
+                <tr key={measure.id} className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <IconBox>
+                        <span style={{ fontSize: "14px", color: "#1e3a5f" }}>+</span>
+                      </IconBox>
+                      <div>
+                        <p className="font-semibold text-slate-800">{measure.name}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Mesure ajoutée manuellement</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                  <td className="px-5 py-4 text-right text-xs text-slate-400 italic">Forfait</td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
+                        {measure.cost.toLocaleString("fr-CA")} $
+                      </span>
+                      {!exportMode && (
+                        <button
+                          data-testid={`btn-remove-measure-${measure.id}`}
+                          onClick={() => removeCustomMeasure(measure.id)}
+                          title="Supprimer cette mesure"
+                          style={{
+                            width: "20px",
+                            height: "20px",
+                            borderRadius: "50%",
+                            border: "1px solid #fca5a5",
+                            backgroundColor: "#fff1f2",
+                            color: "#dc2626",
+                            fontSize: "14px",
+                            lineHeight: "1",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Formulaire d'ajout de mesure */}
+              {!exportMode && (
+                showAddForm ? (
+                  <tr style={{ backgroundColor: "#f0f7ff" }}>
+                    <td className="px-5 py-3" colSpan={2}>
+                      <input
+                        data-testid="input-new-measure-name"
+                        type="text"
+                        value={newMeasureName}
+                        onChange={(e) => setNewMeasureName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") { setShowAddForm(false); setNewMeasureName(""); setNewMeasureCost(""); } }}
+                        placeholder="Nom de la mesure…"
+                        autoFocus
+                        style={{
+                          width: "100%",
+                          fontSize: "13px",
+                          padding: "4px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #93c5fd",
+                          outline: "none",
+                          backgroundColor: "#fff",
+                        }}
+                      />
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <input
+                          data-testid="input-new-measure-cost"
+                          type="number"
+                          value={newMeasureCost}
+                          onChange={(e) => setNewMeasureCost(e.target.value === "" ? "" : Number(e.target.value))}
+                          onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); }}
+                          placeholder="0"
+                          style={{
+                            width: "100px",
+                            textAlign: "right",
+                            fontSize: "13px",
+                            padding: "4px 8px",
+                            borderRadius: "6px",
+                            border: "1px solid #93c5fd",
+                            outline: "none",
+                            backgroundColor: "#fff",
+                          }}
+                        />
+                        <span className="text-slate-400 text-xs">$</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          data-testid="btn-confirm-add-measure"
+                          onClick={addCustomMeasure}
+                          disabled={!newMeasureName.trim()}
+                          style={{
+                            padding: "4px 14px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            borderRadius: "6px",
+                            border: "none",
+                            cursor: newMeasureName.trim() ? "pointer" : "not-allowed",
+                            backgroundColor: newMeasureName.trim() ? "#1e3a5f" : "#94a3b8",
+                            color: "#fff",
+                          }}
+                        >
+                          Ajouter
+                        </button>
+                        <button
+                          data-testid="btn-cancel-add-measure"
+                          onClick={() => { setShowAddForm(false); setNewMeasureName(""); setNewMeasureCost(""); }}
+                          style={{ padding: "4px 10px", fontSize: "12px", borderRadius: "6px", border: "1px solid #e2e8f0", cursor: "pointer", backgroundColor: "#fff", color: "#64748b" }}
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-2">
+                      <button
+                        data-testid="btn-add-custom-measure"
+                        onClick={() => setShowAddForm(true)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: "#1e3a5f",
+                          border: "1px dashed #1e3a5f50",
+                          borderRadius: "6px",
+                          padding: "5px 14px",
+                          cursor: "pointer",
+                          backgroundColor: "transparent",
+                          opacity: 0.75,
+                        }}
+                      >
+                        <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span>
+                        Ajouter une mesure
+                      </button>
+                    </td>
+                  </tr>
+                )
               )}
 
             </tbody>
