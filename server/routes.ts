@@ -257,7 +257,8 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
       const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
-      const reportUrl = `${internalOrigin}/project/${projectId}/print-empreinte`;
+      const queryString = new URLSearchParams(req.query as Record<string, string>).toString();
+      const reportUrl = `${internalOrigin}/project/${projectId}/print-empreinte${queryString ? `?${queryString}` : ""}`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#empreinte-content");
       const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
       res.setHeader("Content-Type", "application/pdf");

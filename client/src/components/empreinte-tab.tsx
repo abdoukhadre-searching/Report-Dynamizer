@@ -14,9 +14,25 @@ import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 const thermoSubventionImg = "/thermo-subvention-hydro.jpg";
 
+interface EmpreinteInitialValues {
+  nbThermo?: number;
+  nbUnits?: number;
+  nbVrc?: number;
+  coutEtancheite?: number;
+  coutThermo?: number;
+  coutChauffeEau?: number;
+  coutVrc?: number;
+  coutFaibleDebit?: number;
+  coutLed?: number;
+  coutPlinthes?: number;
+  coutChauffeEauElecInd?: number;
+  customMeasures?: { id: string; name: string; cost: number }[];
+}
+
 interface EmpreinteTabProps {
   project: Project;
   exportMode?: boolean;
+  initialValues?: EmpreinteInitialValues;
 }
 
 function getOccupantCount(occupants?: string): number {
@@ -74,11 +90,13 @@ function isFossilFuel(fuelType?: string): boolean {
 
 const SUBVENTION_THERMO = 1296;
 
-export default function EmpreinteTab({ project, exportMode = false }: EmpreinteTabProps) {
+export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
-  const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>((project.customMeasures as { id: string; name: string; cost: number }[]) || []);
+  const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>(
+    initialValues?.customMeasures ?? (project.customMeasures as { id: string; name: string; cost: number }[]) ?? []
+  );
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMeasureName, setNewMeasureName] = useState("");
   const [newMeasureCost, setNewMeasureCost] = useState<number | "">("");
@@ -123,17 +141,25 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
     saveCustomMeasuresList(updated);
   }
 
-  const [coutEtancheite, setCoutEtancheite] = useState(5000);
-  const [coutThermo, setCoutThermo] = useState(2995);
-  const [coutChauffeEau, setCoutChauffeEau] = useState(2485);
-  const [coutVrc, setCoutVrc] = useState(0);
-  const [nbVrc, setNbVrc] = useState(1);
-  const [coutFaibleDebit, setCoutFaibleDebit] = useState(0);
-  const [coutLed, setCoutLed] = useState(0);
-  const [coutPlinthes, setCoutPlinthes] = useState(0);
-  const [coutChauffeEauElecInd, setCoutChauffeEauElecInd] = useState(0);
-  const [nbThermo, setNbThermo] = useState(() => { const n = getThermopompeCount((project.preReportData as ReportData | null)?.buildingInfo?.occupants); return n > 0 ? n : 1; });
-  const [nbUnits, setNbUnits] = useState(() => { const n = getNumUnitsFromOccupants((project.preReportData as ReportData | null)?.buildingInfo?.occupants); return n > 0 ? n : 1; });
+  const [coutEtancheite, setCoutEtancheite] = useState(initialValues?.coutEtancheite ?? 5000);
+  const [coutThermo, setCoutThermo] = useState(initialValues?.coutThermo ?? 2995);
+  const [coutChauffeEau, setCoutChauffeEau] = useState(initialValues?.coutChauffeEau ?? 2485);
+  const [coutVrc, setCoutVrc] = useState(initialValues?.coutVrc ?? 0);
+  const [nbVrc, setNbVrc] = useState(initialValues?.nbVrc ?? 1);
+  const [coutFaibleDebit, setCoutFaibleDebit] = useState(initialValues?.coutFaibleDebit ?? 0);
+  const [coutLed, setCoutLed] = useState(initialValues?.coutLed ?? 0);
+  const [coutPlinthes, setCoutPlinthes] = useState(initialValues?.coutPlinthes ?? 0);
+  const [coutChauffeEauElecInd, setCoutChauffeEauElecInd] = useState(initialValues?.coutChauffeEauElecInd ?? 0);
+  const [nbThermo, setNbThermo] = useState(() => {
+    if (initialValues?.nbThermo !== undefined) return initialValues.nbThermo;
+    const n = getThermopompeCount((project.preReportData as ReportData | null)?.buildingInfo?.occupants);
+    return n > 0 ? n : 1;
+  });
+  const [nbUnits, setNbUnits] = useState(() => {
+    if (initialValues?.nbUnits !== undefined) return initialValues.nbUnits;
+    const n = getNumUnitsFromOccupants((project.preReportData as ReportData | null)?.buildingInfo?.occupants);
+    return n > 0 ? n : 1;
+  });
 
   if (!pre || !post) return null;
 
@@ -254,7 +280,21 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                     if (isExporting) return;
                     setIsExporting(true);
                     try {
-                      const response = await fetch(`/api/projects/${project.id}/export-empreinte-pdf`);
+                      const params = new URLSearchParams({
+                        nbThermo: String(nbThermo),
+                        nbUnits: String(nbUnits),
+                        nbVrc: String(nbVrc),
+                        coutEtancheite: String(coutEtancheite),
+                        coutThermo: String(coutThermo),
+                        coutChauffeEau: String(coutChauffeEau),
+                        coutVrc: String(coutVrc),
+                        coutFaibleDebit: String(coutFaibleDebit),
+                        coutLed: String(coutLed),
+                        coutPlinthes: String(coutPlinthes),
+                        coutChauffeEauElecInd: String(coutChauffeEauElecInd),
+                        customMeasures: JSON.stringify(customMeasures),
+                      });
+                      const response = await fetch(`/api/projects/${project.id}/export-empreinte-pdf?${params}`);
                       if (!response.ok) {
                         const data = await response.json().catch(() => null);
                         throw new Error(data?.message || "Échec de génération du PDF");
