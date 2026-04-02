@@ -15,7 +15,8 @@ import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pag
 import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
 import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
-const thermoSubventionImg = "/thermo-subvention-hydro.jpg";
+import tclSubventionImg from "@assets/Subvention_TCL_1775167218708.png";
+const thermoSubventionImgInnovair = "/thermo-subvention-hydro.jpg";
 
 interface EmpreinteInitialValues {
   nbThermo?: number;
@@ -91,7 +92,8 @@ function isFossilFuel(fuelType?: string): boolean {
   return /gaz\s*naturel|mazout|propane|diesel|butane|charbon|kérosène|bois|granules|lignite|essence/i.test(fuelType);
 }
 
-const SUBVENTION_THERMO = 1296;
+const SUBVENTION_THERMO_INNOVAIR = 1296;
+const SUBVENTION_THERMO_TCL = 1680;
 
 export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
   const { toast } = useToast();
@@ -108,6 +110,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const post = project.postReportData as ReportData | null;
 
   const isNewBuilding = project.buildingType === "new";
+  const subventionThermo = thermopompeModel === "innovair" ? SUBVENTION_THERMO_INNOVAIR : SUBVENTION_THERMO_TCL;
+  const thermoSubventionImg = thermopompeModel === "innovair" ? thermoSubventionImgInnovair : tclSubventionImg;
 
   async function saveProgrammeType(value: string) {
     setProgrammeType(value);
@@ -201,7 +205,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
   const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalCustom;
-  const totalSubvention = showHeatingStrategy ? nbThermo * SUBVENTION_THERMO : 0;
+  const totalSubvention = showHeatingStrategy ? nbThermo * subventionThermo : 0;
   const totalApresSubvention = totalBrut - totalSubvention;
 
   const address = project.address || pre.buildingInfo?.address || "";
@@ -901,7 +905,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         <div>
                           <p className="text-xs font-semibold text-green-800">Possibilité de subvention — Thermopompes</p>
                           <p className="text-xs text-green-600 mt-0.5">
-                            {nbThermo} unité{nbThermo > 1 ? "s" : ""} × {SUBVENTION_THERMO.toLocaleString("fr-CA")} $/unité — Programme Hydro-Québec
+                            {nbThermo} unité{nbThermo > 1 ? "s" : ""} × {subventionThermo.toLocaleString("fr-CA")} $/unité — Programme Hydro-Québec
                           </p>
                         </div>
                       </div>
