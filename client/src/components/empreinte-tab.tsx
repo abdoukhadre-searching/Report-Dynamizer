@@ -4,10 +4,9 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
-import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
-import ashpPage1Path from "@assets/ASHP_page-0001_1774063357553.jpg";
-import ashpPage2Path from "@assets/ASHP_page-0002_1774063357552.jpg";
+import tclPhotoPath from "@assets/182568194_3810005075735040_7297035271127510089_n_1775165080896.jpg";
+import tclSpecPage1Path from "@assets/ASHP_page-0001_1775165094129.jpg";
+import tclSpecPage2Path from "@assets/ASHP_page-0002_1775165094129.jpg";
 import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
 import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
 import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
@@ -397,7 +396,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Thermopompes</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Innovair QHW12H2UZRA / QOS12H2BM5A</p>
+                        <p className="text-xs text-slate-400 mt-0.5">TCL T-Pro-25ES — 12 000 BTU | HSPF2 10.5 | SEER2 25</p>
                       </div>
                     </div>
                   </td>
@@ -927,32 +926,27 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
                   <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                    Fiche technique — Thermopompe Innovair
+                    Fiche technique — Thermopompe TCL T-Pro-25ES
                   </h3>
                 </div>
               </CardHeader>
               <div className="p-4">
                 <img
-                  src={innovairPage1Path}
-                  alt="Innovair Q4 — Spécifications techniques page 1"
+                  src={tclPhotoPath}
+                  alt="TCL T-Pro-25ES — Thermopompe murale"
                   className="w-full rounded border border-slate-200 shadow-sm"
                 />
               </div>
             </div>
             <div className="p-4 space-y-4">
               <img
-                src={innovairPage2Path}
-                alt="Innovair Q4 — Spécifications techniques page 2"
+                src={tclSpecPage1Path}
+                alt="TCL T-Pro-25ES — Spécifications techniques page 1"
                 className="w-full rounded border border-slate-200 shadow-sm"
               />
               <img
-                src={ashpPage1Path}
-                alt="ASHP — Caractéristiques page 1"
-                className="w-full rounded border border-slate-200 shadow-sm"
-              />
-              <img
-                src={ashpPage2Path}
-                alt="ASHP — Caractéristiques page 2"
+                src={tclSpecPage2Path}
+                alt="TCL T-Pro-25ES — Spécifications techniques page 2"
                 className="w-full rounded border border-slate-200 shadow-sm"
               />
             </div>
@@ -1002,7 +996,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
             <CardContent className="p-4">
               <img
                 src={thermoSubventionImg}
-                alt="Tableau des subventions Hydro-Québec pour thermopompes Innovair"
+                alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"
                 className="w-full rounded-md border border-slate-200 shadow-sm"
               />
             </CardContent>
