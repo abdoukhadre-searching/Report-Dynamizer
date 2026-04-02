@@ -145,7 +145,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const [coutThermo, setCoutThermo] = useState(initialValues?.coutThermo ?? 2995);
   const [coutChauffeEau, setCoutChauffeEau] = useState(initialValues?.coutChauffeEau ?? 2485);
   const [coutVrc, setCoutVrc] = useState(initialValues?.coutVrc ?? 0);
-  const [nbVrc, setNbVrc] = useState(initialValues?.nbVrc ?? 1);
+  const [nbVrc, setNbVrc] = useState(() => {
+    if (initialValues?.nbVrc !== undefined) return initialValues.nbVrc;
+    const n = getNumUnitsFromOccupants((project.preReportData as ReportData | null)?.buildingInfo?.occupants);
+    return n > 0 ? n : 1;
+  });
   const [coutFaibleDebit, setCoutFaibleDebit] = useState(initialValues?.coutFaibleDebit ?? 0);
   const [coutLed, setCoutLed] = useState(initialValues?.coutLed ?? 0);
   const [coutPlinthes, setCoutPlinthes] = useState(initialValues?.coutPlinthes ?? 0);
@@ -403,8 +407,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <div className="flex items-center gap-3">
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">Thermopompes</p>
-                        <p className="text-xs text-slate-400 mt-0.5">TCL T-Pro-25ES — 12 000 BTU | HSPF2 10.5 | SEER2 25</p>
+                        <p className="font-semibold text-slate-800">TCL T-Pro-25ES</p>
+                        <p className="text-xs text-slate-400 mt-0.5">12 000 BTU | HSPF2 10.5 | SEER2 25</p>
                       </div>
                     </div>
                   </td>
