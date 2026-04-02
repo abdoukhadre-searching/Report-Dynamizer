@@ -489,7 +489,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       <IconBox><Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Chauffe-eau thermopompe</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Installation d'un chauffe-eau thermopompe</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Installation de chauffe-eau thermopompe</p>
                       </div>
                     </div>
                   </td>
