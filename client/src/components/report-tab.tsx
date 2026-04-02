@@ -2143,8 +2143,8 @@ export default function ReportTab({
                     </p>
                     <p className="mt-1">
                       Les thermopompes recommandées possèdent une capacité
-                      minimale de 12 000 BTU, avec une efficacité d'environ 10
-                      HSPF2 et 23 SEER2.
+                      minimale de 12 000 BTU, avec une efficacité d'environ 10.5
+                      HSPF2 et 25 SEER2.
                     </p>
                     <p className="mt-1">
                       Ces équipements permettent de produire plus d'énergie
