@@ -7,16 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import tclPhotoPath from "@assets/182568194_3810005075735040_7297035271127510089_n_1775165080896.jpg";
 import tclSpecPage1Path from "@assets/ASHP_page-0001_1775165094129.jpg";
 import tclSpecPage2Path from "@assets/ASHP_page-0002_1775165094129.jpg";
-import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
-import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
-import ashpPage1Path from "@assets/ASHP_page-0001_1774063357553.jpg";
-import ashpPage2Path from "@assets/ASHP_page-0002_1774063357552.jpg";
 import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
 import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
 import rheemSpecPath from "@assets/RheemHeatPumpPROPH40T2RH37530-2026-03-17_page-0001_1774062648838.jpg";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import tclSubventionImg from "@assets/Subvention_TCL_1775167218708.png";
-const thermoSubventionImgInnovair = "/thermo-subvention-hydro.jpg";
 
 interface EmpreinteInitialValues {
   nbThermo?: number;
@@ -92,14 +87,12 @@ function isFossilFuel(fuelType?: string): boolean {
   return /gaz\s*naturel|mazout|propane|diesel|butane|charbon|kérosène|bois|granules|lignite|essence/i.test(fuelType);
 }
 
-const SUBVENTION_THERMO_INNOVAIR = 1296;
-const SUBVENTION_THERMO_TCL = 1680;
+const SUBVENTION_THERMO = 1680;
 
 export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
-  const [thermopompeModel, setThermopompeModel] = useState<string>(project.thermopompeModel || "tcl");
   const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>(
     initialValues?.customMeasures ?? (project.customMeasures as { id: string; name: string; cost: number }[]) ?? []
   );
@@ -110,8 +103,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const post = project.postReportData as ReportData | null;
 
   const isNewBuilding = project.buildingType === "new";
-  const subventionThermo = thermopompeModel === "innovair" ? SUBVENTION_THERMO_INNOVAIR : SUBVENTION_THERMO_TCL;
-  const thermoSubventionImg = thermopompeModel === "innovair" ? thermoSubventionImgInnovair : tclSubventionImg;
+  const subventionThermo = SUBVENTION_THERMO;
 
   async function saveProgrammeType(value: string) {
     setProgrammeType(value);
@@ -120,16 +112,6 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
     } catch {
       toast({ title: "Erreur", description: "Impossible de sauvegarder le type de programme.", variant: "destructive" });
-    }
-  }
-
-  async function saveThermopompeModel(value: string) {
-    setThermopompeModel(value);
-    try {
-      await apiRequest("PATCH", `/api/projects/${project.id}`, { thermopompeModel: value });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
-    } catch {
-      toast({ title: "Erreur", description: "Impossible de sauvegarder le modèle de thermopompe.", variant: "destructive" });
     }
   }
 
@@ -290,35 +272,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                   </select>
                 )}
               </div>
-              {/* Thermopompe model selector */}
               {!isNewBuilding && (
                 <div className="flex items-center gap-2 mt-2">
-                  {exportMode ? (
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#dc262615", color: "#dc2626" }}>
-                      {thermopompeModel === "innovair" ? "Thermopompe : Innovair Q4" : "Thermopompe : TCL T-Pro-25ES"}
-                    </span>
-                  ) : (
-                    <select
-                      data-testid="select-thermopompe-model"
-                      value={thermopompeModel}
-                      onChange={(e) => saveThermopompeModel(e.target.value)}
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        padding: "3px 28px 3px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #dc262640",
-                        color: "#dc2626",
-                        backgroundColor: "#fff5f5",
-                        cursor: "pointer",
-                        outline: "none",
-                        appearance: "auto",
-                      }}
-                    >
-                      <option value="tcl">Thermopompe : TCL T-Pro-25ES</option>
-                      <option value="innovair">Thermopompe : Innovair Q4</option>
-                    </select>
-                  )}
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#dc262615", color: "#dc2626" }}>
+                    Thermopompe : TCL T-Pro-25ES
+                  </span>
                 </div>
               )}
             </div>
@@ -446,11 +404,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Thermopompes</p>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {thermopompeModel === "innovair"
-                            ? "Innovair QHW12H2UZRA / QOS12H2BM5A"
-                            : "TCL T-Pro-25ES — 12 000 BTU | HSPF2 10.5 | SEER2 25"}
-                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">TCL T-Pro-25ES — 12 000 BTU | HSPF2 10.5 | SEER2 25</p>
                       </div>
                     </div>
                   </td>
@@ -980,32 +934,19 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
                   <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                    {thermopompeModel === "innovair"
-                      ? "Fiche technique — Thermopompe Innovair Q4"
-                      : "Fiche technique — Thermopompe TCL T-Pro-25ES"}
+                    Fiche technique — Thermopompe TCL T-Pro-25ES
                   </h3>
                 </div>
               </CardHeader>
-              {thermopompeModel === "innovair" ? (
-                <>
-                  <div className="p-4 space-y-4">
-                    <img src={innovairPage1Path} alt="Innovair Q4 — Spécifications techniques page 1" className="w-full rounded border border-slate-200 shadow-sm" />
-                    <img src={innovairPage2Path} alt="Innovair Q4 — Spécifications techniques page 2" className="w-full rounded border border-slate-200 shadow-sm" />
-                    <img src={ashpPage1Path} alt="ASHP — Caractéristiques page 1" className="w-full rounded border border-slate-200 shadow-sm" />
-                    <img src={ashpPage2Path} alt="ASHP — Caractéristiques page 2" className="w-full rounded border border-slate-200 shadow-sm" />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="p-4">
-                    <img src={tclPhotoPath} alt="TCL T-Pro-25ES — Thermopompe murale" className="w-full rounded border border-slate-200 shadow-sm" />
-                  </div>
-                  <div className="p-4 space-y-4">
-                    <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded border border-slate-200 shadow-sm" />
-                    <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded border border-slate-200 shadow-sm" />
-                  </div>
-                </>
-              )}
+              <>
+                <div className="p-4">
+                  <img src={tclPhotoPath} alt="TCL T-Pro-25ES — Thermopompe murale" className="w-full rounded border border-slate-200 shadow-sm" />
+                </div>
+                <div className="p-4 space-y-4">
+                  <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded border border-slate-200 shadow-sm" />
+                  <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded border border-slate-200 shadow-sm" />
+                </div>
+              </>
             </div>
           </Card>
 
@@ -1052,7 +993,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
             </CardHeader>
             <CardContent className="p-4">
               <img
-                src={thermoSubventionImg}
+                src={tclSubventionImg}
                 alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"
                 className="w-full rounded-md border border-slate-200 shadow-sm"
               />

@@ -14,10 +14,6 @@ import buildingCoverPath from "@assets/building-cover.png";
 import tclPhotoPath from "@assets/182568194_3810005075735040_7297035271127510089_n_1775165080896.jpg";
 import tclSpecPage1Path from "@assets/ASHP_page-0001_1775165094129.jpg";
 import tclSpecPage2Path from "@assets/ASHP_page-0002_1775165094129.jpg";
-import innovairPage1Path from "@assets/Q4_Innovair_(003)_page-0001_1773707799066.jpg";
-import innovairPage2Path from "@assets/Q4_Innovair_(003)_page-0002_1773707799066.jpg";
-import ashpPage1Path from "@assets/ASHP_page-0001_1774063357553.jpg";
-import ashpPage2Path from "@assets/ASHP_page-0002_1774063357552.jpg";
 import faibleDebitPath from "@assets/ECD_Faible_Débit_page-0001_1773707805841.jpg";
 import rheemPage1Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0001_1774062589098.jpg";
 import rheemPage2Path from "@assets/112977A7-A4C8-4E50-B387-6EA23C05007A_(1)_pages-to-jpg-0002_1774062589099.jpg";
@@ -2146,9 +2142,7 @@ export default function ReportTab({
                       chauffage et de climatisation.
                     </p>
                     <p className="mt-1">
-                      {project.thermopompeModel === "innovair"
-                        ? "Les thermopompes recommandées possèdent une capacité minimale de 12 000 BTU, avec une efficacité d'environ 10 HSPF2 et 23 SEER2."
-                        : "Les thermopompes recommandées possèdent une capacité minimale de 12 000 BTU, avec une efficacité d'environ 10.5 HSPF2 et 25 SEER2."}
+                      Les thermopompes recommandées possèdent une capacité minimale de 12 000 BTU, avec une efficacité d'environ 10.5 HSPF2 et 25 SEER2.
                     </p>
                     <p className="mt-1">
                       Ces équipements permettent de produire plus d'énergie
@@ -3258,46 +3252,27 @@ export default function ReportTab({
                               (page 1)
                             </h3>
                             <p className="text-xs text-muted-foreground mb-2">
-                              {project.thermopompeModel === "innovair"
-                                ? `Ajout de ${thermopompeCount} Thermopompes d'au moins 12 000 btu, 10 HSPF2 et 23 SEER2.`
-                                : `Ajout de ${thermopompeCount} Thermopompes TCL T-Pro-25ES — 12 000 BTU, 10.5 HSPF2 et 25 SEER2.`}
+                              {`Ajout de ${thermopompeCount} Thermopompes TCL T-Pro-25ES — 12 000 BTU, 10.5 HSPF2 et 25 SEER2.`}
                             </p>
                             <AnnexImageUpload
                               key="annex-thermopompes"
                               projectId={project.id}
                               annexType="thermopompes"
-                              label={project.thermopompeModel === "innovair" ? "Thermopompes – page 1" : "Thermopompes – photo"}
+                              label="Thermopompes – photo"
                               currentImage={annexImages.thermopompes}
-                              defaultImageUrl={project.thermopompeModel === "innovair" ? innovairPage1Path : tclPhotoPath}
+                              defaultImageUrl={tclPhotoPath}
                             />
                           </div>
-                          {project.thermopompeModel === "innovair" ? (
-                            <>
-                              <div className="print:break-after-page">
-                                <h3 className="text-sm font-semibold mb-2">(suite) Innovair Q4 — Spécifications techniques (page 2)</h3>
-                                <img src={innovairPage2Path} alt="Innovair Q4 — Spécifications techniques page 2" className="w-full rounded-md border" data-testid="img-annex-thermopompes-p2" />
-                              </div>
-                              <div className="print:break-after-page">
-                                <h3 className="text-sm font-semibold mb-2">(suite) Thermopompes — Caractéristiques ASHP (page 3)</h3>
-                                <img src={ashpPage1Path} alt="ASHP — Caractéristiques page 1" className="w-full rounded-md border" data-testid="img-annex-thermopompes-ashp-p1" />
-                              </div>
-                              <div className="print:break-after-page">
-                                <h3 className="text-sm font-semibold mb-2">(suite) Thermopompes — Caractéristiques ASHP (page 4)</h3>
-                                <img src={ashpPage2Path} alt="ASHP — Caractéristiques page 2" className="w-full rounded-md border" data-testid="img-annex-thermopompes-ashp-p2" />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="print:break-after-page">
-                                <h3 className="text-sm font-semibold mb-2">(suite) TCL T-Pro-25ES — Spécifications techniques (page 1)</h3>
-                                <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded-md border" data-testid="img-annex-thermopompes-p2" />
-                              </div>
-                              <div className="print:break-after-page">
-                                <h3 className="text-sm font-semibold mb-2">(suite) TCL T-Pro-25ES — Spécifications techniques (page 2)</h3>
-                                <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded-md border" data-testid="img-annex-thermopompes-ashp-p1" />
-                              </div>
-                            </>
-                          )}
+                          <>
+                            <div className="print:break-after-page">
+                              <h3 className="text-sm font-semibold mb-2">(suite) TCL T-Pro-25ES — Spécifications techniques (page 1)</h3>
+                              <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded-md border" data-testid="img-annex-thermopompes-p2" />
+                            </div>
+                            <div className="print:break-after-page">
+                              <h3 className="text-sm font-semibold mb-2">(suite) TCL T-Pro-25ES — Spécifications techniques (page 2)</h3>
+                              <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded-md border" data-testid="img-annex-thermopompes-ashp-p1" />
+                            </div>
+                          </>
                         </>
                       )}
 
