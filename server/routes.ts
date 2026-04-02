@@ -492,9 +492,26 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Project not found" });
       }
 
+      // Si le fichier est un PDF, convertir la première page en image via pdftoppm
+      let imageBuffer: Buffer = req.file.buffer;
+      if (req.file.mimetype === "application/pdf" || req.file.originalname?.toLowerCase().endsWith(".pdf")) {
+        const tmpSuffix = crypto.randomBytes(8).toString("hex");
+        const tmpPdf = path.join(os.tmpdir(), `annex-${tmpSuffix}.pdf`);
+        const tmpPrefix = path.join(os.tmpdir(), `annex-${tmpSuffix}-out`);
+        fs.writeFileSync(tmpPdf, req.file.buffer);
+        try {
+          await execFileAsync("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
+          const outputFile = `${tmpPrefix}-1.jpg`;
+          imageBuffer = fs.readFileSync(outputFile);
+          fs.unlinkSync(outputFile);
+        } finally {
+          if (fs.existsSync(tmpPdf)) fs.unlinkSync(tmpPdf);
+        }
+      }
+
       const fileName = `${projectId}_${annexType}_${Date.now()}.jpg`;
       const filePath = path.join(UPLOADS_DIR, fileName);
-      const compressed = await sharp(req.file.buffer)
+      const compressed = await sharp(imageBuffer)
         .rotate()
         .resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 90, mozjpeg: true })

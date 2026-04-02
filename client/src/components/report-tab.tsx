@@ -134,10 +134,10 @@ function AnnexImageUpload({
         <div className="flex gap-2 print:hidden">
           <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30">
             <Upload className="w-3 h-3" />
-            Remplacer l'image
+            Remplacer (image ou PDF)
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -170,10 +170,10 @@ function AnnexImageUpload({
         />
         <label className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
           <Upload className="w-3 h-3" />
-          Remplacer par une image personnalisée
+          Remplacer par une image ou PDF personnalisé
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,application/pdf"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -196,10 +196,10 @@ function AnnexImageUpload({
         ) : (
           <ImageIcon className="w-4 h-4" />
         )}
-        Importer une image pour {label}
+        Importer image ou PDF pour {label}
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];

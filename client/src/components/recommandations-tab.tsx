@@ -99,8 +99,8 @@ function AnnexImageUpload({
         <div className="flex gap-2 print:hidden">
           <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30">
             <Upload className="w-3 h-3" />
-            Remplacer l'image
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadMutation.mutate({ file, annexType }); }} />
+            Remplacer (image ou PDF)
+            <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadMutation.mutate({ file, annexType }); }} />
           </label>
           <button
             type="button"
@@ -122,8 +122,8 @@ function AnnexImageUpload({
         <img src={defaultImageUrl} alt={label} className="w-full rounded-md border" />
         <label className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md cursor-pointer text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
           <Upload className="w-3 h-3" />
-          Remplacer par une image personnalisée
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadMutation.mutate({ file, annexType }); }} />
+          Remplacer par une image ou PDF personnalisé
+          <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadMutation.mutate({ file, annexType }); }} />
         </label>
       </div>
     );
@@ -133,8 +133,8 @@ function AnnexImageUpload({
     <div className="mt-3">
       <label className="flex items-center justify-center gap-2 px-4 py-6 border border-dashed rounded-md cursor-pointer text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/30 print:hidden">
         {uploadMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-        Importer une image pour {label}
-        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadMutation.mutate({ file, annexType }); }} />
+        Importer image ou PDF pour {label}
+        <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadMutation.mutate({ file, annexType }); }} />
       </label>
     </div>
   );
