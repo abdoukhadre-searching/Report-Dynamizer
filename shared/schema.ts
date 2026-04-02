@@ -48,6 +48,7 @@ export const projects = pgTable("projects", {
   evaluationDate: text("evaluation_date"),
   buildingType: text("building_type").notNull().default("existing"),
   programmeType: text("programme_type").notNull().default("optimisation"),
+  thermopompeModel: text("thermopompe_model").notNull().default("tcl"),
   customMeasures: jsonb("custom_measures").default([]),
   status: text("status").notNull().default("draft"),
   preReportRaw: text("pre_report_raw"),
