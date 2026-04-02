@@ -127,6 +127,7 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const [coutThermo, setCoutThermo] = useState(2995);
   const [coutChauffeEau, setCoutChauffeEau] = useState(2485);
   const [coutVrc, setCoutVrc] = useState(0);
+  const [nbVrc, setNbVrc] = useState(1);
   const [coutFaibleDebit, setCoutFaibleDebit] = useState(0);
   const [coutLed, setCoutLed] = useState(0);
   const [coutPlinthes, setCoutPlinthes] = useState(0);
@@ -152,7 +153,7 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
   const totalEtancheite = showAirTightnessStrategy ? coutEtancheite : 0;
   const totalThermo = showHeatingStrategy ? nbThermo * coutThermo : 0;
   const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbUnits * coutChauffeEau : 0;
-  const totalVrc = showVrcStrategy ? coutVrc : 0;
+  const totalVrc = showVrcStrategy ? nbVrc * coutVrc : 0;
   const totalFaibleDebit = showHotWaterStrategy ? coutFaibleDebit : 0;
   const totalLed = showLedStrategy ? coutLed : 0;
   const totalPlinthes = showGasConversionHeatingToElec ? nbUnits * coutPlinthes : 0;
@@ -446,7 +447,18 @@ export default function EmpreinteTab({ project, exportMode = false }: EmpreinteT
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                  <td className="px-5 py-4 text-center">
+                    {exportMode ? <UnitBadge n={nbVrc} /> : (
+                      <input
+                        data-testid="input-nb-vrc"
+                        type="number"
+                        min={1}
+                        value={nbVrc}
+                        onChange={(e) => setNbVrc(Math.max(1, Number(e.target.value) || 1))}
+                        style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
+                      />
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <input
