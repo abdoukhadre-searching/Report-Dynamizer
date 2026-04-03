@@ -863,7 +863,13 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         <div>
                           <p className="text-xs font-semibold text-green-800">Possibilité de subvention — Thermopompes</p>
                           <p className="text-xs text-green-600 mt-0.5">
-                            {nbThermo} unité{nbThermo > 1 ? "s" : ""} × {subventionThermo.toLocaleString("fr-CA")} $/unité — Programme Hydro-Québec
+                            {nbThermo} unité{nbThermo > 1 ? "s" : ""} × {subventionThermo.toLocaleString("fr-CA")} $/unité — Programme Logisvert{" "}
+                            <a
+                              href="#section-subvention-logisvert"
+                              onClick={(e) => { e.preventDefault(); document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth" }); }}
+                              className="underline font-semibold print:hidden"
+                              style={{ color: "#16a34a" }}
+                            >[ Voir en bas de page ]</a>
                           </p>
                         </div>
                       </div>
@@ -985,13 +991,13 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
             </Card>
           )}
 
-          {/* Subvention Hydro-Québec image */}
-          <Card className="overflow-hidden border shadow-sm">
+          {/* Subvention Logisvert image */}
+          <Card id="section-subvention-logisvert" className="overflow-hidden border shadow-sm">
             <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
               <div className="flex items-center gap-2">
                 <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#16a34a" }} />
                 <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                  Programme de subvention — Hydro-Québec
+                  Programme de subvention — Logisvert
                 </h3>
               </div>
             </CardHeader>
