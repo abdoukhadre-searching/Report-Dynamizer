@@ -661,7 +661,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       <IconBox><Lightbulb className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Éclairage DEL</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Installation de luminaires DEL haute efficacité</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Installation de luminaires DEL</p>
                       </div>
                     </div>
                   </td>
