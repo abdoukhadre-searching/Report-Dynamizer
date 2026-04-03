@@ -538,8 +538,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <div className="flex items-center gap-3">
                       <IconBox><Waves className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">Pommeaux de douche et Robinets de salle de bain</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Pommeaux ECD faible débit</p>
+                        <p className="font-semibold text-slate-800">Robinetterie faible débit</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Pommeaux de douche et Robinets de salle de bain</p>
                       </div>
                     </div>
                   </td>
