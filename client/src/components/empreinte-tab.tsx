@@ -867,7 +867,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                             <a
                               href="#section-subvention-logisvert"
                               onClick={(e) => { e.preventDefault(); document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth" }); }}
-                              className="underline font-semibold print:hidden"
+                              className="underline font-semibold"
                               style={{ color: "#16a34a" }}
                             >[ Voir en bas de page ]</a>
                           </p>
