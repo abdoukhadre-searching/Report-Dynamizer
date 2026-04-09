@@ -122,7 +122,7 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showLedStrategy = hasLedImprovement(pre, post);
-  const showVrcStrategy = hasVrcInstallation(post);
+  const showVrcStrategy = hasVrcInstallation(post) && project.buildingType !== "new";
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
   const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType);
   const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType);
