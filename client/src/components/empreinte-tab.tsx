@@ -169,7 +169,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
-  const showVrcStrategy = hasVrcInstallation(post);
+  const showVrcStrategy = hasVrcInstallation(post) && !isNewBuilding;
   const showLedStrategy = hasLedImprovement(pre, post);
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);

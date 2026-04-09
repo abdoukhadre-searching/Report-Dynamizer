@@ -580,7 +580,7 @@ export default function ReportTab({
   const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showLedStrategy = hasLedImprovement(pre, post);
-  const showVrcStrategy = hasVrcInstallation(post);
+  const showVrcStrategy = hasVrcInstallation(post) && project.buildingType !== "new";
   const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType);
   const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType);
   const showGasConversionStrategy = showGasConversionHeatingToElec || showGasConversionHotWaterToElec;
