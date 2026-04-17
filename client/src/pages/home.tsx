@@ -22,8 +22,7 @@ import {
   LogOut,
   Shield,
   ChevronDown,
-  CheckCircle2,
-  Clock,
+  ChevronRight,
   X,
 } from "lucide-react";
 import {
@@ -47,51 +46,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type SortKey = "date_desc" | "date_asc" | "city" | "status";
+type SortKey = "date_desc" | "date_asc" | "city";
 
 const sortLabels: Record<SortKey, string> = {
   date_desc: "Plus récent",
   date_asc: "Plus ancien",
   city: "Ville (A→Z)",
-  status: "Statut",
 };
-
-function statusInfo(status: string) {
-  switch (status) {
-    case "ready":
-    case "completed":
-      return { label: "Prêt", color: "#16a34a", bg: "#f0fdf4", dot: "#22c55e" };
-    case "post_uploaded":
-      return { label: "POST chargé", color: "#2563eb", bg: "#eff6ff", dot: "#3b82f6" };
-    case "pre_uploaded":
-      return { label: "PRÉ chargé", color: "#d97706", bg: "#fffbeb", dot: "#f59e0b" };
-    default:
-      return { label: "Brouillon", color: "#64748b", bg: "#f8fafc", dot: "#94a3b8" };
-  }
-}
-
-function ProgressDots({ project }: { project: Project }) {
-  const hasPre = !!project.preReportData;
-  const hasPost = !!project.postReportData;
-  return (
-    <div className="flex items-center gap-1.5">
-      <div
-        className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
-        style={{ backgroundColor: hasPre ? "#dcfce7" : "#f1f5f9", color: hasPre ? "#16a34a" : "#94a3b8" }}
-      >
-        {hasPre ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-        PRÉ
-      </div>
-      <div
-        className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
-        style={{ backgroundColor: hasPost ? "#dcfce7" : "#f1f5f9", color: hasPost ? "#16a34a" : "#94a3b8" }}
-      >
-        {hasPost ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-        POST
-      </div>
-    </div>
-  );
-}
 
 function ProjectRow({
   project,
@@ -102,39 +63,17 @@ function ProjectRow({
   onDelete: (project: Project) => void;
   onClick: (id: string) => void;
 }) {
-  const st = statusInfo(project.status);
-  const isNew = project.buildingType === "new";
-
   return (
     <div
-      className="group flex items-center gap-4 px-5 py-4 rounded-xl border cursor-pointer transition-all hover:shadow-md"
+      className="group flex items-center gap-4 px-5 py-3.5 rounded-xl border cursor-pointer transition-all hover:shadow-sm hover:border-slate-300"
       style={{ backgroundColor: "#ffffff", borderColor: "#e8edf4" }}
       onClick={() => onClick(project.id)}
       data-testid={`card-project-${project.id}`}
     >
-      {/* Icon */}
-      <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: isNew ? "#f0fdf4" : "#eef2f8" }}
-      >
-        {isNew
-          ? <HardHat className="w-5 h-5" style={{ color: "#16a34a" }} />
-          : <Building2 className="w-5 h-5" style={{ color: "#1e3a5f" }} />}
-      </div>
-
       {/* Main info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-semibold text-slate-900 text-sm truncate">{project.name}</span>
-          <span
-            className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: st.bg, color: st.color }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: st.dot }} />
-            {st.label}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-slate-400">
+        <p className="font-semibold text-slate-900 text-sm truncate">{project.name}</p>
+        <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400">
           {project.city && (
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
@@ -150,46 +89,82 @@ function ProjectRow({
         </div>
       </div>
 
-      {/* Progress pills */}
-      <ProgressDots project={project} />
-
       {/* Actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
-          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
+          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
           onClick={(e) => { e.stopPropagation(); onDelete(project); }}
           data-testid={`button-delete-${project.id}`}
           title="Supprimer"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
-        <div className="flex items-center gap-1 text-xs font-medium text-slate-400 group-hover:text-slate-700 transition-colors">
+        <span className="flex items-center gap-1 text-xs text-slate-400 group-hover:text-slate-700 transition-colors">
           Ouvrir <ArrowRight className="w-3.5 h-3.5" />
-        </div>
+        </span>
       </div>
     </div>
   );
 }
 
-function SectionList({
+function CollapsibleSection({
+  title,
+  icon,
+  iconBg,
+  iconColor,
+  count,
   projects,
   onDelete,
   onNavigate,
   emptyMessage,
+  defaultOpen = true,
 }: {
+  title: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+  count: number;
   projects: Project[];
   onDelete: (p: Project) => void;
   onNavigate: (id: string) => void;
   emptyMessage: string;
+  defaultOpen?: boolean;
 }) {
-  if (projects.length === 0)
-    return <p className="text-sm text-slate-400 py-3 px-1">{emptyMessage}</p>;
+  const [open, setOpen] = useState(defaultOpen);
+
   return (
-    <div className="space-y-2">
-      {projects.map((p) => (
-        <ProjectRow key={p.id} project={p} onDelete={onDelete} onClick={onNavigate} />
-      ))}
-    </div>
+    <section>
+      <button
+        className="w-full flex items-center gap-3 py-3 px-1 rounded-lg hover:bg-slate-50 transition-colors text-left"
+        onClick={() => setOpen((o) => !o)}
+        data-testid={`section-toggle-${title}`}
+      >
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: iconBg }}>
+          <span style={{ color: iconColor }}>{icon}</span>
+        </div>
+        <div className="flex-1">
+          <span className="font-bold text-slate-900 text-sm">{title}</span>
+          <span className="ml-2 text-xs text-slate-400 font-normal">
+            {count} projet{count !== 1 ? "s" : ""}
+          </span>
+        </div>
+        {open
+          ? <ChevronDown className="w-4 h-4 text-slate-400" />
+          : <ChevronRight className="w-4 h-4 text-slate-400" />}
+      </button>
+
+      {open && (
+        <div className="mt-2 space-y-2">
+          {projects.length === 0 ? (
+            <p className="text-sm text-slate-400 py-3 px-1">{emptyMessage}</p>
+          ) : (
+            projects.map((p) => (
+              <ProjectRow key={p.id} project={p} onDelete={onDelete} onClick={onNavigate} />
+            ))
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -224,7 +199,6 @@ export default function HomePage() {
       case "date_desc": return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
       case "date_asc": return new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime();
       case "city": return (a.city || "").localeCompare(b.city || "", "fr");
-      case "status": return (a.status || "").localeCompare(b.status || "", "fr");
       default: return 0;
     }
   };
@@ -244,8 +218,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f8fafc" }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b" style={{ backgroundColor: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)", borderColor: "#e8edf4" }}>
-        <div className="max-w-4xl mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 border-b" style={{ backgroundColor: "rgba(255,255,255,0.96)", backdropFilter: "blur(8px)", borderColor: "#e8edf4" }}>
+        <div className="max-w-3xl mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1e3a5f" }}>
               <Zap className="w-4 h-4 text-white" />
@@ -272,7 +246,7 @@ export default function HomePage() {
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-slate-900" data-testid="button-user-menu">
+                  <Button variant="ghost" size="sm" className="gap-2 text-slate-600" data-testid="button-user-menu">
                     <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: "#1e3a5f" }}>
                       {user.name.charAt(0).toUpperCase()}
                     </div>
@@ -305,7 +279,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-3xl mx-auto px-6 py-8">
         {/* Admin banner */}
         {user?.role === "admin" && (
           <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: "#eef2ff", color: "#3730a3", border: "1px solid #c7d2fe" }}>
@@ -317,9 +291,8 @@ export default function HomePage() {
         {/* Loading */}
         {isLoading ? (
           <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-4 px-5 py-4 rounded-xl border bg-white" style={{ borderColor: "#e8edf4" }}>
-                <Skeleton className="w-10 h-10 rounded-xl flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-48" />
                   <Skeleton className="h-3 w-32" />
@@ -328,14 +301,13 @@ export default function HomePage() {
             ))}
           </div>
         ) : totalCount === 0 ? (
-          /* Empty state */
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: "#eef2f8" }}>
               <FileText className="w-9 h-9" style={{ color: "#1e3a5f" }} />
             </div>
             <h2 className="text-xl font-bold text-slate-900 mb-2">Aucun projet</h2>
             <p className="text-sm text-slate-500 mb-6 max-w-sm leading-relaxed">
-              Créez votre premier projet pour commencer à analyser des rapports HOT2000 et générer vos cahiers de qualification.
+              Créez votre premier projet pour analyser des rapports HOT2000 et générer vos cahiers de qualification.
             </p>
             <Button
               onClick={() => createMutation.mutate()}
@@ -350,14 +322,14 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            {/* Search + sort toolbar */}
-            <div className="flex items-center gap-3 mb-8">
+            {/* Search + sort */}
+            <div className="flex items-center gap-3 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher par adresse, ville..."
+                  placeholder="Rechercher un projet..."
                   className="pl-9 bg-white border-slate-200"
                   data-testid="input-search-projects"
                 />
@@ -369,12 +341,12 @@ export default function HomePage() {
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="default" className="gap-2 bg-white border-slate-200 text-slate-600 text-sm" data-testid="button-sort">
+                  <Button variant="outline" size="default" className="gap-2 bg-white border-slate-200 text-slate-600 text-sm shrink-0" data-testid="button-sort">
                     {sortLabels[sortKey]}
                     <ChevronDown className="w-3.5 h-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuRadioGroup value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
                     {(Object.keys(sortLabels) as SortKey[]).map((key) => (
                       <DropdownMenuRadioItem key={key} value={key} data-testid={`sort-option-${key}`}>
@@ -386,53 +358,39 @@ export default function HomePage() {
               </DropdownMenu>
             </div>
 
-            {/* Sections */}
-            <div className="space-y-10">
-              {/* Bâtiments existants */}
-              <section>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#eef2f8" }}>
-                    <Building2 className="w-4 h-4" style={{ color: "#1e3a5f" }} />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900">Bâtiments existants</h2>
-                    <p className="text-xs text-slate-400">{existingProjects.length} projet{existingProjects.length !== 1 ? "s" : ""}</p>
-                  </div>
-                </div>
-                <SectionList
-                  projects={existingProjects}
-                  onDelete={setDeleteTarget}
-                  onNavigate={(id) => navigate(`/project/${id}`)}
-                  emptyMessage="Aucun projet de bâtiment existant."
-                />
-              </section>
-
-              {/* Constructions neuves */}
-              <section>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#f0fdf4" }}>
-                    <HardHat className="w-4 h-4" style={{ color: "#16a34a" }} />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900">Constructions neuves</h2>
-                    <p className="text-xs text-slate-400">{newProjects.length} projet{newProjects.length !== 1 ? "s" : ""}</p>
-                  </div>
-                </div>
-                <SectionList
-                  projects={newProjects}
-                  onDelete={setDeleteTarget}
-                  onNavigate={(id) => navigate(`/project/${id}`)}
-                  emptyMessage="Aucun projet de construction neuve."
-                />
-              </section>
+            {/* Collapsible sections */}
+            <div className="space-y-4">
+              <CollapsibleSection
+                title="Bâtiments existants"
+                icon={<Building2 className="w-4 h-4" />}
+                iconBg="#eef2f8"
+                iconColor="#1e3a5f"
+                count={existingProjects.length}
+                projects={existingProjects}
+                onDelete={setDeleteTarget}
+                onNavigate={(id) => navigate(`/project/${id}`)}
+                emptyMessage="Aucun bâtiment existant."
+                defaultOpen={true}
+              />
+              <CollapsibleSection
+                title="Constructions neuves"
+                icon={<HardHat className="w-4 h-4" />}
+                iconBg="#f0fdf4"
+                iconColor="#16a34a"
+                count={newProjects.length}
+                projects={newProjects}
+                onDelete={setDeleteTarget}
+                onNavigate={(id) => navigate(`/project/${id}`)}
+                emptyMessage="Aucune construction neuve."
+                defaultOpen={true}
+              />
             </div>
 
-            {/* No search results */}
+            {/* No results */}
             {search.trim() && existingProjects.length === 0 && newProjects.length === 0 && (
               <div className="text-center py-16">
-                <Search className="w-8 h-8 text-slate-300 mx-auto mb-3" />
                 <p className="text-sm text-slate-500 mb-2">Aucun résultat pour « {search} »</p>
-                <Button variant="ghost" size="sm" onClick={() => setSearch("")}>Effacer la recherche</Button>
+                <Button variant="ghost" size="sm" onClick={() => setSearch("")}>Effacer</Button>
               </div>
             )}
           </>
