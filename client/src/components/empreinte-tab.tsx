@@ -279,7 +279,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
               {!isNewBuilding && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#dc262615", color: "#dc2626" }}>
-                    Thermopompe : TCL T-Pro-25ES
+                    Thermopompe TCL T-Pro-25ES
                   </span>
                 </div>
               )}
@@ -407,7 +407,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <div className="flex items-center gap-3">
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">TCL T-Pro-25ES</p>
+                        <p className="font-semibold text-slate-800">Thermopompe TCL T-Pro-25ES</p>
                         <p className="text-xs text-slate-400 mt-0.5">12 000 BTU | HSPF2 10.5 | SEER2 25</p>
                       </div>
                     </div>
@@ -451,7 +451,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       <IconBox><Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Chauffe-eau thermopompe</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Installation de chauffe-eau thermopompe</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Installation de chauffe-eau thermopompe Rheem</p>
                       </div>
                     </div>
                   </td>
