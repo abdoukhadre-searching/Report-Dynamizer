@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
+import ProjectsListPage from "@/pages/projects-list";
 import ProjectPage from "@/pages/project";
 import ProjectPrintPage from "@/pages/project-print";
 import ProjectPrintRecommandationsPage from "@/pages/project-print-recommandations";
@@ -64,6 +65,12 @@ function Router() {
       <Route path="/project/:id/print-recommandations" component={ProjectPrintRecommandationsPage} />
       <Route path="/project/:id/print-strategie" component={ProjectPrintStrategiePage} />
       <Route path="/project/:id/print-empreinte" component={ProjectPrintEmpreintePage} />
+      <Route path="/projects/existing">
+        {() => <ProtectedRoute component={() => <ProjectsListPage buildingType="existing" />} />}
+      </Route>
+      <Route path="/projects/new">
+        {() => <ProtectedRoute component={() => <ProjectsListPage buildingType="new" />} />}
+      </Route>
       <Route path="/project/:id">
         {() => <ProtectedRoute component={ProjectPage} />}
       </Route>
