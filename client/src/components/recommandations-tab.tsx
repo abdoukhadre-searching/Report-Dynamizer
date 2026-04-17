@@ -647,7 +647,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       Installation de thermopompes haute efficacité
                     </h3>
                     <p>L'installation de <span className="font-semibold">{thermopompeCount}</span> thermopompes murales haute efficacité est proposée afin d'améliorer la performance énergétique du système de chauffage et de climatisation.</p>
-                    <p className="mt-1">Les thermopompes recommandées possèdent une capacité minimale de 12 000 BTU, avec une efficacité d'environ 10 HSPF2 et 23 SEER2.</p>
+                    <p className="mt-1">Les thermopompes recommandées possèdent une capacité minimale de 12 000 BTU, avec une efficacité d'environ 10.5 HSPF2 et 25 SEER2.</p>
                     <p className="mt-1">Ces équipements permettent de produire plus d'énergie thermique qu'ils n'en consomment, ce qui contribue à réduire la consommation énergétique associée au chauffage des logements.{" "}
                       <a href="#rec-annex-thermopompes" className="text-xs font-medium text-primary underline cursor-pointer print:hidden" onClick={(e) => { e.preventDefault(); document.getElementById("rec-annex-thermopompes")?.scrollIntoView({ behavior: "smooth" }); }}>[Voir détails]</a>
                     </p>
