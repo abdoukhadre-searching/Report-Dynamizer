@@ -1247,7 +1247,7 @@ export default function ReportTab({
               >
                 Table des matières
               </h2>
-              <nav className="space-y-1 text-xs">
+              <nav className="space-y-1.5 text-xs">
                 {tocItems.map((item, idx) => {
                   const ids = [
                     "toc-resume",
@@ -1288,7 +1288,7 @@ export default function ReportTab({
                         </span>
                       </a>
                       {isStrategiesSection && activeStrategies.length > 0 && (
-                        <div className="ml-6 mt-0.5 mb-0.5 space-y-0.5">
+                        <div className="ml-6 mt-1 mb-1 space-y-1">
                           {activeStrategies.map((s, si) => (
                             <a
                               key={si}
@@ -1318,11 +1318,11 @@ export default function ReportTab({
               </nav>
 
               <div
-                className="mt-4 pt-4"
+                className="mt-5 pt-5"
                 style={{ borderTop: "1px solid #e2e8f0" }}
               >
                 <h3
-                  className="text-sm font-semibold mb-2"
+                  className="text-sm font-semibold mb-3"
                   style={{
                     color: "#1e3a5f",
                     fontFamily: "'Playfair Display', serif",
@@ -1330,7 +1330,7 @@ export default function ReportTab({
                 >
                   Liste des tableaux
                 </h3>
-                <nav className="space-y-0.5 text-xs">
+                <nav className="space-y-1 text-xs">
                   {[
                     {
                       id: "tableau-1",
@@ -1375,11 +1375,11 @@ export default function ReportTab({
               </div>
 
               <div
-                className="mt-4 pt-4"
+                className="mt-5 pt-5"
                 style={{ borderTop: "1px solid #e2e8f0" }}
               >
                 <h3
-                  className="text-sm font-semibold mb-2"
+                  className="text-sm font-semibold mb-3"
                   style={{
                     color: "#1e3a5f",
                     fontFamily: "'Playfair Display', serif",
@@ -1387,7 +1387,7 @@ export default function ReportTab({
                 >
                   Liste des figures
                 </h3>
-                <nav className="space-y-0.5 text-xs">
+                <nav className="space-y-1 text-xs">
                   {[
                     {
                       id: "figure-1",
