@@ -487,7 +487,7 @@ export default function UploadTab({ project }: UploadTabProps) {
         </Card>
       </div>
 
-      {hasPreReport && hasPostReport && (
+      {hasPreReport && hasPostReport && !showPreUpload && !showPostUpload && (
         <Card>
           <CardContent className="p-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
