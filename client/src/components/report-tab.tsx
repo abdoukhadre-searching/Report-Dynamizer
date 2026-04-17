@@ -1247,7 +1247,7 @@ export default function ReportTab({
               >
                 Table des matières
               </h2>
-              <nav className="space-y-2.5 text-xs">
+              <nav className="space-y-1 text-xs">
                 {tocItems.map((item, idx) => {
                   const ids = [
                     "toc-resume",
@@ -1266,7 +1266,7 @@ export default function ReportTab({
                     <div key={idx}>
                       <a
                         href={`#${ids[idx]}`}
-                        className="flex items-center gap-2 py-1.5 px-3 rounded text-slate-700 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0 print:hover:bg-transparent"
+                        className="flex items-center gap-2 py-1 px-3 rounded text-slate-700 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0 print:hover:bg-transparent"
                         onClick={(e) => {
                           e.preventDefault();
                           document
@@ -1288,12 +1288,12 @@ export default function ReportTab({
                         </span>
                       </a>
                       {isStrategiesSection && activeStrategies.length > 0 && (
-                        <div className="ml-6 mt-1.5 mb-1.5 space-y-2">
+                        <div className="ml-6 mt-0.5 mb-0.5 space-y-0.5">
                           {activeStrategies.map((s, si) => (
                             <a
                               key={si}
                               href="#toc-strategies"
-                              className="flex items-center gap-2 py-1.5 px-3 rounded text-slate-700 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0 print:hover:bg-transparent"
+                              className="flex items-center gap-2 py-1 px-3 rounded text-slate-700 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0 print:hover:bg-transparent"
                               onClick={(e) => {
                                 e.preventDefault();
                                 document
@@ -1318,11 +1318,11 @@ export default function ReportTab({
               </nav>
 
               <div
-                className="mt-8 pt-6"
+                className="mt-4 pt-4"
                 style={{ borderTop: "1px solid #e2e8f0" }}
               >
                 <h3
-                  className="text-sm font-semibold mb-4"
+                  className="text-sm font-semibold mb-2"
                   style={{
                     color: "#1e3a5f",
                     fontFamily: "'Playfair Display', serif",
@@ -1330,7 +1330,7 @@ export default function ReportTab({
                 >
                   Liste des tableaux
                 </h3>
-                <nav className="space-y-1.5 text-xs">
+                <nav className="space-y-0.5 text-xs">
                   {[
                     {
                       id: "tableau-1",
@@ -1353,7 +1353,7 @@ export default function ReportTab({
                     <a
                       key={idx}
                       href={`#${item.id}`}
-                      className="flex items-center gap-2 py-1.5 px-3 rounded text-slate-600 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0"
+                      className="flex items-center gap-2 py-1 px-3 rounded text-slate-600 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0"
                       onClick={(e) => {
                         e.preventDefault();
                         document
@@ -1375,11 +1375,11 @@ export default function ReportTab({
               </div>
 
               <div
-                className="mt-6 pt-6"
+                className="mt-4 pt-4"
                 style={{ borderTop: "1px solid #e2e8f0" }}
               >
                 <h3
-                  className="text-sm font-semibold mb-4"
+                  className="text-sm font-semibold mb-2"
                   style={{
                     color: "#1e3a5f",
                     fontFamily: "'Playfair Display', serif",
@@ -1387,7 +1387,7 @@ export default function ReportTab({
                 >
                   Liste des figures
                 </h3>
-                <nav className="space-y-1.5 text-xs">
+                <nav className="space-y-0.5 text-xs">
                   {[
                     {
                       id: "figure-1",
@@ -1418,7 +1418,7 @@ export default function ReportTab({
                     <a
                       key={idx}
                       href={`#${item.id}`}
-                      className="flex items-center gap-2 py-1.5 px-3 rounded text-slate-600 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0"
+                      className="flex items-center gap-2 py-1 px-3 rounded text-slate-600 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors print:text-foreground print:px-0"
                       onClick={(e) => {
                         e.preventDefault();
                         document
@@ -1442,7 +1442,7 @@ export default function ReportTab({
           </CardContent>
         </Card>
 
-        <Card className="print:shadow-none print:border-none mt-6">
+        <Card className="print:shadow-none print:border-none print:break-before-page mt-6">
           <CardContent className="p-8 space-y-8 report-prose relative overflow-hidden">
             <div
               className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] z-0 print:opacity-[0.04]"
