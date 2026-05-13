@@ -88,8 +88,10 @@ function getHeatingLabel(data: ReportData): string {
   const type = data.heating?.primaryType || "";
   if (/thermopompe|source d'air/i.test(equip)) return "Thermopompe";
   if (/plinthe|résistance|électrique/i.test(equip) || /électricité/i.test(type)) return "Plinthes électriques";
-  if (/gaz naturel/i.test(type)) return "Fournaise au gaz naturel";
+  if (/chaudière/i.test(equip)) return `Chaudière au ${getFuelDisplayName(type)}`;
+  if (/fournaise/i.test(equip)) return `Fournaise au ${getFuelDisplayName(type)}`;
   if (/mazout/i.test(type)) return "Chaudière au mazout";
+  if (/gaz naturel/i.test(type)) return "Fournaise au gaz naturel";
   return equip || type || "N/A";
 }
 

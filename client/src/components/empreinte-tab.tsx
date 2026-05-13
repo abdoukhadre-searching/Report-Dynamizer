@@ -203,7 +203,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const totalVrc = showVrcStrategy ? nbVrc * coutVrc : 0;
   const totalFaibleDebit = showHotWaterStrategy ? coutFaibleDebit : 0;
   const totalLed = showLedStrategy ? coutLed : 0;
-  const totalPlinthes = showGasConversionHeatingToElec ? nbPlinthes * coutPlinthes : 0;
+  const totalPlinthes = showGasConversionHeatingToElec ? coutPlinthes : 0;
   const totalChauffeEauElecInd = showGasConversionHotWaterToElec ? nbUnits * coutChauffeEauElecInd : 0;
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
@@ -590,22 +590,13 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <div className="flex items-center gap-3">
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">Installation de plinthes électriques</p>
+                        <p className="font-semibold text-slate-800">Installation de plinthes électriques dans chaque logement</p>
                         <p className="text-xs text-slate-400 mt-0.5">{`Conversion du système de chauffage : ${getFuelDisplayName(pre?.heating?.primaryType)} vers électricité`}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-5 py-4 text-center">
-                    {exportMode ? <UnitBadge n={nbPlinthes} /> : (
-                      <input
-                        data-testid="input-nb-plinthes"
-                        type="number"
-                        min={1}
-                        value={nbPlinthes}
-                        onChange={(e) => setNbPlinthes(Math.max(1, Number(e.target.value) || 1))}
-                        style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
-                      />
-                    )}
+                    <span className="text-slate-400 text-sm">—</span>
                   </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">

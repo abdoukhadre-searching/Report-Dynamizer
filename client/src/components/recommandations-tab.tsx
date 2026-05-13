@@ -525,10 +525,13 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                 const cah50 = pre.airLeakage?.cah50 ?? null;
                 const heatingLabel = (() => {
                   const eq = (pre.heating?.primaryEquipment || "").toLowerCase();
-                  const fuel = (pre.heating?.primaryType || "").toLowerCase();
+                  const fuel = pre.heating?.primaryType || "";
                   if (/thermopompe/i.test(eq)) return "thermopompe à air";
-                  if (/plinthe/i.test(eq) || fuel === "électricité") return "plinthes électriques";
-                  if (/chaudière|fournaise/i.test(eq) && /gaz/i.test(fuel)) return "chaudière au gaz naturel";
+                  if (/plinthe/i.test(eq) || /électricité/i.test(fuel)) return "plinthes électriques";
+                  if (/chaudière/i.test(eq)) return `Chaudière au ${getFuelDisplayName(fuel)}`;
+                  if (/fournaise/i.test(eq)) return `Fournaise au ${getFuelDisplayName(fuel)}`;
+                  if (/mazout/i.test(fuel)) return "Chaudière au mazout";
+                  if (/gaz naturel/i.test(fuel)) return "Fournaise au gaz naturel";
                   return eq || "N/A";
                 })();
                 const hotWaterLabel = (() => {
