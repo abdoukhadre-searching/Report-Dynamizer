@@ -520,8 +520,16 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
               </h2>
               {(() => {
                 const numFloors = pre.buildingInfo?.numFloors || post.buildingInfo?.numFloors || "";
-                const floorsDisplay = numFloors.replace(/\s*étages?\s*$/i, "").trim() || numFloors;
-                const floorsLabel = floorsDisplay ? `${floorsDisplay} étage${floorsDisplay.toLowerCase() === "un" || floorsDisplay === "1" ? "" : "s"}` : "N/A";
+                const floorsLabel = (() => {
+                  if (!numFloors) return "N/A";
+                  const stripped = numFloors.replace(/\s*étages?\s*$/i, "").trim();
+                  if (/étage|demi/i.test(stripped)) return stripped;
+                  const n = stripped || numFloors.trim();
+                  if (!n) return "N/A";
+                  if (n === "1" || /^un$/i.test(n)) return `${n} étage`;
+                  return `${n} étages`;
+                })();
+                const floorsDisplay = floorsLabel !== "N/A" ? floorsLabel : "";
                 const cah50 = pre.airLeakage?.cah50 ?? null;
                 const heatingLabel = (() => {
                   const eq = (pre.heating?.primaryEquipment || "").toLowerCase();
