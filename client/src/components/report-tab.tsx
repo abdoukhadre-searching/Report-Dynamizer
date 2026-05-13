@@ -1025,9 +1025,13 @@ export default function ReportTab({
                   {numUnits > 0 && (
                     <>
                       {" "}
-                      L'immeuble comprend {numUnits} unités résidentielles
+                      L'immeuble comprend{" "}
+                      <strong>{residentialUnits} logements locatifs</strong>
+                      {commercialUnitsCount > 0 && (
+                        <> et <strong>{commercialUnitsCount} unité{commercialUnitsCount > 1 ? "s" : ""} commerciale{commercialUnitsCount > 1 ? "s" : ""}</strong></>
+                      )}
                       {pre.buildingInfo?.numFloors
-                        ? ` réparties sur ${pre.buildingInfo.numFloors.toLowerCase()}`
+                        ? ` répartis sur ${pre.buildingInfo.numFloors.toLowerCase()}`
                         : ""}
                       .
                     </>
