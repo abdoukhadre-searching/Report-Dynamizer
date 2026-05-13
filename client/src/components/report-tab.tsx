@@ -414,6 +414,17 @@ function isFossilFuel(fuelType?: string): boolean {
   );
 }
 
+function getFuelDisplayName(fuelType?: string): string {
+  if (!fuelType) return "combustible fossile";
+  const f = fuelType.toLowerCase();
+  if (/mazout/.test(f)) return "mazout";
+  if (/gaz\s*naturel/.test(f)) return "gaz naturel";
+  if (/propane/.test(f)) return "propane";
+  if (/diesel/.test(f)) return "diesel";
+  if (/butane/.test(f)) return "butane";
+  return f;
+}
+
 function hasFossilConversion(pre: ReportData, post: ReportData): boolean {
   const preHeatingFossil = isFossilFuel(pre.heating?.primaryType);
   const preHotWaterFossil = isFossilFuel(pre.hotWater?.primaryType);
@@ -756,9 +767,9 @@ export default function ReportTab({
       "l'installation de systèmes de ventilation avec récupération de chaleur (VRC)",
     );
   if (showGasConversionHeatingToElec)
-    strategies.push("la conversion du système de chauffage : gaz naturel vers électricité");
+    strategies.push(`la conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers électricité`);
   if (showGasConversionHotWaterToElec)
-    strategies.push("la conversion de l'énergie primaire du chauffe-eau : gaz naturel vers électricité");
+    strategies.push(`la conversion de l'énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers électricité`);
   if (showHeatPumpWaterHeaterStrategy)
     strategies.push("l'installation de chauffe-eaux thermopompe");
 
@@ -2289,10 +2300,10 @@ export default function ReportTab({
                       >
                         4.{stratNum("gasHeat")}
                       </span>
-                      Conversion du système de chauffage : Gaz naturel vers Électricité
+                      {`Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers Électricité`}
                     </h3>
                     <p>
-                      Le système de chauffage actuel, alimenté au gaz naturel, sera converti à l'électricité par l'installation de plinthes électriques dans chaque unité, permettant d'assurer un chauffage autonome, simple et adapté aux besoins des occupants.
+                      {`Le système de chauffage actuel, alimenté au ${getFuelDisplayName(pre.heating?.primaryType)}, sera converti à l'électricité par l'installation de plinthes électriques dans chaque unité, permettant d'assurer un chauffage autonome, simple et adapté aux besoins des occupants.`}
                     </p>
                   </div>
                 )}
@@ -2306,10 +2317,10 @@ export default function ReportTab({
                       >
                         4.{stratNum("gasHW")}
                       </span>
-                      Conversion Énergie primaire du chauffe-eau : Gaz naturel vers Électricité
+                      {`Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers Électricité`}
                     </h3>
                     <p>
-                      Le système actuel de production d'eau chaude domestique, alimenté au gaz naturel, sera converti à l'électricité. Deux options peuvent être envisagées : soit l'installation d'un chauffe-eau électrique indépendant dans chaque unité afin d'assurer une production d'eau chaude autonome et efficace, soit l'installation d'une chaudière électrique commune desservant l'ensemble du bâtiment.
+                      {`Le système actuel de production d'eau chaude domestique, alimenté au ${getFuelDisplayName(pre.hotWater?.primaryType)}, sera converti à l'électricité. Deux options peuvent être envisagées : soit l'installation d'un chauffe-eau électrique indépendant dans chaque unité afin d'assurer une production d'eau chaude autonome et efficace, soit l'installation d'une chaudière électrique commune desservant l'ensemble du bâtiment.`}
                     </p>
                   </div>
                 )}

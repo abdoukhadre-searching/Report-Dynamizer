@@ -186,6 +186,17 @@ function isFossilFuel(fuelType?: string): boolean {
   return /gaz\s*naturel|mazout|propane|diesel|butane|charbon|kérosène|bois|granules|lignite|essence/i.test(fuelType);
 }
 
+function getFuelDisplayName(fuelType?: string): string {
+  if (!fuelType) return "combustible fossile";
+  const f = fuelType.toLowerCase();
+  if (/mazout/.test(f)) return "mazout";
+  if (/gaz\s*naturel/.test(f)) return "gaz naturel";
+  if (/propane/.test(f)) return "propane";
+  if (/diesel/.test(f)) return "diesel";
+  if (/butane/.test(f)) return "butane";
+  return f;
+}
+
 function hasFossilConversion(pre: ReportData, post: ReportData): boolean {
   const preHeatingFossil = isFossilFuel(pre.heating?.primaryType);
   const preHotWaterFossil = isFossilFuel(pre.hotWater?.primaryType);
@@ -314,8 +325,8 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   if (showLedStrategy) activeStrategies.push({ key: "led", label: "Conversion de l'éclairage vers la technologie DEL" });
   if (showVrcStrategy) activeStrategies.push({ key: "vrc", label: "Ventilation avec récupération de chaleur (VRC)" });
   if (showHeatPumpWaterHeaterStrategy) activeStrategies.push({ key: "hwt", label: "Chauffe-eaux Thermopompe" });
-  if (showGasConversionHeatingToElec) activeStrategies.push({ key: "gasHeat", label: "Conversion du système de chauffage : Gaz naturel vers Électricité" });
-  if (showGasConversionHotWaterToElec) activeStrategies.push({ key: "gasHW", label: "Conversion Énergie primaire du chauffe-eau : Gaz naturel vers Électricité" });
+  if (showGasConversionHeatingToElec) activeStrategies.push({ key: "gasHeat", label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers Électricité` });
+  if (showGasConversionHotWaterToElec) activeStrategies.push({ key: "gasHW", label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers Électricité` });
 
   const stratNum = (key: string) => activeStrategies.findIndex((s) => s.key === key) + 1;
   const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
@@ -706,9 +717,9 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                   <div className="mt-12" data-testid="rec-strategy-gas-conversion-heating">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("gasHeat")}</span>
-                      Conversion du système de chauffage : Gaz naturel vers Électricité
+                      {`Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers Électricité`}
                     </h3>
-                    <p>Le système de chauffage actuel, alimenté au gaz naturel, sera converti à l'électricité par l'installation de plinthes électriques dans chaque unité, permettant d'assurer un chauffage autonome, simple et adapté aux besoins des occupants.</p>
+                    <p>{`Le système de chauffage actuel, alimenté au ${getFuelDisplayName(pre.heating?.primaryType)}, sera converti à l'électricité par l'installation de plinthes électriques dans chaque unité, permettant d'assurer un chauffage autonome, simple et adapté aux besoins des occupants.`}</p>
                   </div>
                 )}
 
@@ -716,9 +727,9 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                   <div className="mt-12" data-testid="rec-strategy-gas-conversion-hotwater">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("gasHW")}</span>
-                      Conversion Énergie primaire du chauffe-eau : Gaz naturel vers Électricité
+                      {`Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers Électricité`}
                     </h3>
-                    <p>Le système actuel de production d'eau chaude domestique, alimenté au gaz naturel, sera converti à l'électricité. Deux options peuvent être envisagées : soit l'installation d'un chauffe-eau électrique indépendant dans chaque unité afin d'assurer une production d'eau chaude autonome et efficace, soit l'installation d'une chaudière électrique commune desservant l'ensemble du bâtiment.</p>
+                    <p>{`Le système actuel de production d'eau chaude domestique, alimenté au ${getFuelDisplayName(pre.hotWater?.primaryType)}, sera converti à l'électricité. Deux options peuvent être envisagées : soit l'installation d'un chauffe-eau électrique indépendant dans chaque unité afin d'assurer une production d'eau chaude autonome et efficace, soit l'installation d'une chaudière électrique commune desservant l'ensemble du bâtiment.`}</p>
                   </div>
                 )}
               </div>

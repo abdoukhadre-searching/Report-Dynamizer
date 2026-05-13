@@ -60,6 +60,17 @@ function isFossilFuel(fuelType?: string): boolean {
   return /gaz\s*naturel|mazout|propane|diesel|butane|charbon|kérosène|bois|granules|lignite|essence/i.test(fuelType);
 }
 
+function getFuelDisplayName(fuelType?: string): string {
+  if (!fuelType) return "combustible fossile";
+  const f = fuelType.toLowerCase();
+  if (/mazout/.test(f)) return "mazout";
+  if (/gaz\s*naturel/.test(f)) return "gaz naturel";
+  if (/propane/.test(f)) return "propane";
+  if (/diesel/.test(f)) return "diesel";
+  if (/butane/.test(f)) return "butane";
+  return f;
+}
+
 function hasFossilConversion(pre: ReportData, post: ReportData): boolean {
   const preHeatingFossil = isFossilFuel(pre.heating?.primaryType);
   const preHotWaterFossil = isFossilFuel(pre.hotWater?.primaryType);
@@ -78,7 +89,7 @@ function getHeatingLabel(data: ReportData): string {
   if (/thermopompe|source d'air/i.test(equip)) return "Thermopompe";
   if (/plinthe|résistance|électrique/i.test(equip) || /électricité/i.test(type)) return "Plinthes électriques";
   if (/gaz naturel/i.test(type)) return "Fournaise au gaz naturel";
-  if (/mazout/i.test(type)) return "Fournaise au mazout";
+  if (/mazout/i.test(type)) return "Chaudière au mazout";
   return equip || type || "N/A";
 }
 
@@ -157,10 +168,10 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
     postItems.push({ icon: <Lightbulb className="w-4 h-4" />, label: "Remplacement des luminaires DEL" });
   }
   if (showGasConversionHeatingToElec) {
-    postItems.push({ icon: <Flame className="w-4 h-4" />, label: "Conversion du système de chauffage : gaz naturel vers électricité" });
+    postItems.push({ icon: <Flame className="w-4 h-4" />, label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers électricité` });
   }
   if (showGasConversionHotWaterToElec) {
-    postItems.push({ icon: <Droplets className="w-4 h-4" />, label: "Conversion Énergie primaire du chauffe-eau : Gaz naturel vers Électricité" });
+    postItems.push({ icon: <Droplets className="w-4 h-4" />, label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers électricité` });
   }
 
   const handlePrint = async () => {

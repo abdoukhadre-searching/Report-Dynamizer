@@ -16,6 +16,7 @@ import tclSubventionImg from "@assets/Subvention_TCL_1775167218708.png";
 interface EmpreinteInitialValues {
   nbThermo?: number;
   nbUnits?: number;
+  nbPlinthes?: number;
   nbVrc?: number;
   coutEtancheite?: number;
   coutThermo?: number;
@@ -87,6 +88,17 @@ function isFossilFuel(fuelType?: string): boolean {
   return /gaz\s*naturel|mazout|propane|diesel|butane|charbon|kérosène|bois|granules|lignite|essence/i.test(fuelType);
 }
 
+function getFuelDisplayName(fuelType?: string): string {
+  if (!fuelType) return "combustible fossile";
+  const f = fuelType.toLowerCase();
+  if (/mazout/.test(f)) return "mazout";
+  if (/gaz\s*naturel/.test(f)) return "gaz naturel";
+  if (/propane/.test(f)) return "propane";
+  if (/diesel/.test(f)) return "diesel";
+  if (/butane/.test(f)) return "butane";
+  return f;
+}
+
 const SUBVENTION_THERMO = 1680;
 
 export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
@@ -153,6 +165,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const [coutFaibleDebit, setCoutFaibleDebit] = useState(initialValues?.coutFaibleDebit ?? 0);
   const [coutLed, setCoutLed] = useState(initialValues?.coutLed ?? 0);
   const [coutPlinthes, setCoutPlinthes] = useState(initialValues?.coutPlinthes ?? 0);
+  const [nbPlinthes, setNbPlinthes] = useState(() => {
+    if (initialValues?.nbPlinthes !== undefined) return initialValues.nbPlinthes;
+    const n = getNumUnitsFromOccupants((project.preReportData as ReportData | null)?.buildingInfo?.occupants);
+    return n > 0 ? n : 1;
+  });
   const [coutChauffeEauElecInd, setCoutChauffeEauElecInd] = useState(initialValues?.coutChauffeEauElecInd ?? 0);
   const [nbThermo, setNbThermo] = useState(() => {
     if (initialValues?.nbThermo !== undefined) return initialValues.nbThermo;
@@ -186,7 +203,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const totalVrc = showVrcStrategy ? nbVrc * coutVrc : 0;
   const totalFaibleDebit = showHotWaterStrategy ? coutFaibleDebit : 0;
   const totalLed = showLedStrategy ? coutLed : 0;
-  const totalPlinthes = showGasConversionHeatingToElec ? nbUnits * coutPlinthes : 0;
+  const totalPlinthes = showGasConversionHeatingToElec ? nbPlinthes * coutPlinthes : 0;
   const totalChauffeEauElecInd = showGasConversionHotWaterToElec ? nbUnits * coutChauffeEauElecInd : 0;
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
@@ -294,6 +311,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       const params = new URLSearchParams({
                         nbThermo: String(nbThermo),
                         nbUnits: String(nbUnits),
+                        nbPlinthes: String(nbPlinthes),
                         nbVrc: String(nbVrc),
                         coutEtancheite: String(coutEtancheite),
                         coutThermo: String(coutThermo),
@@ -573,18 +591,18 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Installation de plinthes électriques</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Conversion du système de chauffage : gaz naturel vers électricité</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{`Conversion du système de chauffage : ${getFuelDisplayName(pre?.heating?.primaryType)} vers électricité`}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-5 py-4 text-center">
-                    {exportMode ? <UnitBadge n={nbUnits} /> : (
+                    {exportMode ? <UnitBadge n={nbPlinthes} /> : (
                       <input
-                        data-testid="input-nb-units"
+                        data-testid="input-nb-plinthes"
                         type="number"
                         min={1}
-                        value={nbUnits}
-                        onChange={(e) => setNbUnits(Math.max(1, Number(e.target.value) || 1))}
+                        value={nbPlinthes}
+                        onChange={(e) => setNbPlinthes(Math.max(1, Number(e.target.value) || 1))}
                         style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
                       />
                     )}
@@ -617,7 +635,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       <IconBox><Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Installation d'un chauffe-eau électrique indépendant dans chaque unité ou d'une chaudière électrique commune</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Conversion énergie primaire du chauffe-eau : gaz naturel vers électricité</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{`Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre?.hotWater?.primaryType)} vers électricité`}</p>
                       </div>
                     </div>
                   </td>
