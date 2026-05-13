@@ -182,6 +182,23 @@ export default function UploadTab({ project }: UploadTabProps) {
     }
   };
 
+  const saveCommercialUnitsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PATCH", `/api/projects/${project.id}`, {
+        hasCommercialUnits: hasCommercialUnits === true,
+        commercialUnits: hasCommercialUnits === true ? (parseInt(commercialUnits) || 0) : 0,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+      toast({ title: "Configuration sauvegardée" });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder.", variant: "destructive" });
+    },
+  });
+
   const isPreUploading = uploadPreMutation.isPending || uploadPrePdfMutation.isPending;
   const isPostUploading = uploadPostMutation.isPending || uploadPostPdfMutation.isPending;
 
@@ -538,6 +555,65 @@ export default function UploadTab({ project }: UploadTabProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Commercial units inline setting — always visible in step 3 */}
+      <Card>
+        <CardContent className="p-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <p className="text-sm font-medium mb-1">Unités commerciales dans ce bâtiment ?</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setHasCommercialUnits(false)}
+                  data-testid="button-no-commercial-s3"
+                  className="px-4 py-1.5 rounded-md border text-sm font-medium transition-colors"
+                  style={hasCommercialUnits === false ? { backgroundColor: "#1e3a5f", color: "white", borderColor: "#1e3a5f" } : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
+                >
+                  Non
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHasCommercialUnits(true)}
+                  data-testid="button-yes-commercial-s3"
+                  className="px-4 py-1.5 rounded-md border text-sm font-medium transition-colors"
+                  style={hasCommercialUnits === true ? { backgroundColor: "#1e3a5f", color: "white", borderColor: "#1e3a5f" } : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
+                >
+                  Oui
+                </button>
+              </div>
+            </div>
+            {hasCommercialUnits === true && (
+              <div className="flex items-end gap-2">
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">Nombre d'unités commerciales</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={commercialUnits}
+                    onChange={(e) => setCommercialUnits(e.target.value)}
+                    placeholder="Ex: 1"
+                    data-testid="input-commercial-units-s3"
+                    className="w-24 h-9"
+                  />
+                </div>
+              </div>
+            )}
+            {hasCommercialUnits !== null && (
+              <Button
+                size="sm"
+                onClick={() => saveCommercialUnitsMutation.mutate()}
+                disabled={saveCommercialUnitsMutation.isPending}
+                data-testid="button-save-commercial-units"
+                style={{ backgroundColor: "#1e3a5f" }}
+              >
+                {saveCommercialUnitsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : null}
+                Sauvegarder
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {hasPreReport && hasPostReport && !showPreUpload && !showPostUpload && (
         <Card>
