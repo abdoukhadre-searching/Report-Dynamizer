@@ -35,7 +35,12 @@ export default function UploadTab({ project }: UploadTabProps) {
   const hasPostReport = !!project.postReportData;
   const hasAddress = !!(project.address || project.city);
 
-  const [step, setStep] = useState<1 | 2 | 3>(hasAddress ? 3 : 1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(() => {
+    if (!hasAddress) return 1;
+    const bothLoaded = !!project.preReportData && !!project.postReportData;
+    if (bothLoaded && project.hasCommercialUnits === null) return 4;
+    return 3;
+  });
   const [preText, setPreText] = useState("");
   const [postText, setPostText] = useState("");
   const [buildingType, setBuildingType] = useState<"existing" | "new">(
@@ -78,8 +83,6 @@ export default function UploadTab({ project }: UploadTabProps) {
         city: city.trim(),
         province: province.trim(),
         postalCode: postalCode.trim(),
-        hasCommercialUnits: hasCommercialUnits === true,
-        commercialUnits: hasCommercialUnits === true ? (parseInt(commercialUnits) || 0) : 0,
       });
       return res.json();
     },

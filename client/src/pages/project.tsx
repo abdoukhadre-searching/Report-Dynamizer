@@ -58,6 +58,8 @@ export default function ProjectPage() {
   const hasPreReport = !!project.preReportData;
   const hasPostReport = !!project.postReportData;
   const hasBothReports = hasPreReport && hasPostReport;
+  const hasAnsweredCommercialUnits = project.hasCommercialUnits !== null && project.hasCommercialUnits !== undefined;
+  const tabsUnlocked = hasBothReports && hasAnsweredCommercialUnits;
 
   const cityLine = [project.city, project.province].filter(Boolean).join(", ");
 
@@ -96,15 +98,15 @@ export default function ProjectPage() {
               <FileText className="w-3.5 h-3.5" />
               Infos Projet
             </TabsTrigger>
-            <TabsTrigger value="dashboard" disabled={!hasBothReports} data-testid="tab-dashboard" className="gap-1.5">
+            <TabsTrigger value="dashboard" disabled={!tabsUnlocked} data-testid="tab-dashboard" className="gap-1.5">
               <LayoutDashboard className="w-3.5 h-3.5" />
               Tableau de bord
             </TabsTrigger>
-            <TabsTrigger value="strategie" disabled={!hasBothReports} data-testid="tab-strategie" className="gap-1.5">
+            <TabsTrigger value="strategie" disabled={!tabsUnlocked} data-testid="tab-strategie" className="gap-1.5">
               <BarChart2 className="w-3.5 h-3.5" />
               Stratégie et Empreinte
             </TabsTrigger>
-            <TabsTrigger value="report" disabled={!hasBothReports} data-testid="tab-report" className="gap-1.5">
+            <TabsTrigger value="report" disabled={!tabsUnlocked} data-testid="tab-report" className="gap-1.5">
               <BookOpen className="w-3.5 h-3.5" />
               Rapports
             </TabsTrigger>

@@ -65,7 +65,7 @@ export const projects = pgTable("projects", {
   signatoryName: text("signatory_name"),
   signatoryTitle: text("signatory_title"),
   signatoryCoordonnes: text("signatory_coordonnees"),
-  hasCommercialUnits: boolean("has_commercial_units").default(false),
+  hasCommercialUnits: boolean("has_commercial_units"),
   commercialUnits: integer("commercial_units").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
