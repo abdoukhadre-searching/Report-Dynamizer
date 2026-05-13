@@ -699,11 +699,16 @@ export async function registerRoutes(
   async function buildAttestationPdf(project: any): Promise<Buffer> {
     const cmp = project.comparisonData as ComparisonData | null;
     const impPct = cmp?.improvementPercent ?? 0;
+    const gesPct = cmp?.ghsImprovementPercent ?? 0;
     const isNew = project.buildingType === "new";
 
     // Niveau thresholds (existing: N1=15-24%, N2=25-39%, N3≥40%;  new: N1=20-24%)
     const niveau: 1 | 2 | 3 = impPct >= 40 ? 3 : impPct >= 25 ? 2 : 1;
-    const pctText = `${impPct.toFixed(1)} %`;
+    // Show both percentages when energy ≠ GES (rounded to 1 decimal)
+    const pctText =
+      Math.abs(impPct - gesPct) >= 0.05
+        ? `${impPct.toFixed(1)} % et ${gesPct.toFixed(1)} %`
+        : `${impPct.toFixed(1)} %`;
 
     const address = [project.address, project.city, project.province, project.postalCode]
       .filter(Boolean).join(", ");
