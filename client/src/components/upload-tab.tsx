@@ -195,7 +195,9 @@ export default function UploadTab({ project }: UploadTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
-      toast({ title: "Configuration sauvegardée" });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      setStep(3);
+      toast({ title: "✓ Configuration enregistrée", description: "Le tableau de bord et les rapports sont maintenant accessibles." });
     },
     onError: () => {
       toast({ title: "Erreur", description: "Impossible de sauvegarder.", variant: "destructive" });
@@ -215,9 +217,9 @@ export default function UploadTab({ project }: UploadTabProps) {
     else if (postText.trim()) uploadPostMutation.mutate(postText);
   };
 
-  const StepDots = ({ current }: { current: 1 | 2 | 3 }) => (
+  const StepDots = ({ current }: { current: 1 | 2 | 3 | 4 }) => (
     <div className="flex items-center gap-1.5">
-      {[1, 2, 3].map((s) => (
+      {[1, 2, 3, 4].map((s) => (
         <div
           key={s}
           className={`rounded-full transition-all ${
@@ -347,56 +349,101 @@ export default function UploadTab({ project }: UploadTabProps) {
             </CardContent>
           </Card>
 
-          {/* Commercial units question */}
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div>
-                <p className="text-sm font-medium mb-3">Ce bâtiment comprend-il des unités commerciales ?</p>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setHasCommercialUnits(false)}
-                    data-testid="button-no-commercial"
-                    className="flex-1 py-2 px-4 rounded-md border text-sm font-medium transition-colors"
-                    style={hasCommercialUnits === false ? { backgroundColor: "#1e3a5f", color: "white", borderColor: "#1e3a5f" } : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
-                  >
-                    Non
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setHasCommercialUnits(true)}
-                    data-testid="button-yes-commercial"
-                    className="flex-1 py-2 px-4 rounded-md border text-sm font-medium transition-colors"
-                    style={hasCommercialUnits === true ? { backgroundColor: "#1e3a5f", color: "white", borderColor: "#1e3a5f" } : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
-                  >
-                    Oui
-                  </button>
-                </div>
+          <Button onClick={() => updateInfoMutation.mutate()} disabled={updateInfoMutation.isPending || (!address.trim() && !city.trim())} size="lg" className="w-full" data-testid="button-save-address" style={{ backgroundColor: "#1e3a5f" }}>
+            {updateInfoMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Continuer <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+
+          <div className="flex justify-center"><StepDots current={2} /></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 4) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] py-8">
+        <div className="w-full max-w-lg space-y-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Button variant="ghost" size="sm" onClick={() => setStep(3)} data-testid="button-back-to-upload" className="gap-1.5 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="w-4 h-4" /> Retour
+            </Button>
+            <StepDots current={4 as any} />
+          </div>
+
+          <div className="text-center space-y-1">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-[#1e3a5f]/10 flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-[#1e3a5f]" />
               </div>
+            </div>
+            <h2 className="text-2xl font-bold" style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}>
+              Composition du bâtiment
+            </h2>
+            <p className="text-muted-foreground text-sm">Cette information sera utilisée dans vos rapports.</p>
+          </div>
+
+          <Card>
+            <CardContent className="p-6 space-y-5">
+              <p className="text-sm font-medium">Ce bâtiment comprend-il des unités commerciales ?</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setHasCommercialUnits(false)}
+                  data-testid="button-no-commercial"
+                  className="relative flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all"
+                  style={hasCommercialUnits === false
+                    ? { backgroundColor: "#1e3a5f", borderColor: "#1e3a5f", color: "white" }
+                    : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#374151" }}
+                >
+                  <span className="text-2xl">🏠</span>
+                  <span className="font-semibold text-sm">Non</span>
+                  <span className="text-xs opacity-70">Résidentiel uniquement</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHasCommercialUnits(true)}
+                  data-testid="button-yes-commercial"
+                  className="relative flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all"
+                  style={hasCommercialUnits === true
+                    ? { backgroundColor: "#1e3a5f", borderColor: "#1e3a5f", color: "white" }
+                    : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#374151" }}
+                >
+                  <span className="text-2xl">🏢</span>
+                  <span className="font-semibold text-sm">Oui</span>
+                  <span className="text-xs opacity-70">Mixte résidentiel + commercial</span>
+                </button>
+              </div>
+
               {hasCommercialUnits === true && (
                 <div>
-                  <Label htmlFor="commercial-units">Nombre d'unités commerciales</Label>
+                  <Label htmlFor="commercial-units-4">Nombre d'unités commerciales</Label>
                   <Input
-                    id="commercial-units"
+                    id="commercial-units-4"
                     type="number"
                     min="1"
                     value={commercialUnits}
                     onChange={(e) => setCommercialUnits(e.target.value)}
                     placeholder="Ex: 1"
                     data-testid="input-commercial-units"
-                    className="mt-1"
+                    className="mt-1 w-40"
                   />
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Button onClick={() => updateInfoMutation.mutate()} disabled={updateInfoMutation.isPending || (!address.trim() && !city.trim()) || hasCommercialUnits === null} size="lg" className="w-full" data-testid="button-save-address" style={{ backgroundColor: "#1e3a5f" }}>
-            {updateInfoMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            Continuer <ArrowRight className="w-4 h-4 ml-2" />
+          <Button
+            onClick={() => saveCommercialUnitsMutation.mutate()}
+            disabled={hasCommercialUnits === null || saveCommercialUnitsMutation.isPending || (hasCommercialUnits === true && !commercialUnits)}
+            size="lg"
+            className="w-full"
+            data-testid="button-confirm-commercial"
+            style={{ backgroundColor: "#1e3a5f" }}
+          >
+            {saveCommercialUnitsMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Confirmer et accéder au tableau de bord <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
-
-          <div className="flex justify-center"><StepDots current={2} /></div>
         </div>
       </div>
     );
@@ -559,67 +606,8 @@ export default function UploadTab({ project }: UploadTabProps) {
         </Card>
       </div>
 
-      {/* Commercial units inline setting — always visible in step 3 */}
-      <Card>
-        <CardContent className="p-5">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <p className="text-sm font-medium mb-1">Unités commerciales dans ce bâtiment ?</p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setHasCommercialUnits(false)}
-                  data-testid="button-no-commercial-s3"
-                  className="px-4 py-1.5 rounded-md border text-sm font-medium transition-colors"
-                  style={hasCommercialUnits === false ? { backgroundColor: "#1e3a5f", color: "white", borderColor: "#1e3a5f" } : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
-                >
-                  Non
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setHasCommercialUnits(true)}
-                  data-testid="button-yes-commercial-s3"
-                  className="px-4 py-1.5 rounded-md border text-sm font-medium transition-colors"
-                  style={hasCommercialUnits === true ? { backgroundColor: "#1e3a5f", color: "white", borderColor: "#1e3a5f" } : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
-                >
-                  Oui
-                </button>
-              </div>
-            </div>
-            {hasCommercialUnits === true && (
-              <div className="flex items-end gap-2">
-                <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Nombre d'unités commerciales</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={commercialUnits}
-                    onChange={(e) => setCommercialUnits(e.target.value)}
-                    placeholder="Ex: 1"
-                    data-testid="input-commercial-units-s3"
-                    className="w-24 h-9"
-                  />
-                </div>
-              </div>
-            )}
-            {hasCommercialUnits !== null && (
-              <Button
-                size="sm"
-                onClick={() => saveCommercialUnitsMutation.mutate()}
-                disabled={saveCommercialUnitsMutation.isPending}
-                data-testid="button-save-commercial-units"
-                style={{ backgroundColor: "#1e3a5f" }}
-              >
-                {saveCommercialUnitsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : null}
-                Sauvegarder
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {hasPreReport && hasPostReport && !showPreUpload && !showPostUpload && (
-        <Card>
+        <Card style={{ borderColor: "#1e3a5f", borderWidth: "1.5px" }}>
           <CardContent className="p-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -627,13 +615,12 @@ export default function UploadTab({ project }: UploadTabProps) {
               </div>
               <div>
                 <h3 className="font-medium text-sm">Les deux rapports sont chargés</h3>
-                <p className="text-xs text-muted-foreground">Consultez le tableau de bord ou générez le cahier de qualification.</p>
+                <p className="text-xs text-muted-foreground">Répondez à une dernière question pour accéder au tableau de bord.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="default">PRÉ</Badge>
-              <Badge variant="default">POST</Badge>
-            </div>
+            <Button onClick={() => setStep(4)} data-testid="button-next-to-step4" style={{ backgroundColor: "#1e3a5f" }}>
+              Suivant <ArrowRight className="w-4 h-4 ml-1.5" />
+            </Button>
           </CardContent>
         </Card>
       )}
