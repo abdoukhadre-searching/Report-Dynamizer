@@ -155,6 +155,8 @@ export class MemoryStorage implements IStorage {
       signatoryName: (project as any).signatoryName ?? null,
       signatoryTitle: (project as any).signatoryTitle ?? null,
       signatoryCoordonnes: (project as any).signatoryCoordonnes ?? null,
+      hasCommercialUnits: (project as any).hasCommercialUnits ?? false,
+      commercialUnits: (project as any).commercialUnits ?? 0,
       createdAt: new Date(),
     };
     this._projects.unshift(created);

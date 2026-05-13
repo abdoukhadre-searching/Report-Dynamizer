@@ -47,6 +47,12 @@ export default function UploadTab({ project }: UploadTabProps) {
   const [postalCode, setPostalCode] = useState(project.postalCode || "");
   const [prePdfFile, setPrePdfFile] = useState<File | null>(null);
   const [postPdfFile, setPostPdfFile] = useState<File | null>(null);
+  const [hasCommercialUnits, setHasCommercialUnits] = useState<boolean | null>(
+    project.hasCommercialUnits === true ? true : project.hasCommercialUnits === false && (project.address || project.city) ? false : null
+  );
+  const [commercialUnits, setCommercialUnits] = useState<string>(
+    project.commercialUnits ? String(project.commercialUnits) : ""
+  );
 
   const [showPreUpload, setShowPreUpload] = useState(!hasPreReport);
   const [showPostUpload, setShowPostUpload] = useState(!hasPostReport);
@@ -72,6 +78,8 @@ export default function UploadTab({ project }: UploadTabProps) {
         city: city.trim(),
         province: province.trim(),
         postalCode: postalCode.trim(),
+        hasCommercialUnits: hasCommercialUnits === true,
+        commercialUnits: hasCommercialUnits === true ? (parseInt(commercialUnits) || 0) : 0,
       });
       return res.json();
     },
@@ -319,7 +327,51 @@ export default function UploadTab({ project }: UploadTabProps) {
             </CardContent>
           </Card>
 
-          <Button onClick={() => updateInfoMutation.mutate()} disabled={updateInfoMutation.isPending || (!address.trim() && !city.trim())} size="lg" className="w-full" data-testid="button-save-address" style={{ backgroundColor: "#1e3a5f" }}>
+          {/* Commercial units question */}
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-3">Ce bâtiment comprend-il des unités commerciales ?</p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setHasCommercialUnits(false)}
+                    data-testid="button-no-commercial"
+                    className="flex-1 py-2 px-4 rounded-md border text-sm font-medium transition-colors"
+                    style={hasCommercialUnits === false ? { backgroundColor: "#1e3a5f", color: "white", borderColor: "#1e3a5f" } : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
+                  >
+                    Non
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHasCommercialUnits(true)}
+                    data-testid="button-yes-commercial"
+                    className="flex-1 py-2 px-4 rounded-md border text-sm font-medium transition-colors"
+                    style={hasCommercialUnits === true ? { backgroundColor: "#1e3a5f", color: "white", borderColor: "#1e3a5f" } : { backgroundColor: "transparent", borderColor: "#e5e7eb", color: "#6b7280" }}
+                  >
+                    Oui
+                  </button>
+                </div>
+              </div>
+              {hasCommercialUnits === true && (
+                <div>
+                  <Label htmlFor="commercial-units">Nombre d'unités commerciales</Label>
+                  <Input
+                    id="commercial-units"
+                    type="number"
+                    min="1"
+                    value={commercialUnits}
+                    onChange={(e) => setCommercialUnits(e.target.value)}
+                    placeholder="Ex: 1"
+                    data-testid="input-commercial-units"
+                    className="mt-1"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Button onClick={() => updateInfoMutation.mutate()} disabled={updateInfoMutation.isPending || (!address.trim() && !city.trim()) || hasCommercialUnits === null} size="lg" className="w-full" data-testid="button-save-address" style={{ backgroundColor: "#1e3a5f" }}>
             {updateInfoMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Continuer <ArrowRight className="w-4 h-4 ml-2" />
           </Button>

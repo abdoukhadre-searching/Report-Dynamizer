@@ -636,6 +636,8 @@ export default function ReportTab({
   const stratNum = (key: string) =>
     activeStrategies.findIndex((s) => s.key === key) + 1;
   const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
+  const commercialUnitsCount = project.hasCommercialUnits ? (project.commercialUnits ?? 0) : 0;
+  const residentialUnits = commercialUnitsCount > 0 ? Math.max(0, numUnits - commercialUnitsCount) : numUnits;
 
   const address = project.address || pre.buildingInfo?.address || "N/A";
   const city = project.city || pre.buildingInfo?.city || "N/A";
@@ -1583,8 +1585,11 @@ export default function ReportTab({
                             <>
                               Il comprendra{" "}
                               <span className="font-semibold">
-                                {numUnits} logements locatifs
+                                {residentialUnits} logements locatifs
                               </span>
+                              {commercialUnitsCount > 0 && (
+                                <> et <span className="font-semibold">{commercialUnitsCount} unité{commercialUnitsCount > 1 ? "s" : ""} commerciale{commercialUnitsCount > 1 ? "s" : ""}</span></>
+                              )}
                               {floorsDisplay && (
                                 <>
                                   {" "}
@@ -1672,8 +1677,11 @@ export default function ReportTab({
                             <>
                               , comprenant{" "}
                               <span className="font-semibold">
-                                {numUnits} logements locatifs
+                                {residentialUnits} logements locatifs
                               </span>
+                              {commercialUnitsCount > 0 && (
+                                <> et <span className="font-semibold">{commercialUnitsCount} unité{commercialUnitsCount > 1 ? "s" : ""} commerciale{commercialUnitsCount > 1 ? "s" : ""}</span></>
+                              )}
                             </>
                           )}
                           , construit en{" "}

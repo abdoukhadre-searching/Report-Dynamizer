@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, jsonb, timestamp, real, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, jsonb, timestamp, real, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -65,6 +65,8 @@ export const projects = pgTable("projects", {
   signatoryName: text("signatory_name"),
   signatoryTitle: text("signatory_title"),
   signatoryCoordonnes: text("signatory_coordonnees"),
+  hasCommercialUnits: boolean("has_commercial_units").default(false),
+  commercialUnits: integer("commercial_units").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

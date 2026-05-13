@@ -330,6 +330,8 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
 
   const stratNum = (key: string) => activeStrategies.findIndex((s) => s.key === key) + 1;
   const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
+  const commercialUnitsCount = project.hasCommercialUnits ? (project.commercialUnits ?? 0) : 0;
+  const residentialUnits = commercialUnitsCount > 0 ? Math.max(0, numUnits - commercialUnitsCount) : numUnits;
 
   const address = project.address || pre.buildingInfo?.address || "N/A";
   const city = project.city || pre.buildingInfo?.city || "N/A";
@@ -576,7 +578,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                         <p>
                           Le bâtiment analysé correspond à un immeuble résidentiel multifamilial qui sera construit au{" "}
                           <span className="font-semibold">{fullAddress}</span>.{" "}
-                          {numUnits > 0 && (<>Il comprendra <span className="font-semibold">{numUnits} logements locatifs</span>{floorsDisplay && (<> répartis sur <span className="font-semibold">{floorsLabel}</span></>)}. </>)}
+                          {numUnits > 0 && (<>Il comprendra <span className="font-semibold">{residentialUnits} logements locatifs</span>{commercialUnitsCount > 0 && (<> et <span className="font-semibold">{commercialUnitsCount} unité{commercialUnitsCount > 1 ? "s" : ""} commerciale{commercialUnitsCount > 1 ? "s" : ""}</span></>)}{floorsDisplay && (<> répartis sur <span className="font-semibold">{floorsLabel}</span></>)}. </>)}
                           Le bâtiment sera construit en{" "}
                           {exportMode ? (
                             <span className="font-semibold">{constructionYear || "—"}</span>
@@ -611,7 +613,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                         <p>
                           Le bâtiment analysé est un immeuble résidentiel situé au{" "}
                           <span className="font-semibold">{fullAddress}</span>
-                          {numUnits > 0 && (<>, comprenant <span className="font-semibold">{numUnits} logements locatifs</span></>)}, construit en{" "}
+                          {numUnits > 0 && (<>, comprenant <span className="font-semibold">{residentialUnits} logements locatifs</span>{commercialUnitsCount > 0 && (<> et <span className="font-semibold">{commercialUnitsCount} unité{commercialUnitsCount > 1 ? "s" : ""} commerciale{commercialUnitsCount > 1 ? "s" : ""}</span></>)}</>)}, construit en{" "}
                           <span className="font-semibold">{constructionYear || "N/A"}</span>.
                           {floorsDisplay && (<> Le bâtiment comporte <span className="font-semibold">{floorsLabel}</span>.</>)}{" "}
                           La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
