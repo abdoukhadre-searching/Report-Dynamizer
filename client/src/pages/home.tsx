@@ -17,6 +17,10 @@ import {
   ChevronDown,
   CheckCircle2,
   X,
+  FileText,
+  Clock,
+  MapPin,
+  ArrowRight,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -41,6 +45,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+function getProjectStatus(p: Project): { label: string; color: string; bg: string; border: string } {
+  if (p.preReportData && p.postReportData) {
+    return { label: "Qualifié", color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" };
+  }
+  if (p.preReportData) {
+    return { label: "En cours", color: "#d97706", bg: "#fffbeb", border: "#fde68a" };
+  }
+  return { label: "Non démarré", color: "#64748b", bg: "#f8fafc", border: "#e2e8f0" };
+}
 
 function NewProjectDialog({
   open,
@@ -147,8 +161,16 @@ export default function HomePage() {
     },
   });
 
-  const existingCount = (projects || []).filter((p) => p.buildingType !== "new").length;
-  const newCount = (projects || []).filter((p) => p.buildingType === "new").length;
+  const allProjects = projects || [];
+  const existingCount = allProjects.filter((p) => p.buildingType !== "new").length;
+  const newCount = allProjects.filter((p) => p.buildingType === "new").length;
+
+  const enCoursCount = allProjects.filter((p) => p.preReportData && !p.postReportData).length;
+  const qualifiesCount = allProjects.filter((p) => p.preReportData && p.postReportData).length;
+
+  const recentProjects = [...allProjects]
+    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+    .slice(0, 3);
 
   const handleLogout = async () => { await logout(); navigate("/login"); };
 
@@ -213,59 +235,141 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <main className="max-w-3xl mx-auto px-6 py-10">
         {/* Admin banner */}
         {user?.role === "admin" && (
-          <div className="mb-8 flex items-center gap-3 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: "#eef2ff", color: "#3730a3", border: "1px solid #c7d2fe" }}>
+          <div className="mb-7 flex items-center gap-3 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: "#eef2ff", color: "#3730a3", border: "1px solid #c7d2fe" }}>
             <Shield className="w-4 h-4 flex-shrink-0" />
             <span><strong>Vue administrateur</strong> — Tous les projets de tous les utilisateurs sont visibles.</span>
           </div>
         )}
 
+        {/* Stats bar — only shown when there are projects */}
+        {allProjects.length > 0 && (
+          <div className="grid grid-cols-3 gap-3 mb-8">
+            <div className="bg-white rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "#e8edf4" }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#eef2f8" }}>
+                <FileText className="w-4 h-4" style={{ color: "#1e3a5f" }} />
+              </div>
+              <div>
+                <p className="text-[11px] text-slate-400 leading-none mb-0.5">Total</p>
+                <p className="text-lg font-bold text-slate-900 leading-none" data-testid="stat-total">{allProjects.length}</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "#e8edf4" }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#fffbeb" }}>
+                <Clock className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-[11px] text-slate-400 leading-none mb-0.5">En cours</p>
+                <p className="text-lg font-bold text-slate-900 leading-none" data-testid="stat-en-cours">{enCoursCount}</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "#e8edf4" }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f0fdf4" }}>
+                <CheckCircle2 className="w-4 h-4" style={{ color: "#16a34a" }} />
+              </div>
+              <div>
+                <p className="text-[11px] text-slate-400 leading-none mb-0.5">Qualifiés</p>
+                <p className="text-lg font-bold text-slate-900 leading-none" data-testid="stat-qualifies">{qualifiesCount}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Two category cards */}
-        <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid sm:grid-cols-2 gap-5 mb-10">
           <button
-            className="group flex flex-col text-left rounded-2xl border-2 p-8 transition-all hover:shadow-lg hover:-translate-y-0.5 bg-white"
+            className="group relative flex flex-col text-left rounded-2xl border bg-white overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5"
             style={{ borderColor: "#e8edf4" }}
             onClick={() => navigate("/projects/existing")}
             data-testid="button-section-existing"
           >
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-105 transition-transform" style={{ backgroundColor: "#eef2f8" }}>
-              <Building2 className="w-7 h-7" style={{ color: "#1e3a5f" }} />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1">Bâtiments existants</h3>
-            <p className="text-sm text-slate-500 leading-relaxed mb-5">
-              Analyse avant / après travaux pour immeubles déjà construits.
-            </p>
-            <div className="flex items-center justify-between mt-auto">
-              <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#eef2f8", color: "#1e3a5f" }}>
-                {existingCount} projet{existingCount !== 1 ? "s" : ""}
-              </span>
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 transition-colors" />
+            <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: "#1e3a5f" }} />
+            <div className="pl-7 pr-6 pt-6 pb-6">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform" style={{ backgroundColor: "#eef2f8" }}>
+                <Building2 className="w-6 h-6" style={{ color: "#1e3a5f" }} />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Bâtiments existants</h3>
+              <p className="text-sm text-slate-500 leading-relaxed mb-5">
+                Analyse avant / après travaux pour immeubles déjà construits.
+              </p>
+              <div className="flex items-center justify-between mt-auto">
+                <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#eef2f8", color: "#1e3a5f" }}>
+                  {existingCount} projet{existingCount !== 1 ? "s" : ""}
+                </span>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 transition-colors" />
+              </div>
             </div>
           </button>
 
           <button
-            className="group flex flex-col text-left rounded-2xl border-2 p-8 transition-all hover:shadow-lg hover:-translate-y-0.5 bg-white"
+            className="group relative flex flex-col text-left rounded-2xl border bg-white overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5"
             style={{ borderColor: "#e8edf4" }}
             onClick={() => navigate("/projects/new")}
             data-testid="button-section-new"
           >
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-105 transition-transform" style={{ backgroundColor: "#f0fdf4" }}>
-              <HardHat className="w-7 h-7" style={{ color: "#16a34a" }} />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1">Constructions neuves</h3>
-            <p className="text-sm text-slate-500 leading-relaxed mb-5">
-              Qualification selon le bâtiment de référence CNEB 2017.
-            </p>
-            <div className="flex items-center justify-between mt-auto">
-              <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}>
-                {newCount} projet{newCount !== 1 ? "s" : ""}
-              </span>
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 transition-colors" />
+            <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: "#16a34a" }} />
+            <div className="pl-7 pr-6 pt-6 pb-6">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform" style={{ backgroundColor: "#f0fdf4" }}>
+                <HardHat className="w-6 h-6" style={{ color: "#16a34a" }} />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Constructions neuves</h3>
+              <p className="text-sm text-slate-500 leading-relaxed mb-5">
+                Qualification selon le bâtiment de référence CNEB 2017.
+              </p>
+              <div className="flex items-center justify-between mt-auto">
+                <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}>
+                  {newCount} projet{newCount !== 1 ? "s" : ""}
+                </span>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 transition-colors" />
+              </div>
             </div>
           </button>
         </div>
+
+        {/* Recent projects */}
+        {recentProjects.length > 0 && (
+          <div>
+            <h2 className="text-sm font-semibold text-slate-600 mb-3 uppercase tracking-wide">Projets récents</h2>
+            <div className="space-y-2">
+              {recentProjects.map((p) => {
+                const status = getProjectStatus(p);
+                const isNew = p.buildingType === "new";
+                return (
+                  <button
+                    key={p.id}
+                    className="group w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border bg-white text-left transition-all hover:shadow-sm hover:border-slate-300"
+                    style={{ borderColor: "#e8edf4" }}
+                    onClick={() => navigate(`/project/${p.id}`)}
+                    data-testid={`recent-project-${p.id}`}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isNew ? "#f0fdf4" : "#eef2f8" }}>
+                      {isNew
+                        ? <HardHat className="w-4 h-4" style={{ color: "#16a34a" }} />
+                        : <Building2 className="w-4 h-4" style={{ color: "#1e3a5f" }} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{p.name}</p>
+                      {p.city && (
+                        <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3" />{p.city}{p.province ? `, ${p.province}` : ""}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 border"
+                      style={{ color: status.color, backgroundColor: status.bg, borderColor: status.border }}
+                    >
+                      {status.label}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* New project dialog */}

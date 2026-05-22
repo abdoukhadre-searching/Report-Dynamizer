@@ -53,22 +53,36 @@ const sortLabels: Record<SortKey, string> = {
   city: "Ville (A→Z)",
 };
 
+function getProjectStatus(p: Project): { label: string; color: string; bg: string; border: string } {
+  if (p.preReportData && p.postReportData) {
+    return { label: "Qualifié", color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" };
+  }
+  if (p.preReportData) {
+    return { label: "En cours", color: "#d97706", bg: "#fffbeb", border: "#fde68a" };
+  }
+  return { label: "Non démarré", color: "#64748b", bg: "#f8fafc", border: "#e2e8f0" };
+}
+
 function ProjectRow({
   project,
   onDelete,
   onClick,
+  accentColor,
 }: {
   project: Project;
   onDelete: (project: Project) => void;
   onClick: (id: string) => void;
+  accentColor: string;
 }) {
+  const status = getProjectStatus(project);
   return (
     <div
-      className="group flex items-center gap-4 px-5 py-4 rounded-xl border cursor-pointer transition-all hover:shadow-sm hover:border-slate-300 bg-white"
+      className="group relative flex items-center gap-4 pl-5 pr-5 py-4 rounded-xl border cursor-pointer transition-all hover:shadow-md hover:-translate-y-px bg-white overflow-hidden"
       style={{ borderColor: "#e8edf4" }}
       onClick={() => onClick(project.id)}
       data-testid={`card-project-${project.id}`}
     >
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl transition-all" style={{ backgroundColor: accentColor, opacity: 0.7 }} />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-slate-900 text-sm truncate">{project.name}</p>
         <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400">
@@ -86,7 +100,13 @@ function ProjectRow({
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-2.5 flex-shrink-0">
+        <span
+          className="text-[11px] font-semibold px-2.5 py-1 rounded-full border"
+          style={{ color: status.color, backgroundColor: status.bg, borderColor: status.border }}
+        >
+          {status.label}
+        </span>
         <button
           className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
           onClick={(e) => { e.stopPropagation(); onDelete(project); }}
@@ -95,9 +115,7 @@ function ProjectRow({
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
-        <span className="flex items-center gap-1 text-xs text-slate-400 group-hover:text-slate-700 transition-colors">
-          Ouvrir <ArrowRight className="w-3.5 h-3.5" />
-        </span>
+        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
       </div>
     </div>
   );
@@ -329,7 +347,7 @@ export default function ProjectsListPage({ buildingType }: ProjectsListPageProps
           <div className="space-y-2">
             <p className="text-xs text-slate-400 mb-3">{filtered.length} projet{filtered.length !== 1 ? "s" : ""}</p>
             {filtered.map((p) => (
-              <ProjectRow key={p.id} project={p} onDelete={setDeleteTarget} onClick={(id) => navigate(`/project/${id}`)} />
+              <ProjectRow key={p.id} project={p} onDelete={setDeleteTarget} onClick={(id) => navigate(`/project/${id}`)} accentColor={sectionColor} />
             ))}
           </div>
         )}
