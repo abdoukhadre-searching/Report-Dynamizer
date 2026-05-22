@@ -119,7 +119,27 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   const cityProvinceMatch = text.match(/Ville:\s*([^\n\r]+?)\s{2,}Province:\s*([^\n\r]+)/i);
   if (cityProvinceMatch) {
     // Replace any internal tabs with spaces (pdftotext column artefacts)
-    info.city = cityProvinceMatch[1].replace(/\t+/g, " ").trim();
+    let cityValue = cityProvinceMatch[1].replace(/\t+/g, " ").trim();
+
+    // The city may wrap onto the next line(s) in HOT2000 reports.
+    // Find the line that contains the Ville: match and check the line(s) below it.
+    const villeLineIdx = lines.findIndex(l => /Ville:/i.test(l));
+    if (villeLineIdx >= 0) {
+      for (let i = villeLineIdx + 1; i < Math.min(villeLineIdx + 4, lines.length); i++) {
+        const l = lines[i].trim();
+        if (!l || l.length <= 2) break;
+        if (/^(Province|Code|Adresse|Ville|Fichier|Téléphone|Courriel|Nom du):/i.test(l)) break;
+        if (/^[A-Z]\d[A-Z]/.test(l) || /^\(/.test(l)) break; // postal code or province value
+        // If it looks like a continuation of the city (no label colon), append it
+        if (!/:\s/.test(l)) {
+          cityValue = cityValue + " " + l;
+        } else {
+          break;
+        }
+      }
+    }
+    info.city = cityValue;
+
     const rawProv = cityProvinceMatch[2].replace(/\t+/g, " ").trim();
     // Strip surrounding parentheses and normalise caps: "(QUÉBEC)" → "Québec"
     info.province = rawProv.replace(/^\(|\)$/g, "").trim();
