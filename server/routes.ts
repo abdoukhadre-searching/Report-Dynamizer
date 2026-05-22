@@ -11,7 +11,7 @@ import { promisify } from "util";
 import { renderProjectPdf } from "./pdf-export";
 import * as os from "os";
 import * as crypto from "crypto";
-import { PDFDocument, rgb, StandardFonts, PDFName } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, PDFName, PDFBool } from "pdf-lib";
 import { inflateSync, deflateSync } from "zlib";
 import { hashPassword, verifyPassword } from "./auth";
 import sharp from "sharp";
@@ -724,6 +724,8 @@ export async function registerRoutes(
     const templateBytes = fs.readFileSync(templatePath);
     const pdfDoc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
     const form = pdfDoc.getForm();
+    // Tell PDF viewers to regenerate appearance streams so long text fits properly
+    form.acroForm.dict.set(PDFName.of("NeedAppearances"), PDFBool.True);
 
     // Helper: set a text field, silently skip if not found
     const setText = (name: string, value: string) => {
