@@ -115,10 +115,17 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     info.address = addressMatch[1].trim();
   }
 
-  const cityProvinceMatch = text.match(/Ville:\s*([^\n\r\t]+)\s*[\t ]+Province:\s*([^\n\r\t]+)/i);
+  // Allow tabs within city name (pdftotext column detection); require 2+ spaces before Province:
+  const cityProvinceMatch = text.match(/Ville:\s*([^\n\r]+?)\s{2,}Province:\s*([^\n\r]+)/i);
   if (cityProvinceMatch) {
-    info.city = cityProvinceMatch[1].trim();
-    info.province = cityProvinceMatch[2].trim();
+    // Replace any internal tabs with spaces (pdftotext column artefacts)
+    info.city = cityProvinceMatch[1].replace(/\t+/g, " ").trim();
+    const rawProv = cityProvinceMatch[2].replace(/\t+/g, " ").trim();
+    // Strip surrounding parentheses and normalise caps: "(QUÉBEC)" → "Québec"
+    info.province = rawProv.replace(/^\(|\)$/g, "").trim();
+    if (info.province === info.province.toUpperCase()) {
+      info.province = info.province.charAt(0).toUpperCase() + info.province.slice(1).toLowerCase();
+    }
   }
 
   const postalMatch = text.match(/Code\s*Postal:\s*([A-Z]\d[A-Z]\s*\d[A-Z]\d)/i)
@@ -159,13 +166,18 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   const fileNameLine = fichierIdx >= 0 && fichierIdx + 1 < lines.length ? lines[fichierIdx + 1] : "";
 
   if (info.address && !info.city) {
-    const addrLineIdx = lines.indexOf(info.address);
+    const addrLineIdx = lines.findIndex(l => l.trim() === info.address!.trim());
     if (addrLineIdx >= 0) {
-      for (let i = addrLineIdx + 1; i < Math.min(addrLineIdx + 3, lines.length); i++) {
-        if (lines[i] && !/^[A-Z]\d[A-Z]/.test(lines[i]) && !/^\d/.test(lines[i]) && lines[i].length > 2) {
-          info.city = lines[i];
-          break;
-        }
+      const cityParts: string[] = [];
+      for (let i = addrLineIdx + 1; i < Math.min(addrLineIdx + 5, lines.length); i++) {
+        const l = lines[i].trim();
+        if (!l || l.length <= 2) break;
+        if (/^[A-Z]\d[A-Z]/.test(l) || /^\d/.test(l)) break;
+        if (/^(Province|Code|Adresse|Ville|Fichier|Téléphone|Courriel):/i.test(l)) break;
+        cityParts.push(l);
+      }
+      if (cityParts.length > 0) {
+        info.city = cityParts.join(" ");
       }
     }
   }
@@ -174,7 +186,10 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   if (!info.province && provinceIdx >= 0) {
     for (let i = provinceIdx + 1; i < Math.min(provinceIdx + 5, lines.length); i++) {
       if (lines[i] && !lines[i].startsWith("T") && lines[i].length > 2) {
-        info.province = lines[i];
+        const rawProv = lines[i].trim().replace(/^\(|\)$/g, "").trim();
+        info.province = rawProv === rawProv.toUpperCase()
+          ? rawProv.charAt(0).toUpperCase() + rawProv.slice(1).toLowerCase()
+          : rawProv;
         break;
       }
     }
