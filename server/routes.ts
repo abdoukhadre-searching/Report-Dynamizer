@@ -729,6 +729,8 @@ export async function registerRoutes(
     const setText = (name: string, value: string) => {
       try {
         const field = form.getTextField(name);
+        // Remove MaxLen so long city names (e.g. "St-Germain-de-Grantham") are never truncated
+        field.acroField.dict.delete(PDFName.of("MaxLen"));
         field.setText(value);
         field.enableReadOnly();
       } catch (_) {}
