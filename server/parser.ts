@@ -115,8 +115,18 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     info.address = addressMatch[1].trim();
   }
 
+  // DEBUG: log lines around Ville: to diagnose city parsing
+  const villeDebugIdx = lines.findIndex(l => /Ville:/i.test(l));
+  if (villeDebugIdx >= 0) {
+    console.log("[PARSER DEBUG] Lines around Ville:");
+    for (let i = Math.max(0, villeDebugIdx - 1); i < Math.min(villeDebugIdx + 6, lines.length); i++) {
+      console.log(`  [${i}] ${JSON.stringify(lines[i])}`);
+    }
+  }
+
   // Allow tabs within city name (pdftotext column detection); require 2+ spaces before Province:
   const cityProvinceMatch = text.match(/Ville:\s*([^\n\r]+?)\s{2,}Province:\s*([^\n\r]+)/i);
+  console.log("[PARSER DEBUG] cityProvinceMatch:", cityProvinceMatch ? [cityProvinceMatch[1], cityProvinceMatch[2]] : null);
   if (cityProvinceMatch) {
     // Replace any internal tabs with spaces (pdftotext column artefacts)
     let cityValue = cityProvinceMatch[1].replace(/\t+/g, " ").trim();
