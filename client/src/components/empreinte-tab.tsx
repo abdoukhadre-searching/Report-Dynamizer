@@ -968,7 +968,6 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                           <TrendingDown className="w-3.5 h-3.5 text-green-600" />
                           <div>
                             <p className="text-xs font-semibold text-green-800">Subvention — Isolation du sous-sol</p>
-                            <p className="text-xs text-green-600 mt-0.5">Montant saisi manuellement</p>
                           </div>
                         </div>
                       </td>
