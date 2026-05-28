@@ -732,7 +732,12 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("gasHeat")}</span>
                       {`Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}`}
                     </h3>
-                    <p>{`Le système de chauffage actuel, alimenté au ${getFuelDisplayName(pre.heating?.primaryType)}, sera converti vers ${getFuelDisplayName(post.heating?.primaryType)}.`}</p>
+                    <p>
+                      {`Le système de chauffage actuel, alimenté au ${getFuelDisplayName(pre.heating?.primaryType)}, sera converti vers ${getFuelDisplayName(post.heating?.primaryType)}`}
+                      {!isFossilFuel(post.heating?.primaryType)
+                        ? ` par l'installation de plinthes électriques dans chaque logement, permettant d'assurer un chauffage autonome, simple et adapté aux besoins des occupants.`
+                        : `.`}
+                    </p>
                   </div>
                 )}
 

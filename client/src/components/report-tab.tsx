@@ -2319,7 +2319,10 @@ export default function ReportTab({
                       {`Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}`}
                     </h3>
                     <p>
-                      {`Le système de chauffage actuel, alimenté au ${getFuelDisplayName(pre.heating?.primaryType)}, sera converti vers ${getFuelDisplayName(post.heating?.primaryType)}.`}
+                      {`Le système de chauffage actuel, alimenté au ${getFuelDisplayName(pre.heating?.primaryType)}, sera converti vers ${getFuelDisplayName(post.heating?.primaryType)}`}
+                      {!isFossilFuel(post.heating?.primaryType)
+                        ? ` par l'installation de plinthes électriques dans chaque logement, permettant d'assurer un chauffage autonome, simple et adapté aux besoins des occupants.`
+                        : `.`}
                     </p>
                   </div>
                 )}
