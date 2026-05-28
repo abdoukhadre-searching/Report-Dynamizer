@@ -113,6 +113,7 @@ export const reportDataSchema = z.object({
     windowFraction: z.string().optional(),
     wallMaxRsi: z.number().optional(),
     roofMaxRsi: z.number().optional(),
+    foundationRsi: z.number().optional(),
   }).optional(),
   zone1: z.array(buildingZoneSchema).optional(),
   zone1Total: z.object({

@@ -601,6 +601,10 @@ export default function ReportTab({
     /thermopompe/i.test(post.hotWater.equipmentType)
   );
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants, post.heating?.puissance8_3kW);
+  const postFoundationRsi = post.buildingInfo?.foundationRsi ?? 0;
+  const preFoundationRsi = pre.buildingInfo?.foundationRsi ?? 0;
+  const showBasementInsulationStrategy = postFoundationRsi > preFoundationRsi;
+  const basementRValue = Math.round(postFoundationRsi * 5.678);
 
   const activeStrategies: { key: string; label: string }[] = [];
   if (showAirTightnessStrategy)
@@ -634,6 +638,8 @@ export default function ReportTab({
     activeStrategies.push({ key: "gasHeat", label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}` });
   if (showGasConversionHotWaterToElec)
     activeStrategies.push({ key: "gasHW", label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}` });
+  if (showBasementInsulationStrategy)
+    activeStrategies.push({ key: "basement", label: `Isolation du sous-sol (R-${basementRValue})` });
   const stratNum = (key: string) =>
     activeStrategies.findIndex((s) => s.key === key) + 1;
   const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
@@ -775,6 +781,8 @@ export default function ReportTab({
     strategies.push(`la conversion de l'énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}`);
   if (showHeatPumpWaterHeaterStrategy)
     strategies.push("l'installation de chauffe-eaux thermopompe");
+  if (showBasementInsulationStrategy)
+    strategies.push(`l'amélioration de l'isolation du sous-sol jusqu'à R-${basementRValue}`);
 
   const preHeatingEquipment =
     pre.heating?.primaryEquipment || "plinthes électriques";
@@ -2341,6 +2349,23 @@ export default function ReportTab({
                     </h3>
                     <p>
                       {`Le système actuel de production d'eau chaude domestique, alimenté au ${getFuelDisplayName(pre.hotWater?.primaryType)}, sera converti vers ${getFuelDisplayName(post.hotWater?.primaryType)}.`}
+                    </p>
+                  </div>
+                )}
+
+                {showBasementInsulationStrategy && (
+                  <div className="mt-12" data-testid="strategy-basement-insulation">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span
+                        className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0"
+                        style={{ backgroundColor: "#1e3a5f" }}
+                      >
+                        4.{stratNum("basement")}
+                      </span>
+                      {`Isolation du sous-sol (R-${basementRValue})`}
+                    </h3>
+                    <p>
+                      {`Améliorer l'isolation du sous-sol jusqu'à une résistance thermique minimale de R-${basementRValue} afin de réduire les pertes thermiques et d'améliorer l'efficacité énergétique du bâtiment.`}
                     </p>
                   </div>
                 )}

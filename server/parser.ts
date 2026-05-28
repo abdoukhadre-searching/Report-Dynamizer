@@ -393,6 +393,13 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     if (wallVals.length > 0) info.wallMaxRsi = Math.max(...wallVals);
   }
 
+  // Parse foundation RSI from first FONDATIONS section (Valeur-R de mur)
+  const fondRsiMatch = text.match(/FONDATIONS[\s\S]{0,1200}?Valeur-R:\s*(?:\n\s*)?([\d,.]+)\s*RSI/i);
+  if (fondRsiMatch) {
+    const val = parseFloat(fondRsiMatch[1].replace(",", "."));
+    if (!isNaN(val) && val > 0) info.foundationRsi = val;
+  }
+
   return info;
 }
 
