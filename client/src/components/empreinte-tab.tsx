@@ -590,8 +590,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <div className="flex items-center gap-3">
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">Installation de plinthes électriques dans chaque logement</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{`Conversion du système de chauffage : ${getFuelDisplayName(pre?.heating?.primaryType)} vers électricité`}</p>
+                        <p className="font-semibold text-slate-800">{`Conversion du système de chauffage`}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{`${getFuelDisplayName(pre?.heating?.primaryType)} vers ${getFuelDisplayName(post?.heating?.primaryType)}`}</p>
                       </div>
                     </div>
                   </td>
@@ -625,8 +625,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <div className="flex items-center gap-3">
                       <IconBox><Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">Installation d'un chauffe-eau électrique indépendant dans chaque unité ou d'une chaudière électrique commune</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{`Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre?.hotWater?.primaryType)} vers électricité`}</p>
+                        <p className="font-semibold text-slate-800">{`Conversion énergie primaire du chauffe-eau`}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{`${getFuelDisplayName(pre?.hotWater?.primaryType)} vers ${getFuelDisplayName(post?.hotWater?.primaryType)}`}</p>
                       </div>
                     </div>
                   </td>

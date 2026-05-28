@@ -730,9 +730,9 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                   <div className="mt-12" data-testid="rec-strategy-gas-conversion-heating">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("gasHeat")}</span>
-                      {`Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers Électricité`}
+                      {`Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}`}
                     </h3>
-                    <p>{`Le système de chauffage actuel, alimenté au ${getFuelDisplayName(pre.heating?.primaryType)}, sera converti à l'électricité par l'installation de plinthes électriques dans chaque unité, permettant d'assurer un chauffage autonome, simple et adapté aux besoins des occupants.`}</p>
+                    <p>{`Le système de chauffage actuel, alimenté au ${getFuelDisplayName(pre.heating?.primaryType)}, sera converti vers ${getFuelDisplayName(post.heating?.primaryType)}.`}</p>
                   </div>
                 )}
 
@@ -740,9 +740,9 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                   <div className="mt-12" data-testid="rec-strategy-gas-conversion-hotwater">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("gasHW")}</span>
-                      {`Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers Électricité`}
+                      {`Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}`}
                     </h3>
-                    <p>{`Le système actuel de production d'eau chaude domestique, alimenté au ${getFuelDisplayName(pre.hotWater?.primaryType)}, sera converti à l'électricité. Deux options peuvent être envisagées : soit l'installation d'un chauffe-eau électrique indépendant dans chaque unité afin d'assurer une production d'eau chaude autonome et efficace, soit l'installation d'une chaudière électrique commune desservant l'ensemble du bâtiment.`}</p>
+                    <p>{`Le système actuel de production d'eau chaude domestique, alimenté au ${getFuelDisplayName(pre.hotWater?.primaryType)}, sera converti vers ${getFuelDisplayName(post.hotWater?.primaryType)}.`}</p>
                   </div>
                 )}
               </div>
