@@ -106,6 +106,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [coutBasementInsul, setCoutBasementInsul] = useState(0);
+  const [subventionBasementInsul, setSubventionBasementInsul] = useState(0);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
   const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>(
     initialValues?.customMeasures ?? (project.customMeasures as { id: string; name: string; cost: number }[]) ?? []
@@ -218,7 +219,9 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
   const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalCustom;
-  const totalSubvention = showHeatingStrategy ? nbThermo * subventionThermo : 0;
+  const totalSubventionThermo = showHeatingStrategy ? nbThermo * subventionThermo : 0;
+  const totalSubventionBasement = showBasementInsulationStrategy ? subventionBasementInsul : 0;
+  const totalSubvention = totalSubventionThermo + totalSubventionBasement;
   const totalApresSubvention = totalBrut - totalSubvention;
 
   const address = project.address || pre.buildingInfo?.address || "";
@@ -721,6 +724,24 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         <p className="text-xs text-slate-400 mt-0.5">
                           {[project.basementInsulationInches ? `${project.basementInsulationInches} po` : "", project.basementInsulationType].filter(Boolean).join(" de ") || "Isolant à préciser"}
                         </p>
+                        {!exportMode && (
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <TrendingDown className="w-3 h-3 text-green-600 flex-shrink-0" />
+                            <span className="text-xs text-green-700 font-medium">Subvention :</span>
+                            <input
+                              data-testid="input-subvention-basement-insul"
+                              type="number"
+                              value={subventionBasementInsul}
+                              onChange={(e) => setSubventionBasementInsul(Number(e.target.value))}
+                              placeholder="0"
+                              style={{ width: "72px", fontSize: "12px", padding: "2px 6px", borderRadius: "5px", border: "1px solid #86efac", outline: "none", backgroundColor: "#f0fdf4", color: "#15803d" }}
+                            />
+                            <span className="text-xs text-green-600">$</span>
+                          </div>
+                        )}
+                        {exportMode && subventionBasementInsul > 0 && (
+                          <p className="text-xs text-green-700 mt-1">Subvention : {subventionBasementInsul.toLocaleString("fr-CA")} $</p>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -916,28 +937,46 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
               {totalSubvention > 0 && (
                 <>
-                  <tr className="bg-green-50">
-                    <td className="px-5 py-3" colSpan={2}>
-                      <div className="flex items-center gap-2">
-                        <TrendingDown className="w-3.5 h-3.5 text-green-600" />
-                        <div>
-                          <p className="text-xs font-semibold text-green-800">Possibilité de subvention — Thermopompes</p>
-                          <p className="text-xs text-green-600 mt-0.5">
-                            {nbThermo} unité{nbThermo > 1 ? "s" : ""} × {subventionThermo.toLocaleString("fr-CA")} $/unité — Programme Logisvert{" "}
-                            <a
-                              href="#section-subvention-logisvert"
-                              onClick={(e) => { e.preventDefault(); document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth" }); }}
-                              className="underline font-semibold"
-                              style={{ color: "#16a34a" }}
-                            >↓ Détails</a>
-                          </p>
+                  {totalSubventionThermo > 0 && (
+                    <tr className="bg-green-50">
+                      <td className="px-5 py-3" colSpan={2}>
+                        <div className="flex items-center gap-2">
+                          <TrendingDown className="w-3.5 h-3.5 text-green-600" />
+                          <div>
+                            <p className="text-xs font-semibold text-green-800">Possibilité de subvention — Thermopompes</p>
+                            <p className="text-xs text-green-600 mt-0.5">
+                              {nbThermo} unité{nbThermo > 1 ? "s" : ""} × {subventionThermo.toLocaleString("fr-CA")} $/unité — Programme Logisvert{" "}
+                              <a
+                                href="#section-subvention-logisvert"
+                                onClick={(e) => { e.preventDefault(); document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth" }); }}
+                                className="underline font-semibold"
+                                style={{ color: "#16a34a" }}
+                              >↓ Détails</a>
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-right text-sm text-green-600 font-medium" colSpan={2}>
-                      − {totalSubvention.toLocaleString("fr-CA")} $
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-5 py-3 text-right text-sm text-green-600 font-medium" colSpan={2}>
+                        − {totalSubventionThermo.toLocaleString("fr-CA")} $
+                      </td>
+                    </tr>
+                  )}
+                  {totalSubventionBasement > 0 && (
+                    <tr className="bg-green-50">
+                      <td className="px-5 py-3" colSpan={2}>
+                        <div className="flex items-center gap-2">
+                          <TrendingDown className="w-3.5 h-3.5 text-green-600" />
+                          <div>
+                            <p className="text-xs font-semibold text-green-800">Subvention — Isolation du sous-sol</p>
+                            <p className="text-xs text-green-600 mt-0.5">Montant saisi manuellement</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-right text-sm text-green-600 font-medium" colSpan={2}>
+                        − {totalSubventionBasement.toLocaleString("fr-CA")} $
+                      </td>
+                    </tr>
+                  )}
                   <tr style={{ backgroundColor: "#1e3a5f" }}>
                     <td colSpan={3} className="px-5 py-4 text-right text-white font-semibold text-xs uppercase tracking-wider">
                       Montant estimé après subvention
