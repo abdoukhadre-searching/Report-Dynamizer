@@ -745,6 +745,9 @@ function parseHeating(text: string): ReportData["heating"] {
   const chargeMatch = text.match(/Charge de l'installation de chauffage:\s*\n?\s*([\d,. ]+)\s*MJ/);
   if (chargeMatch) result.annualConsumption = parseFloat(chargeMatch[1].replace(/\s/g, "").replace(",", "."));
 
+  const pui8Match = text.match(/Puissance\s+[àa]\s+8[,.]3\s*°C\s*:\s*\n?\s*([\d,. ]+)\s*kW/i);
+  if (pui8Match) result.puissance8_3kW = parseFloat(pui8Match[1].replace(/\s/g, "").replace(",", "."));
+
   const boilerMatch = text.match(/Consommation d'énergie annuelle de la\s*\n?\s*chaudière:\s*\n?\s*([\d,. ]+)\s*MJ/);
   if (boilerMatch) result.annualConsumption = parseFloat(boilerMatch[1].replace(/\s/g, "").replace(",", "."));
 

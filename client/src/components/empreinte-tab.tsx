@@ -41,7 +41,8 @@ function getOccupantCount(occupants?: string): number {
   return m ? parseInt(m[1], 10) : 0;
 }
 
-function getThermopompeCount(occupants?: string): number {
+function getThermopompeCount(occupants?: string, puissance8_3kW?: number): number {
+  if (puissance8_3kW && puissance8_3kW > 0) return Math.round(puissance8_3kW / 3.51);
   const count = getOccupantCount(occupants);
   return count > 0 ? Math.ceil(count / 2) : 0;
 }
@@ -173,7 +174,10 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const [coutChauffeEauElecInd, setCoutChauffeEauElecInd] = useState(initialValues?.coutChauffeEauElecInd ?? 0);
   const [nbThermo, setNbThermo] = useState(() => {
     if (initialValues?.nbThermo !== undefined) return initialValues.nbThermo;
-    const n = getThermopompeCount((project.preReportData as ReportData | null)?.buildingInfo?.occupants);
+    const n = getThermopompeCount(
+      (project.preReportData as ReportData | null)?.buildingInfo?.occupants,
+      (project.postReportData as ReportData | null)?.heating?.puissance8_3kW,
+    );
     return n > 0 ? n : 1;
   });
   const [nbUnits, setNbUnits] = useState(() => {

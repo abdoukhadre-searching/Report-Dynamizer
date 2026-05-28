@@ -149,6 +149,7 @@ export const reportDataSchema = z.object({
     secondaryEfficiency: z.string().optional(),
     annualConsumption: z.number().optional(),
     grossHeatLoss: z.number().optional(),
+    puissance8_3kW: z.number().optional(),
   }).optional(),
   cooling: z.object({
     type: z.string().optional(),

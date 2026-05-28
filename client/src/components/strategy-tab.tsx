@@ -17,7 +17,8 @@ function getOccupantCount(occupants?: string): number {
   return m ? parseInt(m[1], 10) : 0;
 }
 
-function getThermopompeCount(occupants?: string): number {
+function getThermopompeCount(occupants?: string, puissance8_3kW?: number): number {
+  if (puissance8_3kW && puissance8_3kW > 0) return Math.round(puissance8_3kW / 3.51);
   const count = getOccupantCount(occupants);
   return count > 0 ? Math.ceil(count / 2) : 0;
 }
@@ -129,7 +130,7 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
 
   const occupants = pre.buildingInfo?.occupants;
   const numUnits = getNumUnitsFromOccupants(occupants);
-  const thermopompeCount = getThermopompeCount(occupants);
+  const thermopompeCount = getThermopompeCount(occupants, post.heating?.puissance8_3kW);
 
   const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);

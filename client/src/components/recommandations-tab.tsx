@@ -142,7 +142,8 @@ function getOccupantCount(occupants?: string): number {
   return match ? parseInt(match[1], 10) : 0;
 }
 
-function getThermopompeCount(occupants?: string): number {
+function getThermopompeCount(occupants?: string, puissance8_3kW?: number): number {
+  if (puissance8_3kW && puissance8_3kW > 0) return Math.round(puissance8_3kW / 3.51);
   const count = getOccupantCount(occupants);
   return count > 0 ? Math.ceil(count / 2) : 0;
 }
@@ -316,7 +317,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   const showGasConversionHeatingToElec = !!pre.heating?.primaryType && !!post.heating?.primaryType && getFuelDisplayName(pre.heating.primaryType) !== getFuelDisplayName(post.heating.primaryType);
   const showGasConversionHotWaterToElec = !!pre.hotWater?.primaryType && !!post.hotWater?.primaryType && getFuelDisplayName(pre.hotWater.primaryType) !== getFuelDisplayName(post.hotWater.primaryType);
   const showHeatPumpWaterHeaterStrategy = !!(post.hotWater?.equipmentType && /thermopompe/i.test(post.hotWater.equipmentType));
-  const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
+  const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants, post.heating?.puissance8_3kW);
 
   const activeStrategies: { key: string; label: string }[] = [];
   if (showAirTightnessStrategy) activeStrategies.push({ key: "air", label: "Amélioration de l'étanchéité du bâtiment" });
