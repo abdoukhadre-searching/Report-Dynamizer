@@ -190,8 +190,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const showLedStrategy = hasLedImprovement(pre, post);
   const showAirTightnessStrategy = hasAirTightnessChanged(pre, post);
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
-  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType);
-  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType);
+  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) !== isFossilFuel(post.heating?.primaryType);
+  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) !== isFossilFuel(post.hotWater?.primaryType);
 
   const preGJ = pre.annualSummary?.totalGJ ?? 0;
   const postGJ = post.annualSummary?.totalGJ ?? 0;

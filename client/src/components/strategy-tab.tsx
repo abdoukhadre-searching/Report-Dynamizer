@@ -137,8 +137,8 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post) && project.buildingType !== "new";
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
-  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType);
-  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType);
+  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) !== isFossilFuel(post.heating?.primaryType);
+  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) !== isFossilFuel(post.hotWater?.primaryType);
 
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";
@@ -170,10 +170,10 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
     postItems.push({ icon: <Lightbulb className="w-4 h-4" />, label: "Remplacement des luminaires DEL" });
   }
   if (showGasConversionHeatingToElec) {
-    postItems.push({ icon: <Flame className="w-4 h-4" />, label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers électricité` });
+    postItems.push({ icon: <Flame className="w-4 h-4" />, label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}` });
   }
   if (showGasConversionHotWaterToElec) {
-    postItems.push({ icon: <Droplets className="w-4 h-4" />, label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers électricité` });
+    postItems.push({ icon: <Droplets className="w-4 h-4" />, label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}` });
   }
 
   const handlePrint = async () => {

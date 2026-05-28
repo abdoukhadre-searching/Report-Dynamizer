@@ -202,7 +202,7 @@ function hasFossilConversion(pre: ReportData, post: ReportData): boolean {
   const preHotWaterFossil = isFossilFuel(pre.hotWater?.primaryType);
   const postHeatingFossil = isFossilFuel(post.heating?.primaryType);
   const postHotWaterFossil = isFossilFuel(post.hotWater?.primaryType);
-  return (preHeatingFossil && !postHeatingFossil) || (preHotWaterFossil && !postHotWaterFossil);
+  return (preHeatingFossil !== postHeatingFossil) || (preHotWaterFossil !== postHotWaterFossil);
 }
 
 function getPreFossilFuelLabel(pre: ReportData): string {
@@ -313,8 +313,8 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post) && project.buildingType !== "new";
-  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) && !isFossilFuel(post.heating?.primaryType);
-  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) && !isFossilFuel(post.hotWater?.primaryType);
+  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) !== isFossilFuel(post.heating?.primaryType);
+  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) !== isFossilFuel(post.hotWater?.primaryType);
   const showHeatPumpWaterHeaterStrategy = !!(post.hotWater?.equipmentType && /thermopompe/i.test(post.hotWater.equipmentType));
   const thermopompeCount = getThermopompeCount(pre.buildingInfo?.occupants);
 
@@ -325,8 +325,8 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   if (showLedStrategy) activeStrategies.push({ key: "led", label: "Conversion de l'éclairage vers la technologie DEL" });
   if (showVrcStrategy) activeStrategies.push({ key: "vrc", label: "Ventilation avec récupération de chaleur (VRC)" });
   if (showHeatPumpWaterHeaterStrategy) activeStrategies.push({ key: "hwt", label: "Chauffe-eaux Thermopompe" });
-  if (showGasConversionHeatingToElec) activeStrategies.push({ key: "gasHeat", label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers Électricité` });
-  if (showGasConversionHotWaterToElec) activeStrategies.push({ key: "gasHW", label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers Électricité` });
+  if (showGasConversionHeatingToElec) activeStrategies.push({ key: "gasHeat", label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}` });
+  if (showGasConversionHotWaterToElec) activeStrategies.push({ key: "gasHW", label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}` });
 
   const stratNum = (key: string) => activeStrategies.findIndex((s) => s.key === key) + 1;
   const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
