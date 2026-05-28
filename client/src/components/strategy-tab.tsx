@@ -137,8 +137,8 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const showLedStrategy = hasLedImprovement(pre, post);
   const showVrcStrategy = hasVrcInstallation(post) && project.buildingType !== "new";
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
-  const showGasConversionHeatingToElec = isFossilFuel(pre.heating?.primaryType) !== isFossilFuel(post.heating?.primaryType);
-  const showGasConversionHotWaterToElec = isFossilFuel(pre.hotWater?.primaryType) !== isFossilFuel(post.hotWater?.primaryType);
+  const showGasConversionHeatingToElec = !!pre.heating?.primaryType && !!post.heating?.primaryType && getFuelDisplayName(pre.heating.primaryType) !== getFuelDisplayName(post.heating.primaryType);
+  const showGasConversionHotWaterToElec = !!pre.hotWater?.primaryType && !!post.hotWater?.primaryType && getFuelDisplayName(pre.hotWater.primaryType) !== getFuelDisplayName(post.hotWater.primaryType);
 
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";
