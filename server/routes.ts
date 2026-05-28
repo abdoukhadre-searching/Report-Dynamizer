@@ -710,8 +710,7 @@ export async function registerRoutes(
         ? `${impPct.toFixed(1)} % et ${gesPct.toFixed(1)} %`
         : `${impPct.toFixed(1)} %`;
 
-    const address = [project.address, project.city]
-      .filter(Boolean).join(", ");
+    const address = project.address || "";
 
     const now = new Date();
     const day = String(now.getDate()).padStart(2, "0");

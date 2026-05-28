@@ -644,7 +644,7 @@ export default function ReportTab({
   const city = project.city || pre.buildingInfo?.city || "N/A";
   const province = project.province || pre.buildingInfo?.province || "N/A";
   const postalCode = project.postalCode || pre.buildingInfo?.postalCode || "";
-  const fullAddress = `${address}, ${city} (${province}) ${postalCode}`.trim();
+  const fullAddress = address;
 
   const totalBeforeGJ = comparison.totalBefore ?? 0;
   const totalAfterGJ = comparison.totalAfter ?? 0;

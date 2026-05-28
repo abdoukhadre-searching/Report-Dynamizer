@@ -144,7 +144,7 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";
   const province = project.province || pre.buildingInfo?.province || "";
-  const fullAddress = [address, city, province].filter(Boolean).join(", ");
+  const fullAddress = address;
 
   const heatingPre = getHeatingLabel(pre);
   const hotWaterPre = getHotWaterLabel(pre);
