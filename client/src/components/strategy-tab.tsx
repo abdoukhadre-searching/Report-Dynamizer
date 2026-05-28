@@ -173,7 +173,7 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
     const toElec = !isFossilFuel(post.heating?.primaryType);
     postItems.push({
       icon: <Flame className="w-4 h-4" />,
-      label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}${toElec ? " — installation de plinthes électriques dans chaque logement" : ""}`,
+      label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}${toElec ? ", en installant des plinthes électriques dans chaque logement" : ""}`,
     });
   }
   if (showGasConversionHotWaterToElec) {
