@@ -67,6 +67,8 @@ export const projects = pgTable("projects", {
   signatoryCoordonnes: text("signatory_coordonnees"),
   hasCommercialUnits: boolean("has_commercial_units"),
   commercialUnits: integer("commercial_units").default(0),
+  basementInsulationType: text("basement_insulation_type"),
+  basementInsulationInches: text("basement_insulation_inches"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

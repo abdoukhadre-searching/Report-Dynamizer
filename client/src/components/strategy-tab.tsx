@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Project, ReportData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Printer, TrendingDown, Zap, Droplets, Wind, Lightbulb, Flame, Loader2 } from "lucide-react";
+import { Printer, TrendingDown, Zap, Droplets, Wind, Lightbulb, Flame, Loader2, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 
@@ -140,6 +140,10 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const showHeatPumpWaterHeaterStrategy = hasHeatPumpWaterHeater(post);
   const showGasConversionHeatingToElec = !!pre.heating?.primaryType && !!post.heating?.primaryType && getFuelDisplayName(pre.heating.primaryType) !== getFuelDisplayName(post.heating.primaryType);
   const showGasConversionHotWaterToElec = !!pre.hotWater?.primaryType && !!post.hotWater?.primaryType && getFuelDisplayName(pre.hotWater.primaryType) !== getFuelDisplayName(post.hotWater.primaryType);
+  const postFoundationRsi = post.buildingInfo?.foundationRsi ?? 0;
+  const preFoundationRsi = pre.buildingInfo?.foundationRsi ?? 0;
+  const showBasementInsulationStrategy = postFoundationRsi > preFoundationRsi;
+  const basementRValue = Math.round(postFoundationRsi * 5.678);
 
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";
@@ -179,6 +183,12 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   }
   if (showGasConversionHotWaterToElec) {
     postItems.push({ icon: <Droplets className="w-4 h-4" />, label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}` });
+  }
+  if (showBasementInsulationStrategy) {
+    const inches = project.basementInsulationInches ? `${project.basementInsulationInches} po` : "";
+    const type = project.basementInsulationType || "";
+    const detail = [inches, type].filter(Boolean).join(" de ");
+    postItems.push({ icon: <Building2 className="w-4 h-4" />, label: `Isolation du sous-sol R-${basementRValue}${detail ? ` (${detail})` : ""}` });
   }
 
   const handlePrint = async () => {

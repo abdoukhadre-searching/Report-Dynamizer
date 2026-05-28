@@ -268,6 +268,21 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
     },
   });
+  const recInsulMutation = useMutation({
+    mutationFn: async (data: { basementInsulationType?: string; basementInsulationInches?: string }) => {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    },
+  });
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
   const comparison = project.comparisonData as ComparisonData | null;
@@ -764,6 +779,36 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       {`Isolation du sous-sol (R-${basementRValue})`}
                     </h3>
                     <p>{`Améliorer l'isolation du sous-sol jusqu'à une résistance thermique minimale de R-${basementRValue} afin de réduire les pertes thermiques et d'améliorer l'efficacité énergétique du bâtiment.`}</p>
+                    {(project.basementInsulationInches || project.basementInsulationType) && (
+                      <p className="mt-1">
+                        Isolant recommandé :{" "}
+                        {[project.basementInsulationInches ? `${project.basementInsulationInches} po` : "", project.basementInsulationType].filter(Boolean).join(" de ")}.
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-4 items-end print:hidden" data-testid="rec-insul-fields">
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Nombre de pouces</label>
+                        <input
+                          data-testid="rec-input-insul-inches"
+                          type="text"
+                          defaultValue={project.basementInsulationInches || ""}
+                          onBlur={(e) => recInsulMutation.mutate({ basementInsulationInches: e.target.value })}
+                          placeholder="ex. 3.5"
+                          style={{ width: "90px", fontSize: "13px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Type d'isolant</label>
+                        <input
+                          data-testid="rec-input-insul-type"
+                          type="text"
+                          defaultValue={project.basementInsulationType || ""}
+                          onBlur={(e) => recInsulMutation.mutate({ basementInsulationType: e.target.value })}
+                          placeholder="ex. polyuréthane giclé"
+                          style={{ width: "220px", fontSize: "13px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

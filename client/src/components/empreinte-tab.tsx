@@ -105,6 +105,7 @@ const SUBVENTION_THERMO = 1680;
 export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const [coutBasementInsul, setCoutBasementInsul] = useState(0);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
   const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>(
     initialValues?.customMeasures ?? (project.customMeasures as { id: string; name: string; cost: number }[]) ?? []
@@ -196,6 +197,10 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const showHotWaterStrategy = hasHotWaterChanged(pre, post);
   const showGasConversionHeatingToElec = !!pre.heating?.primaryType && !!post.heating?.primaryType && getFuelDisplayName(pre.heating.primaryType) !== getFuelDisplayName(post.heating.primaryType);
   const showGasConversionHotWaterToElec = !!pre.hotWater?.primaryType && !!post.hotWater?.primaryType && getFuelDisplayName(pre.hotWater.primaryType) !== getFuelDisplayName(post.hotWater.primaryType);
+  const postFoundationRsi = post?.buildingInfo?.foundationRsi ?? 0;
+  const preFoundationRsi = pre?.buildingInfo?.foundationRsi ?? 0;
+  const showBasementInsulationStrategy = postFoundationRsi > preFoundationRsi;
+  const basementRValue = Math.round(postFoundationRsi * 5.678);
 
   const preGJ = pre.annualSummary?.totalGJ ?? 0;
   const postGJ = post.annualSummary?.totalGJ ?? 0;
@@ -209,9 +214,10 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const totalLed = showLedStrategy ? coutLed : 0;
   const totalPlinthes = showGasConversionHeatingToElec ? coutPlinthes : 0;
   const totalChauffeEauElecInd = showGasConversionHotWaterToElec ? nbUnits * coutChauffeEauElecInd : 0;
+  const totalBasementInsul = showBasementInsulationStrategy ? coutBasementInsul : 0;
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
-  const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalCustom;
+  const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalCustom;
   const totalSubvention = showHeatingStrategy ? nbThermo * subventionThermo : 0;
   const totalApresSubvention = totalBrut - totalSubvention;
 
@@ -698,6 +704,43 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                   <td className="px-5 py-4 text-right">
                     {totalLed > 0
                       ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalLed.toLocaleString("fr-CA")} $</span>
+                      : <span className="text-xs italic text-slate-400">Variable</span>
+                    }
+                  </td>
+                </tr>
+              )}
+
+              {/* Isolation du sous-sol — conditional */}
+              {showBasementInsulationStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <IconBox><Building2 className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
+                      <div>
+                        <p className="font-semibold text-slate-800">Isolation du sous-sol (R-{basementRValue})</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {[project.basementInsulationInches ? `${project.basementInsulationInches} po` : "", project.basementInsulationType].filter(Boolean).join(" de ") || "Isolant à préciser"}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        data-testid="input-cout-basement-insul"
+                        type="number"
+                        value={coutBasementInsul}
+                        onChange={(e) => setCoutBasementInsul(Number(e.target.value))}
+                        placeholder="0"
+                        className={inputCls}
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    {totalBasementInsul > 0
+                      ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalBasementInsul.toLocaleString("fr-CA")} $</span>
                       : <span className="text-xs italic text-slate-400">Variable</span>
                     }
                   </td>
