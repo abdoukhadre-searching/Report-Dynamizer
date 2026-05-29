@@ -69,6 +69,7 @@ export const projects = pgTable("projects", {
   commercialUnits: integer("commercial_units").default(0),
   basementInsulationType: text("basement_insulation_type"),
   basementInsulationInches: text("basement_insulation_inches"),
+  basementInsulationRValue: text("basement_insulation_r_value"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

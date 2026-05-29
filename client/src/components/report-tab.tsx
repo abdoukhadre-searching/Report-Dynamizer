@@ -512,7 +512,7 @@ export default function ReportTab({
     },
   });
   const insulMutation = useMutation({
-    mutationFn: async (data: { basementInsulationType?: string; basementInsulationInches?: string }) => {
+    mutationFn: async (data: { basementInsulationType?: string; basementInsulationInches?: string; basementInsulationRValue?: string }) => {
       const res = await fetch(`/api/projects/${project.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -619,7 +619,8 @@ export default function ReportTab({
   const postFoundationRsi = post.buildingInfo?.foundationRsi ?? 0;
   const preFoundationRsi = pre.buildingInfo?.foundationRsi ?? 0;
   const showBasementInsulationStrategy = postFoundationRsi > preFoundationRsi;
-  const basementRValue = Math.round(postFoundationRsi * 5.678);
+  const autoBasementRValue = Math.round(postFoundationRsi * 5.678);
+  const basementRValue = project.basementInsulationRValue ? Number(project.basementInsulationRValue) : autoBasementRValue;
 
   const activeStrategies: { key: string; label: string }[] = [];
   if (showAirTightnessStrategy)
@@ -2389,6 +2390,17 @@ export default function ReportTab({
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-4 items-end print:hidden" data-testid="insul-fields">
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Valeur R recommandée</label>
+                        <input
+                          data-testid="input-insul-rvalue"
+                          type="number"
+                          defaultValue={project.basementInsulationRValue || ""}
+                          onBlur={(e) => insulMutation.mutate({ basementInsulationRValue: e.target.value })}
+                          placeholder={String(autoBasementRValue)}
+                          style={{ width: "80px", fontSize: "13px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
+                        />
+                      </div>
                       <div>
                         <label className="block text-xs text-slate-500 mb-1">Nombre de pouces</label>
                         <input

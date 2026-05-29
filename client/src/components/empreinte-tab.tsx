@@ -201,7 +201,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const postFoundationRsi = post?.buildingInfo?.foundationRsi ?? 0;
   const preFoundationRsi = pre?.buildingInfo?.foundationRsi ?? 0;
   const showBasementInsulationStrategy = postFoundationRsi > preFoundationRsi;
-  const basementRValue = Math.round(postFoundationRsi * 5.678);
+  const autoBasementRValue = Math.round(postFoundationRsi * 5.678);
+  const basementRValue = project.basementInsulationRValue ? Number(project.basementInsulationRValue) : autoBasementRValue;
 
   const preGJ = pre.annualSummary?.totalGJ ?? 0;
   const postGJ = post.annualSummary?.totalGJ ?? 0;
