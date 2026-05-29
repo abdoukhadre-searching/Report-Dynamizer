@@ -165,7 +165,8 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
     postItems.push({ icon: <Zap className="w-4 h-4" />, label: `${thermopompeCount} Thermopompe${thermopompeCount > 1 ? "s" : ""} haute efficacité` });
   }
   if (showHeatPumpWaterHeaterStrategy) {
-    postItems.push({ icon: <Droplets className="w-4 h-4" />, label: `${numUnits > 0 ? numUnits : ""} Chauffe-eau${numUnits > 1 ? "x" : ""} Thermopompe` });
+    const nbCET = project.nbChauffeEauThermo ?? numUnits;
+    postItems.push({ icon: <Droplets className="w-4 h-4" />, label: `${nbCET > 0 ? nbCET : ""} Chauffe-eau${nbCET > 1 ? "x" : ""} Thermopompe` });
   }
   if (showHotWaterStrategy) {
     postItems.push({ icon: <Droplets className="w-4 h-4" />, label: "Pommeaux de douche et robinets à faible débit" });
