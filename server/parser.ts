@@ -66,19 +66,16 @@ export function parseHot2000Report(content: string): ReportData {
   const zone3 = parseZone3(lines);
   const zone3Total = parseZoneTotal(lines, "ZONE 3 Totaux:");
 
-  // Strengthen foundationRsi: Zone 3 "Superficie des murs" effective RSI is the
-  // most reliable source (summary table). Override weak or missing regex-parsed value.
-  const zone3WallRow = zone3.find(z => /superficie des murs/i.test(z.element));
-  if (zone3WallRow && zone3WallRow.rsi && zone3WallRow.rsi > 0) {
-    if (!buildingInfo.foundationRsi || buildingInfo.foundationRsi === 0 || zone3WallRow.rsi > buildingInfo.foundationRsi) {
-      buildingInfo.foundationRsi = zone3WallRow.rsi;
-    }
-  }
-  // Also consider Zone 3 "Solive de rive" RSI as secondary indicator
+  // Zone 3 fallback: only use if parseBuildingInfo couldn't find foundationRsi
   if (!buildingInfo.foundationRsi || buildingInfo.foundationRsi === 0) {
-    const zone3RimRow = zone3.find(z => /solive de rive/i.test(z.element));
-    if (zone3RimRow && zone3RimRow.rsi && zone3RimRow.rsi > 0) {
-      buildingInfo.foundationRsi = zone3RimRow.rsi;
+    const zone3WallRow = zone3.find(z => /superficie des murs/i.test(z.element));
+    if (zone3WallRow && zone3WallRow.rsi && zone3WallRow.rsi > 0) {
+      buildingInfo.foundationRsi = zone3WallRow.rsi;
+    } else {
+      const zone3RimRow = zone3.find(z => /solive de rive/i.test(z.element));
+      if (zone3RimRow && zone3RimRow.rsi && zone3RimRow.rsi > 0) {
+        buildingInfo.foundationRsi = zone3RimRow.rsi;
+      }
     }
   }
   const ventilation = parseVentilation(lines, fullText);
@@ -409,11 +406,53 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
     if (wallVals.length > 0) info.wallMaxRsi = Math.max(...wallVals);
   }
 
-  // Parse foundation RSI from first FONDATIONS section (Valeur-R de mur)
-  const fondRsiMatch = text.match(/FONDATIONS[\s\S]{0,1200}?Valeur-R:\s*(?:\n\s*)?([\d,.]+)\s*RSI/i);
-  if (fondRsiMatch) {
-    const val = parseFloat(fondRsiMatch[1].replace(",", "."));
-    if (!isNaN(val) && val > 0) info.foundationRsi = val;
+  // Parse foundation RSI from basement (sous-sol) sections.
+  // Primary signal: "Configuration: BCCB_4" (or BCCB variant) = concrete basement.
+  // Within that section, "Type mur intérieur" + "Valeur-R:" = insulation R-value added.
+  {
+    let fondRsiValue = 0;
+
+    // Collect anchor positions: BCCB_ variants and "Type de fondation: ... Sous-sol"
+    const anchorPositions: number[] = [];
+    let p = 0;
+    while ((p = text.indexOf("BCCB_", p)) >= 0) { anchorPositions.push(p); p++; }
+    // Also look for Sous-sol text (may appear without BCCB)
+    const sousSolRe = /Type de fondation:\s*\n?\s*Sous-sol/gi;
+    let ssm: RegExpExecArray | null;
+    while ((ssm = sousSolRe.exec(text)) !== null) anchorPositions.push(ssm.index);
+
+    for (const anchorIdx of anchorPositions) {
+      // Examine up to 800 chars before the anchor (fields come before Configuration line)
+      const winStart = Math.max(0, anchorIdx - 900);
+      const winEnd   = Math.min(text.length, anchorIdx + 300);
+      const section  = text.substring(winStart, winEnd);
+
+      // Strategy A: "Type mur intérieur" (or variant) followed by Valeur-R
+      const murIntMatch = section.match(/Type mur int[eé]r[^\n]{0,60}[\s\S]{0,200}?Valeur-R:\s*\n?\s*([\d,.]+)\s*RSI/i);
+      if (murIntMatch) {
+        const v = parseFloat(murIntMatch[1].replace(",", "."));
+        if (!isNaN(v) && v > fondRsiValue) fondRsiValue = v;
+        break; // found the best source, stop
+      }
+
+      // Strategy B: first non-zero Valeur-R anywhere in this section
+      const allRsi = [...section.matchAll(/Valeur-R:\s*\n?\s*([\d,.]+)\s*RSI/gi)];
+      for (const m of allRsi) {
+        const v = parseFloat(m[1].replace(",", "."));
+        if (!isNaN(v) && v > 0 && v > fondRsiValue) { fondRsiValue = v; break; }
+      }
+    }
+
+    // Strategy C: original broad regex as last fallback
+    if (!fondRsiValue) {
+      const fondRsiMatch = text.match(/FONDATIONS[\s\S]{0,1200}?Valeur-R:\s*(?:\n\s*)?([\d,.]+)\s*RSI/i);
+      if (fondRsiMatch) {
+        const v = parseFloat(fondRsiMatch[1].replace(",", "."));
+        if (!isNaN(v) && v > 0) fondRsiValue = v;
+      }
+    }
+
+    if (fondRsiValue > 0) info.foundationRsi = fondRsiValue;
   }
 
   return info;
