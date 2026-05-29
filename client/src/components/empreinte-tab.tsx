@@ -200,11 +200,13 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   });
 
   async function saveNbChauffeEauThermo(value: number) {
+    queryClient.setQueryData(["/api/projects", project.id], (old: any) =>
+      old ? { ...old, nbChauffeEauThermo: value } : old
+    );
     try {
       await apiRequest("PATCH", `/api/projects/${project.id}`, { nbChauffeEauThermo: value });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
     } catch {
-      // silent
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
     }
   }
 
