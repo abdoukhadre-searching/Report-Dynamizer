@@ -491,7 +491,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <div className="flex items-center gap-3">
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">Travaux électriques — thermopompe</p>
+                        <p className="font-semibold text-slate-800">Travaux électriques : Thermopompes</p>
                         <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">Disjoncteur, interrupteur de sécurité ext. et câblage requis</p>
                       </div>
                     </div>
