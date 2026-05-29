@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import puppeteer, { Browser } from "puppeteer";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -92,12 +92,28 @@ function findChromiumExecutable(): string | undefined {
   return undefined;
 }
 
-export async function renderProjectPdf(reportUrl: string, waitForSelector = "#report-content"): Promise<Buffer> {
-  const executablePath = findChromiumExecutable();
-  console.log(`[pdf] Launching Chromium: ${executablePath || "puppeteer default"}`);
-  console.log(`[pdf] URL: ${reportUrl}, selector: ${waitForSelector}`);
+let browserInstance: Browser | null = null;
+let browserLaunchPromise: Promise<Browser> | null = null;
 
-  const browser = await puppeteer.launch({
+async function getBrowser(): Promise<Browser> {
+  if (browserInstance) {
+    try {
+      await browserInstance.version();
+      return browserInstance;
+    } catch {
+      browserInstance = null;
+      browserLaunchPromise = null;
+    }
+  }
+
+  if (browserLaunchPromise) {
+    return browserLaunchPromise;
+  }
+
+  const executablePath = findChromiumExecutable();
+  console.log(`[pdf] Launching Chromium (singleton): ${executablePath || "puppeteer default"}`);
+
+  browserLaunchPromise = puppeteer.launch({
     headless: true,
     executablePath,
     args: [
@@ -110,99 +126,112 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
       "--disable-background-networking",
       "--disable-default-apps",
     ],
+  }).then(b => {
+    browserInstance = b;
+    browserLaunchPromise = null;
+    b.on("disconnected", () => {
+      console.log("[pdf] Chromium disconnected, will relaunch on next request");
+      browserInstance = null;
+      browserLaunchPromise = null;
+    });
+    return b;
+  }).catch(err => {
+    browserLaunchPromise = null;
+    throw err;
   });
 
-  try {
-    const page = await browser.newPage();
-    try {
-      console.log(`[pdf] Navigating to: ${reportUrl}`);
-      await page.goto(reportUrl, { waitUntil: "load", timeout: 60000 });
-      console.log(`[pdf] Page loaded, waiting for selector: ${waitForSelector}`);
-      await page.waitForSelector(waitForSelector, { timeout: 60000 });
-      console.log(`[pdf] Selector found, rendering PDF...`);
-      await new Promise(r => setTimeout(r, 1000));
-      await page.emulateMediaType("print");
+  return browserLaunchPromise;
+}
 
-      await page.evaluate(async () => {
-        if (document.fonts?.ready) {
-          await document.fonts.ready;
-        }
-      });
-
-      // Inject image compression as a raw script to avoid esbuild __name injection
-      await page.addScriptTag({
-        content: `
-          window.__pdfCompressImages = function() {
-            var MAX_PX = 2400;
-            var QUALITY = 0.90;
-            var promises = [];
-            var imgs = document.querySelectorAll('img');
-            for (var i = 0; i < imgs.length; i++) {
-              (function(img) {
-                promises.push(new Promise(function(resolve) {
-                  function compress() {
-                    try {
-                      var w = img.naturalWidth, h = img.naturalHeight;
-                      if (!w || !h) { resolve(); return; }
-                      var scale = w > MAX_PX ? MAX_PX / w : 1;
-                      var c = document.createElement('canvas');
-                      c.width = Math.round(w * scale);
-                      c.height = Math.round(h * scale);
-                      var ctx = c.getContext('2d');
-                      if (!ctx) { resolve(); return; }
-                      ctx.drawImage(img, 0, 0, c.width, c.height);
-                      img.src = c.toDataURL('image/jpeg', QUALITY);
-                    } catch(e) {}
-                    resolve();
-                  }
-                  if (img.complete && img.naturalWidth > 0) compress();
-                  else { img.onload = compress; img.onerror = resolve; }
-                }));
-              })(imgs[i]);
-            }
-            var canvases = document.querySelectorAll('canvas');
-            for (var j = 0; j < canvases.length; j++) {
-              (function(canvas) {
-                try {
-                  var w = canvas.width, h = canvas.height;
-                  if (!w || !h) return;
-                  var scale = w > MAX_PX ? MAX_PX / w : 1;
-                  var tmp = document.createElement('canvas');
-                  tmp.width = Math.round(w * scale);
-                  tmp.height = Math.round(h * scale);
-                  var ctx = tmp.getContext('2d');
-                  if (!ctx) return;
-                  ctx.drawImage(canvas, 0, 0, tmp.width, tmp.height);
-                  var dataUrl = tmp.toDataURL('image/jpeg', QUALITY);
-                  var img = document.createElement('img');
-                  img.src = dataUrl;
-                  img.style.cssText = 'width:' + canvas.offsetWidth + 'px;height:' + canvas.offsetHeight + 'px;display:block;';
-                  if (canvas.parentNode) canvas.parentNode.replaceChild(img, canvas);
-                } catch(e) {}
-              })(canvases[j]);
-            }
-            return Promise.all(promises);
-          };
-        `,
-      });
-
-      // Run the compression and wait for all images to be replaced
-      await page.evaluate(() => (window as any).__pdfCompressImages());
-      await new Promise(r => setTimeout(r, 600));
-
-      const pdf = await page.pdf({
-        format: "A4",
-        printBackground: true,
-        displayHeaderFooter: false,
-        preferCSSPageSize: true,
-        margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
-      });
-
-      return Buffer.from(pdf);
-    } finally {
-      await page.close().catch(() => {});
+const IMAGE_COMPRESS_SCRIPT = `
+  window.__pdfCompressImages = function() {
+    var MAX_PX = 2400;
+    var QUALITY = 0.90;
+    var promises = [];
+    var imgs = document.querySelectorAll('img');
+    for (var i = 0; i < imgs.length; i++) {
+      (function(img) {
+        promises.push(new Promise(function(resolve) {
+          function compress() {
+            try {
+              var w = img.naturalWidth, h = img.naturalHeight;
+              if (!w || !h) { resolve(); return; }
+              var scale = w > MAX_PX ? MAX_PX / w : 1;
+              var c = document.createElement('canvas');
+              c.width = Math.round(w * scale);
+              c.height = Math.round(h * scale);
+              var ctx = c.getContext('2d');
+              if (!ctx) { resolve(); return; }
+              ctx.drawImage(img, 0, 0, c.width, c.height);
+              img.src = c.toDataURL('image/jpeg', QUALITY);
+            } catch(e) {}
+            resolve();
+          }
+          if (img.complete && img.naturalWidth > 0) compress();
+          else { img.onload = compress; img.onerror = resolve; }
+        }));
+      })(imgs[i]);
     }
+    var canvases = document.querySelectorAll('canvas');
+    for (var j = 0; j < canvases.length; j++) {
+      (function(canvas) {
+        try {
+          var w = canvas.width, h = canvas.height;
+          if (!w || !h) return;
+          var scale = w > MAX_PX ? MAX_PX / w : 1;
+          var tmp = document.createElement('canvas');
+          tmp.width = Math.round(w * scale);
+          tmp.height = Math.round(h * scale);
+          var ctx = tmp.getContext('2d');
+          if (!ctx) return;
+          ctx.drawImage(canvas, 0, 0, tmp.width, tmp.height);
+          var dataUrl = tmp.toDataURL('image/jpeg', QUALITY);
+          var img = document.createElement('img');
+          img.src = dataUrl;
+          img.style.cssText = 'width:' + canvas.offsetWidth + 'px;height:' + canvas.offsetHeight + 'px;display:block;';
+          if (canvas.parentNode) canvas.parentNode.replaceChild(img, canvas);
+        } catch(e) {}
+      })(canvases[j]);
+    }
+    return Promise.all(promises);
+  };
+`;
+
+export async function renderProjectPdf(reportUrl: string, waitForSelector = "#report-content"): Promise<Buffer> {
+  console.log(`[pdf] URL: ${reportUrl}, selector: ${waitForSelector}`);
+
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  try {
+    console.log(`[pdf] Navigating to: ${reportUrl}`);
+    await page.goto(reportUrl, { waitUntil: "load", timeout: 60000 });
+    console.log(`[pdf] Page loaded, waiting for selector: ${waitForSelector}`);
+    await page.waitForSelector(waitForSelector, { timeout: 60000 });
+    console.log(`[pdf] Selector found, rendering PDF...`);
+
+    await new Promise(r => setTimeout(r, 400));
+
+    await page.emulateMediaType("print");
+
+    await page.evaluate(async () => {
+      if (document.fonts?.ready) await document.fonts.ready;
+    });
+
+    await page.addScriptTag({ content: IMAGE_COMPRESS_SCRIPT });
+    await page.evaluate(() => (window as any).__pdfCompressImages());
+    await new Promise(r => setTimeout(r, 300));
+
+    const pdf = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      displayHeaderFooter: false,
+      preferCSSPageSize: true,
+      margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
+    });
+
+    return Buffer.from(pdf);
   } finally {
-    await browser.close().catch(() => {});
+    await page.close().catch(() => {});
   }
 }
