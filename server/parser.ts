@@ -65,6 +65,22 @@ export function parseHot2000Report(content: string): ReportData {
   const zone1Total = parseZoneTotal(lines, "ZONE 1 Totaux:");
   const zone3 = parseZone3(lines);
   const zone3Total = parseZoneTotal(lines, "ZONE 3 Totaux:");
+
+  // Strengthen foundationRsi: Zone 3 "Superficie des murs" effective RSI is the
+  // most reliable source (summary table). Override weak or missing regex-parsed value.
+  const zone3WallRow = zone3.find(z => /superficie des murs/i.test(z.element));
+  if (zone3WallRow && zone3WallRow.rsi && zone3WallRow.rsi > 0) {
+    if (!buildingInfo.foundationRsi || buildingInfo.foundationRsi === 0 || zone3WallRow.rsi > buildingInfo.foundationRsi) {
+      buildingInfo.foundationRsi = zone3WallRow.rsi;
+    }
+  }
+  // Also consider Zone 3 "Solive de rive" RSI as secondary indicator
+  if (!buildingInfo.foundationRsi || buildingInfo.foundationRsi === 0) {
+    const zone3RimRow = zone3.find(z => /solive de rive/i.test(z.element));
+    if (zone3RimRow && zone3RimRow.rsi && zone3RimRow.rsi > 0) {
+      buildingInfo.foundationRsi = zone3RimRow.rsi;
+    }
+  }
   const ventilation = parseVentilation(lines, fullText);
   const totalHeatLossMJ = parseTotalHeatLoss(fullText);
   const monthlyEnergy = parseMonthlyEnergy(lines);
