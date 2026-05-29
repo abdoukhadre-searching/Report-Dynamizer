@@ -355,11 +355,11 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   const commercialUnitsCount = project.hasCommercialUnits ? (project.commercialUnits ?? 0) : 0;
   const residentialUnits = commercialUnitsCount > 0 ? Math.max(0, numUnits - commercialUnitsCount) : numUnits;
 
-  const address = project.address || pre.buildingInfo?.address || "N/A";
-  const city = project.city || pre.buildingInfo?.city || "N/A";
-  const province = project.province || pre.buildingInfo?.province || "N/A";
-  const postalCode = project.postalCode || pre.buildingInfo?.postalCode || "";
-  const fullAddress = address;
+  const address = project.address || pre.buildingInfo?.address || "";
+  const city = project.city || pre.buildingInfo?.city || "";
+  const province = project.province || pre.buildingInfo?.province || "";
+  const postalCode = project.postalCode || (pre.buildingInfo as any)?.postalCode || "";
+  const fullAddress = [address, city, postalCode].filter(Boolean).join(", ") || "N/A";
 
   const totalBeforeGJ = comparison.totalBefore ?? 0;
   const totalAfterGJ = comparison.totalAfter ?? 0;

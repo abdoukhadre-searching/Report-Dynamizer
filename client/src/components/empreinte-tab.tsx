@@ -228,7 +228,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";
   const province = project.province || pre.buildingInfo?.province || "";
-  const fullAddress = address;
+  const postalCode = project.postalCode || (pre.buildingInfo as any)?.postalCode || "";
+  const fullAddress = [address, city, postalCode].filter(Boolean).join(", ");
 
   const inputCls = "w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400";
 
