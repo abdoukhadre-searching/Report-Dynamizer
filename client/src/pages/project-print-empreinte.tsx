@@ -21,6 +21,7 @@ function parseInitialValues() {
     coutLed: num("coutLed"),
     coutPlinthes: num("coutPlinthes"),
     coutChauffeEauElecInd: num("coutChauffeEauElecInd"),
+    coutElecThermo: num("coutElecThermo"),
     coutBasementInsul: num("coutBasementInsul"),
     subventionBasementInsul: num("subventionBasementInsul"),
     customMeasures: cm,

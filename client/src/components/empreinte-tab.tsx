@@ -26,6 +26,7 @@ interface EmpreinteInitialValues {
   coutLed?: number;
   coutPlinthes?: number;
   coutChauffeEauElecInd?: number;
+  coutElecThermo?: number;
   coutBasementInsul?: number;
   subventionBasementInsul?: number;
   customMeasures?: { id: string; name: string; cost: number }[];
@@ -107,6 +108,7 @@ const SUBVENTION_THERMO = 1680;
 export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const [coutElecThermo, setCoutElecThermo] = useState(initialValues?.coutElecThermo ?? 500);
   const [coutBasementInsul, setCoutBasementInsul] = useState(initialValues?.coutBasementInsul ?? 0);
   const [subventionBasementInsul, setSubventionBasementInsul] = useState(initialValues?.subventionBasementInsul ?? 0);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
@@ -212,6 +214,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   const totalEtancheite = showAirTightnessStrategy ? coutEtancheite : 0;
   const totalThermo = showHeatingStrategy ? nbThermo * coutThermo : 0;
+  const totalElecThermo = showHeatingStrategy ? nbThermo * coutElecThermo : 0;
   const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbUnits * coutChauffeEau : 0;
   const totalVrc = showVrcStrategy ? nbVrc * coutVrc : 0;
   const totalFaibleDebit = showHotWaterStrategy ? coutFaibleDebit : 0;
@@ -221,7 +224,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const totalBasementInsul = showBasementInsulationStrategy ? coutBasementInsul : 0;
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
-  const totalBrut = totalEtancheite + totalThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalCustom;
+  const totalBrut = totalEtancheite + totalThermo + totalElecThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalCustom;
   const totalSubventionThermo = showHeatingStrategy ? nbThermo * subventionThermo : 0;
   const totalSubventionBasement = showBasementInsulationStrategy ? subventionBasementInsul : 0;
   const totalSubvention = totalSubventionThermo + totalSubventionBasement;
@@ -338,6 +341,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         coutLed: String(coutLed),
                         coutPlinthes: String(coutPlinthes),
                         coutChauffeEauElecInd: String(coutChauffeEauElecInd),
+                        coutElecThermo: String(coutElecThermo),
                         coutBasementInsul: String(coutBasementInsul),
                         subventionBasementInsul: String(subventionBasementInsul),
                         customMeasures: JSON.stringify(customMeasures),
@@ -475,6 +479,42 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                   <td className="px-5 py-4 text-right">
                     <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
                       {totalThermo.toLocaleString("fr-CA")} $
+                    </span>
+                  </td>
+                </tr>
+              )}
+
+              {/* Travaux électriques thermopompe — conditional */}
+              {showHeatingStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
+                      <div>
+                        <p className="font-semibold text-slate-800">Travaux électriques — thermopompe</p>
+                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">Disjoncteur, interrupteur de sécurité ext. et câblage requis</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center">
+                    {exportMode ? <UnitBadge n={nbThermo} /> : (
+                      <span className="text-slate-400 text-sm font-semibold">{nbThermo}</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        value={coutElecThermo}
+                        onChange={(e) => setCoutElecThermo(Number(e.target.value))}
+                        className={inputCls}
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
+                      {totalElecThermo.toLocaleString("fr-CA")} $
                     </span>
                   </td>
                 </tr>
