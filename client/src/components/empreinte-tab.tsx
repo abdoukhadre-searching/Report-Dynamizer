@@ -16,6 +16,7 @@ import tclSubventionImg from "@assets/Subvention_TCL_1775167218708.png";
 interface EmpreinteInitialValues {
   nbThermo?: number;
   nbUnits?: number;
+  nbChauffeEauThermo?: number;
   nbPlinthes?: number;
   nbVrc?: number;
   coutEtancheite?: number;
@@ -191,6 +192,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
     const n = getNumUnitsFromOccupants((project.preReportData as ReportData | null)?.buildingInfo?.occupants);
     return n > 0 ? n : 1;
   });
+  const [nbChauffeEauThermo, setNbChauffeEauThermo] = useState(() => {
+    if (initialValues?.nbChauffeEauThermo !== undefined) return initialValues.nbChauffeEauThermo;
+    const n = getNumUnitsFromOccupants((project.preReportData as ReportData | null)?.buildingInfo?.occupants);
+    return n > 0 ? n : 1;
+  });
 
   if (!pre || !post) return null;
 
@@ -215,7 +221,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const totalEtancheite = showAirTightnessStrategy ? coutEtancheite : 0;
   const totalThermo = showHeatingStrategy ? nbThermo * coutThermo : 0;
   const totalElecThermo = showHeatingStrategy ? nbThermo * coutElecThermo : 0;
-  const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbUnits * coutChauffeEau : 0;
+  const totalChauffeEau = showHeatPumpWaterHeaterStrategy ? nbChauffeEauThermo * coutChauffeEau : 0;
   const totalVrc = showVrcStrategy ? nbVrc * coutVrc : 0;
   const totalFaibleDebit = showHotWaterStrategy ? coutFaibleDebit : 0;
   const totalLed = showLedStrategy ? coutLed : 0;
@@ -331,6 +337,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       const params = new URLSearchParams({
                         nbThermo: String(nbThermo),
                         nbUnits: String(nbUnits),
+                        nbChauffeEauThermo: String(nbChauffeEauThermo),
                         nbPlinthes: String(nbPlinthes),
                         nbVrc: String(nbVrc),
                         coutEtancheite: String(coutEtancheite),
@@ -533,13 +540,13 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     </div>
                   </td>
                   <td className="px-5 py-4 text-center">
-                    {exportMode ? <UnitBadge n={nbUnits} /> : (
+                    {exportMode ? <UnitBadge n={nbChauffeEauThermo} /> : (
                       <input
-                        data-testid="input-nb-units"
+                        data-testid="input-nb-chauffe-eau-thermo"
                         type="number"
                         min={1}
-                        value={nbUnits}
-                        onChange={(e) => setNbUnits(Math.max(1, Number(e.target.value) || 1))}
+                        value={nbChauffeEauThermo}
+                        onChange={(e) => setNbChauffeEauThermo(Math.max(1, Number(e.target.value) || 1))}
                         style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
                       />
                     )}

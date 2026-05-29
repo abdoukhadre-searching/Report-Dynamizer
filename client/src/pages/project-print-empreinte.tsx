@@ -11,6 +11,7 @@ function parseInitialValues() {
   return {
     nbThermo: num("nbThermo"),
     nbUnits: num("nbUnits"),
+    nbChauffeEauThermo: num("nbChauffeEauThermo"),
     nbPlinthes: num("nbPlinthes"),
     nbVrc: num("nbVrc"),
     coutEtancheite: num("coutEtancheite"),
