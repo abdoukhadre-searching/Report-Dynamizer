@@ -407,44 +407,73 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   }
 
   // Parse foundation RSI from basement (sous-sol) sections.
-  // Primary signal: "Configuration: BCCB_4" (or BCCB variant) = concrete basement.
-  // Within that section, "Type mur intérieur" + "Valeur-R:" = insulation R-value added.
+  // Primary signal: "Configuration: BCCB_4" or "Type de fondation: Sous-sol"
+  // Key field: "Type mur intérieur" Valeur-R = insulation R-value on interior wall.
+  // Strategy: find the line containing "Type mur intérieur" in a basement section,
+  // then extract the Valeur-R value on that SAME line (all on one line in pdftotext output).
   {
-    let fondRsiValue = 0;
+    let fondRsiValue: number | undefined = undefined;
 
     // Collect anchor positions: BCCB_ variants and "Type de fondation: ... Sous-sol"
     const anchorPositions: number[] = [];
     let p = 0;
     while ((p = text.indexOf("BCCB_", p)) >= 0) { anchorPositions.push(p); p++; }
-    // Also look for Sous-sol text (may appear without BCCB)
     const sousSolRe = /Type de fondation:\s*\n?\s*Sous-sol/gi;
     let ssm: RegExpExecArray | null;
     while ((ssm = sousSolRe.exec(text)) !== null) anchorPositions.push(ssm.index);
 
     for (const anchorIdx of anchorPositions) {
-      // Examine up to 800 chars before the anchor (fields come before Configuration line)
+      // The basement section fields appear BEFORE the Configuration line
       const winStart = Math.max(0, anchorIdx - 900);
       const winEnd   = Math.min(text.length, anchorIdx + 300);
       const section  = text.substring(winStart, winEnd);
 
-      // Strategy A: "Type mur intérieur" (or variant) followed by Valeur-R
-      const murIntMatch = section.match(/Type mur int[eé]r[^\n]{0,60}[\s\S]{0,200}?Valeur-R:\s*\n?\s*([\d,.]+)\s*RSI/i);
-      if (murIntMatch) {
-        const v = parseFloat(murIntMatch[1].replace(",", "."));
-        if (!isNaN(v) && v > fondRsiValue) fondRsiValue = v;
-        break; // found the best source, stop
+      // Strategy A: find the line that contains BOTH "Type mur int" and "Valeur-R:"
+      // (they appear on the same line in pdftotext: "Type mur intérieur: ... Valeur-R: 1.47 RSI")
+      const sectionLines = section.split("\n");
+      let foundLine: string | null = null;
+      for (const line of sectionLines) {
+        if (/Type mur int/i.test(line) && /Valeur-R:/i.test(line)) {
+          foundLine = line;
+          break;
+        }
+      }
+      if (foundLine) {
+        // Extract the RSI value after "Valeur-R:" on this line
+        const valMatch = foundLine.match(/Valeur-R:\s*([\d,.]+)\s*RSI/i);
+        if (valMatch) {
+          const v = parseFloat(valMatch[1].replace(",", "."));
+          if (!isNaN(v)) { fondRsiValue = v; break; }
+        }
       }
 
-      // Strategy B: first non-zero Valeur-R anywhere in this section
+      // Strategy B: "Type mur intérieur" and "Valeur-R:" on adjacent lines (split layout)
+      for (let i = 0; i < sectionLines.length - 1; i++) {
+        if (/Type mur int/i.test(sectionLines[i])) {
+          // Look ahead up to 5 lines for a Valeur-R
+          for (let j = i + 1; j < Math.min(i + 6, sectionLines.length); j++) {
+            const vm = sectionLines[j].match(/Valeur-R:\s*([\d,.]+)\s*RSI/i);
+            if (vm) {
+              const v = parseFloat(vm[1].replace(",", "."));
+              if (!isNaN(v)) { fondRsiValue = v; break; }
+            }
+          }
+          if (fondRsiValue !== undefined) break;
+        }
+      }
+      if (fondRsiValue !== undefined) break;
+
+      // Strategy C: first non-zero Valeur-R in the basement section
       const allRsi = [...section.matchAll(/Valeur-R:\s*\n?\s*([\d,.]+)\s*RSI/gi)];
       for (const m of allRsi) {
         const v = parseFloat(m[1].replace(",", "."));
-        if (!isNaN(v) && v > 0 && v > fondRsiValue) { fondRsiValue = v; break; }
+        if (!isNaN(v) && v > 0) { fondRsiValue = v; break; }
       }
+      if (fondRsiValue !== undefined) break;
     }
 
-    // Strategy C: original broad regex as last fallback
-    if (!fondRsiValue) {
+    // Strategy D: original broad regex as last fallback
+    if (fondRsiValue === undefined) {
       const fondRsiMatch = text.match(/FONDATIONS[\s\S]{0,1200}?Valeur-R:\s*(?:\n\s*)?([\d,.]+)\s*RSI/i);
       if (fondRsiMatch) {
         const v = parseFloat(fondRsiMatch[1].replace(",", "."));
@@ -452,7 +481,10 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
       }
     }
 
-    if (fondRsiValue > 0) info.foundationRsi = fondRsiValue;
+    // Store the value (including 0 = no insulation, so comparison PRE vs POST works)
+    if (fondRsiValue !== undefined && !isNaN(fondRsiValue)) {
+      info.foundationRsi = fondRsiValue;
+    }
   }
 
   return info;
