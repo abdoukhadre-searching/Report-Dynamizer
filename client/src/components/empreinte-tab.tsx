@@ -516,6 +516,9 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
                       {totalElecThermo.toLocaleString("fr-CA")} $
                     </span>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed text-left">
+                      Fourniture et installation d'un disjoncteur au panneau électrique, d'un interrupteur de sécurité extérieur situé à proximité de l'unité extérieure de la thermopompe, ainsi que du câblage requis entre le panneau électrique et l'interrupteur de sécurité. Sous réserve des conditions réelles du chantier. Une visite sur place est requise afin de valider les travaux à effectuer et de fournir une soumission définitive.
+                    </p>
                   </td>
                 </tr>
               )}
