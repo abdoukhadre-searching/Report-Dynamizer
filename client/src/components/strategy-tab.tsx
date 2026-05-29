@@ -189,7 +189,7 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
     const inches = project.basementInsulationInches ? `${project.basementInsulationInches} po` : "";
     const type = project.basementInsulationType || "";
     const detail = [inches, type].filter(Boolean).join(" de ");
-    postItems.push({ icon: <Building2 className="w-4 h-4" />, label: `Isolation du sous-sol R-${basementRValue}${detail ? ` (${detail})` : ""}` });
+    postItems.push({ icon: <Building2 className="w-4 h-4" />, label: `Isolation du sous-sol avec R${basementRValue} dans la superficie non isolée${detail ? ` (${detail})` : ""}` });
   }
 
   const handlePrint = async () => {
