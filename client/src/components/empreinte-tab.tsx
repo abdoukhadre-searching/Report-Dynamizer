@@ -516,7 +516,6 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
                       {totalElecThermo.toLocaleString("fr-CA")} $
                     </span>
-                    <p className="text-xs text-slate-400 mt-1 italic">Montant estimatif</p>
                   </td>
                 </tr>
               )}
