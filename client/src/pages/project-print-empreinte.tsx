@@ -21,6 +21,8 @@ function parseInitialValues() {
     coutLed: num("coutLed"),
     coutPlinthes: num("coutPlinthes"),
     coutChauffeEauElecInd: num("coutChauffeEauElecInd"),
+    coutBasementInsul: num("coutBasementInsul"),
+    subventionBasementInsul: num("subventionBasementInsul"),
     customMeasures: cm,
   };
 }

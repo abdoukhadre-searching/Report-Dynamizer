@@ -26,6 +26,8 @@ interface EmpreinteInitialValues {
   coutLed?: number;
   coutPlinthes?: number;
   coutChauffeEauElecInd?: number;
+  coutBasementInsul?: number;
+  subventionBasementInsul?: number;
   customMeasures?: { id: string; name: string; cost: number }[];
 }
 
@@ -105,8 +107,8 @@ const SUBVENTION_THERMO = 1680;
 export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
-  const [coutBasementInsul, setCoutBasementInsul] = useState(0);
-  const [subventionBasementInsul, setSubventionBasementInsul] = useState(0);
+  const [coutBasementInsul, setCoutBasementInsul] = useState(initialValues?.coutBasementInsul ?? 0);
+  const [subventionBasementInsul, setSubventionBasementInsul] = useState(initialValues?.subventionBasementInsul ?? 0);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
   const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>(
     initialValues?.customMeasures ?? (project.customMeasures as { id: string; name: string; cost: number }[]) ?? []
@@ -336,6 +338,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         coutLed: String(coutLed),
                         coutPlinthes: String(coutPlinthes),
                         coutChauffeEauElecInd: String(coutChauffeEauElecInd),
+                        coutBasementInsul: String(coutBasementInsul),
+                        subventionBasementInsul: String(subventionBasementInsul),
                         customMeasures: JSON.stringify(customMeasures),
                       });
                       const response = await fetch(`/api/projects/${project.id}/export-empreinte-pdf?${params}`);
