@@ -742,7 +742,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("hwt")}</span>
                       Chauffe-eaux Thermopompe
                     </h3>
-                    <p>Installation de <span className="font-semibold">{numUnits > 0 ? numUnits : "—"}</span> Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.{" "}
+                    <p>Installation de <span className="font-semibold">{(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"}</span> Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.{" "}
                       <a href="#rec-annex-chauffe-eau-thermopompe" className="text-xs font-medium text-primary underline cursor-pointer print:hidden" onClick={(e) => { e.preventDefault(); document.getElementById("rec-annex-chauffe-eau-thermopompe")?.scrollIntoView({ behavior: "smooth" }); }}>[Voir détails]</a>
                     </p>
                   </div>
@@ -927,7 +927,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       {showHeatPumpWaterHeaterStrategy && (
                         <div id="rec-annex-chauffe-eau-thermopompe" className="print:break-before-page">
                           <h3 className="text-sm font-semibold mb-2">{annexNum++}. Chauffe-eaux Thermopompe Rheem PROPH40 T2 RH375-30</h3>
-                          <p className="text-xs text-muted-foreground mb-4">Installation de {numUnits > 0 ? numUnits : "—"} Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.</p>
+                          <p className="text-xs text-muted-foreground mb-4">Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"} Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.</p>
                           <div className="space-y-4 print:break-inside-avoid">
                             <img src={rheemPage1Path} alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1" className="w-full rounded border" />
                             <img src={rheemPage2Path} alt="Données techniques Rheem ProTerra — page 2" className="w-full rounded border" />

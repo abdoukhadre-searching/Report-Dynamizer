@@ -194,9 +194,19 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   });
   const [nbChauffeEauThermo, setNbChauffeEauThermo] = useState(() => {
     if (initialValues?.nbChauffeEauThermo !== undefined) return initialValues.nbChauffeEauThermo;
+    if (project.nbChauffeEauThermo != null) return project.nbChauffeEauThermo;
     const n = getNumUnitsFromOccupants((project.preReportData as ReportData | null)?.buildingInfo?.occupants);
     return n > 0 ? n : 1;
   });
+
+  async function saveNbChauffeEauThermo(value: number) {
+    try {
+      await apiRequest("PATCH", `/api/projects/${project.id}`, { nbChauffeEauThermo: value });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch {
+      // silent
+    }
+  }
 
   if (!pre || !post) return null;
 
@@ -546,7 +556,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         type="number"
                         min={1}
                         value={nbChauffeEauThermo}
-                        onChange={(e) => setNbChauffeEauThermo(Math.max(1, Number(e.target.value) || 1))}
+                        onChange={(e) => { const v = Math.max(1, Number(e.target.value) || 1); setNbChauffeEauThermo(v); saveNbChauffeEauThermo(v); }}
                         style={{ width: "56px", textAlign: "center", fontSize: "13px", fontWeight: 700, padding: "3px 6px", borderRadius: "6px", border: "1px solid #93c5fd", outline: "none", backgroundColor: "#eff6ff", color: "#1e3a5f" }}
                       />
                     )}
