@@ -393,6 +393,38 @@ export async function registerRoutes(
     } catch {}
   }
 
+  app.post("/api/projects/:id/reparse", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+
+      const updateData: any = {};
+
+      if (project.preReportRaw) {
+        const preData = parseHot2000Report(project.preReportRaw as string);
+        updateData.preReportData = preData;
+      }
+      if (project.postReportRaw) {
+        const postData = parseHot2000Report(project.postReportRaw as string);
+        updateData.postReportData = postData;
+      }
+      if (updateData.preReportData && updateData.postReportData) {
+        updateData.comparisonData = computeComparison(updateData.preReportData, updateData.postReportData);
+      } else if (updateData.preReportData && project.postReportData) {
+        updateData.comparisonData = computeComparison(updateData.preReportData, project.postReportData as ReportData);
+      } else if (project.preReportData && updateData.postReportData) {
+        updateData.comparisonData = computeComparison(project.preReportData as ReportData, updateData.postReportData);
+      }
+
+      const updated = await storage.updateProject(projectId, updateData);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Reparse error:", error);
+      res.status(500).json({ message: error.message || "Failed to reparse" });
+    }
+  });
+
   app.post("/api/projects/:id/upload-pre", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);

@@ -207,6 +207,21 @@ export default function UploadTab({ project }: UploadTabProps) {
   const isPreUploading = uploadPreMutation.isPending || uploadPrePdfMutation.isPending;
   const isPostUploading = uploadPostMutation.isPending || uploadPostPdfMutation.isPending;
 
+  const reparseMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/projects/${project.id}/reparse`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      toast({ title: "✓ Rapports re-parsés", description: "Les données ont été recalculées avec la dernière version du parseur." });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de re-parser les rapports.", variant: "destructive" });
+    },
+  });
+
   const handlePreSubmit = () => {
     if (prePdfFile) uploadPrePdfMutation.mutate(prePdfFile);
     else if (preText.trim()) uploadPreMutation.mutate(preText);
@@ -452,16 +467,31 @@ export default function UploadTab({ project }: UploadTabProps) {
   return (
     <div className="space-y-6">
       {/* Context bar */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => setStep(2)} data-testid="button-back-to-address" className="gap-1.5 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="w-4 h-4" /> Modifier l'adresse
-        </Button>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          {buildingType === "existing" ? <><Building2 className="w-3.5 h-3.5" /> Bâtiment existant</> : <><HardHat className="w-3.5 h-3.5" /> Construction neuve</>}
-          {(address || city) && (
-            <><span className="mx-1">·</span><MapPin className="w-3.5 h-3.5" />{[address, city].filter(Boolean).join(", ")}</>
-          )}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => setStep(2)} data-testid="button-back-to-address" className="gap-1.5 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-4 h-4" /> Modifier l'adresse
+          </Button>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {buildingType === "existing" ? <><Building2 className="w-3.5 h-3.5" /> Bâtiment existant</> : <><HardHat className="w-3.5 h-3.5" /> Construction neuve</>}
+            {(address || city) && (
+              <><span className="mx-1">·</span><MapPin className="w-3.5 h-3.5" />{[address, city].filter(Boolean).join(", ")}</>
+            )}
+          </div>
         </div>
+        {hasPreReport && hasPostReport && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => reparseMutation.mutate()}
+            disabled={reparseMutation.isPending}
+            data-testid="button-reparse"
+            className="gap-1.5 text-xs"
+          >
+            {reparseMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            Re-parser
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
