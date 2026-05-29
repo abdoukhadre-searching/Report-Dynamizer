@@ -926,10 +926,12 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
 
                       {showHeatPumpWaterHeaterStrategy && (
                         <div id="rec-annex-chauffe-eau-thermopompe" className="print:break-before-page">
-                          <h3 className="text-sm font-semibold mb-2">{annexNum++}. Chauffe-eaux Thermopompe Rheem PROPH40 T2 RH375-30</h3>
-                          <p className="text-xs text-muted-foreground mb-4">Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"} Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.</p>
-                          <div className="space-y-4 print:break-inside-avoid">
+                          <div className="print:break-inside-avoid mb-4">
+                            <h3 className="text-sm font-semibold mb-2">{annexNum++}. Chauffe-eaux Thermopompe Rheem PROPH40 T2 RH375-30</h3>
+                            <p className="text-xs text-muted-foreground mb-4">Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"} Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30.</p>
                             <img src={rheemPage1Path} alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1" className="w-full rounded border" />
+                          </div>
+                          <div className="space-y-4 print:break-inside-avoid">
                             <img src={rheemPage2Path} alt="Données techniques Rheem ProTerra — page 2" className="w-full rounded border" />
                             <img src={rheemSpecPath} alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star" className="w-full rounded border" />
                             <img src={chauffeEauInstallPath} alt="Schéma d'installation chauffe-eau thermopompe" className="w-full rounded border" />
