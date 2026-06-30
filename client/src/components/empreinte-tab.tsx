@@ -30,6 +30,7 @@ interface EmpreinteInitialValues {
   coutElecThermo?: number;
   coutBasementInsul?: number;
   subventionBasementInsul?: number;
+  coutFenetres?: number;
   customMeasures?: { id: string; name: string; cost: number }[];
 }
 
@@ -76,6 +77,27 @@ function hasHeatPumpWaterHeater(post: ReportData): boolean {
   return /thermopompe/i.test(post.hotWater?.equipmentType || "");
 }
 
+function hasWindowImprovement(pre: ReportData, post: ReportData): boolean {
+  const preWindows = pre.windows ?? [];
+  const postWindows = post.windows ?? [];
+  if (postWindows.length === 0) return false;
+  const preTypes = new Set(preWindows.map((w) => w.type));
+  return postWindows.some((w) => w.type.length >= 4 && w.type[3] === "2" && !preTypes.has(w.type));
+}
+
+function getWindowChangeInfo(pre: ReportData, post: ReportData): { changedCount: number; totalCount: number; allChanged: boolean } {
+  const preWindows = pre.windows ?? [];
+  const postWindows = post.windows ?? [];
+  const preTypes = new Set(preWindows.map((w) => w.type));
+  let changedCount = 0;
+  let totalCount = 0;
+  for (const w of postWindows) {
+    totalCount += w.count;
+    if (w.type.length >= 4 && w.type[3] === "2" && !preTypes.has(w.type)) changedCount += w.count;
+  }
+  return { changedCount, totalCount, allChanged: changedCount > 0 && changedCount === totalCount };
+}
+
 function hasAirTightnessChanged(pre: ReportData, post: ReportData): boolean {
   const preCah = pre.airLeakage?.cah50;
   const postCah = post.airLeakage?.cah50;
@@ -112,6 +134,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const [coutElecThermo, setCoutElecThermo] = useState(initialValues?.coutElecThermo ?? 500);
   const [coutBasementInsul, setCoutBasementInsul] = useState(initialValues?.coutBasementInsul ?? 0);
   const [subventionBasementInsul, setSubventionBasementInsul] = useState(initialValues?.subventionBasementInsul ?? 0);
+  const [coutFenetres, setCoutFenetres] = useState(initialValues?.coutFenetres ?? 0);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
   const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>(
     initialValues?.customMeasures ?? (project.customMeasures as { id: string; name: string; cost: number }[]) ?? []
@@ -225,6 +248,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const showBasementInsulationStrategy = postFoundationRsi > preFoundationRsi;
   const autoBasementRValue = Math.round(postFoundationRsi * 5.678);
   const basementRValue = project.basementInsulationRValue ? Number(project.basementInsulationRValue) : autoBasementRValue;
+  const showWindowImprovementStrategy = hasWindowImprovement(pre, post);
+  const windowChangeInfo = getWindowChangeInfo(pre, post);
 
   const preGJ = pre.annualSummary?.totalGJ ?? 0;
   const postGJ = post.annualSummary?.totalGJ ?? 0;
@@ -240,9 +265,10 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const totalPlinthes = showGasConversionHeatingToElec ? coutPlinthes : 0;
   const totalChauffeEauElecInd = showGasConversionHotWaterToElec ? nbUnits * coutChauffeEauElecInd : 0;
   const totalBasementInsul = showBasementInsulationStrategy ? coutBasementInsul : 0;
+  const totalFenetres = showWindowImprovementStrategy ? coutFenetres : 0;
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
-  const totalBrut = totalEtancheite + totalThermo + totalElecThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalCustom;
+  const totalBrut = totalEtancheite + totalThermo + totalElecThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalFenetres + totalCustom;
   const totalSubventionThermo = showHeatingStrategy ? nbThermo * subventionThermo : 0;
   const totalSubventionBasement = showBasementInsulationStrategy ? subventionBasementInsul : 0;
   const totalSubvention = totalSubventionThermo + totalSubventionBasement;
@@ -827,6 +853,45 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                   <td className="px-5 py-4 text-right">
                     {totalBasementInsul > 0
                       ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalBasementInsul.toLocaleString("fr-CA")} $</span>
+                      : <span className="text-xs italic text-slate-400">Variable</span>
+                    }
+                  </td>
+                </tr>
+              )}
+
+              {/* Fenêtres haute efficacité — conditional */}
+              {showWindowImprovementStrategy && (
+                <tr className="hover:bg-blue-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <IconBox><span style={{ fontSize: "16px", color: "#1e3a5f" }}>🪟</span></IconBox>
+                      <div>
+                        <p className="font-semibold text-slate-800">
+                          {windowChangeInfo.allChanged
+                            ? "Remplacement de toutes les fenêtres"
+                            : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""}`}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">Fenêtres à haute efficacité (Low-E, gaz argon)</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <input
+                        data-testid="input-cout-fenetres"
+                        type="number"
+                        value={coutFenetres}
+                        onChange={(e) => setCoutFenetres(Number(e.target.value))}
+                        placeholder="0"
+                        className={inputCls}
+                      />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    {totalFenetres > 0
+                      ? <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>{totalFenetres.toLocaleString("fr-CA")} $</span>
                       : <span className="text-xs italic text-slate-400">Variable</span>
                     }
                   </td>

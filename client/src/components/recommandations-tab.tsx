@@ -374,7 +374,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   if (showGasConversionHeatingToElec) activeStrategies.push({ key: "gasHeat", label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}` });
   if (showGasConversionHotWaterToElec) activeStrategies.push({ key: "gasHW", label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}` });
   if (showBasementInsulationStrategy) activeStrategies.push({ key: "basement", label: `Isolation du sous-sol (R-${basementRValue})` });
-  if (showWindowImprovementStrategy) activeStrategies.push({ key: "window", label: windowChangeInfo.allChanged ? "Remplacement de toutes les fenêtres haute efficacité" : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} haute efficacité` });
+  if (showWindowImprovementStrategy) activeStrategies.push({ key: "window", label: windowChangeInfo.allChanged ? "Remplacement de toutes les fenêtres par des modèles à haute efficacité" : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} par des modèles à haute efficacité` });
 
   const stratNum = (key: string) => activeStrategies.findIndex((s) => s.key === key) + 1;
   const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
@@ -803,12 +803,10 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                   <div className="mt-12" data-testid="rec-strategy-window">
                     <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("window")}</span>
-                      {windowChangeInfo.allChanged ? "Remplacement de toutes les fenêtres haute efficacité" : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} haute efficacité`}
+                      {windowChangeInfo.allChanged ? "Remplacement de toutes les fenêtres par des modèles à haute efficacité" : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} par des modèles à haute efficacité`}
                     </h3>
                     <p>
-                      {windowChangeInfo.allChanged
-                        ? "Le remplacement de toutes les fenêtres par des modèles haute efficacité (triple vitrage ou équivalent) permet de réduire significativement les pertes thermiques par l'enveloppe du bâtiment, d'améliorer le confort des occupants et de diminuer les infiltrations d'air froid."
-                        : `Le remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} par des modèles haute efficacité (triple vitrage ou équivalent) permet de réduire les pertes thermiques par l'enveloppe du bâtiment, d'améliorer le confort des occupants et de diminuer les infiltrations d'air froid.`}
+                      Le remplacement des fenêtres existantes par des modèles à haute efficacité énergétique, dotés d'un vitrage isolant à faible émissivité (Low-E) avec gaz argon, permet d'améliorer la performance énergétique globale du bâtiment tout en augmentant le confort des occupants.
                     </p>
                   </div>
                 )}

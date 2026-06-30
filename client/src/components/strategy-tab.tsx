@@ -222,8 +222,8 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
     postItems.push({
       icon: <span className="w-4 h-4 flex items-center justify-center text-xs">🪟</span>,
       label: windowChangeInfo.allChanged
-        ? "Remplacement de toutes les fenêtres haute efficacité"
-        : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} haute efficacité`,
+        ? "Remplacement de toutes les fenêtres par des modèles à haute efficacité"
+        : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} par des modèles à haute efficacité`,
     });
   }
 
