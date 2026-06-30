@@ -189,6 +189,11 @@ export const reportDataSchema = z.object({
     ghgGas: z.number().optional(),
     ghgTotal: z.number().optional(),
   }).optional(),
+  windows: z.array(z.object({
+    designation: z.string(),
+    type: z.string(),
+    count: z.number(),
+  })).optional(),
 });
 
 export type ReportData = z.infer<typeof reportDataSchema>;

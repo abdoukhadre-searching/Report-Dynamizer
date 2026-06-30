@@ -99,6 +99,7 @@ export function parseHot2000Report(content: string): ReportData {
   );
   const interiorLightingKWh = parseInteriorLightingKWh(fullText);
   const centralVentilation = parseCentralVentilation(fullText);
+  const windows = parseWindowTypes(lines);
 
   return {
     buildingInfo,
@@ -117,7 +118,53 @@ export function parseHot2000Report(content: string): ReportData {
     interiorLightingKWh,
     centralVentilation,
     annualSummary,
+    windows,
   };
+}
+
+function parseWindowTypes(lines: string[]): NonNullable<ReportData["windows"]> {
+  const result: NonNullable<ReportData["windows"]> = [];
+
+  const secStart = findLineIndex(lines, "CARACTÉRISTIQUES DES FENETRES");
+  if (secStart < 0) return result;
+
+  // Find second sub-table header: the "Désignation" line that also has "Type"
+  let typeHeaderIdx = -1;
+  for (let i = secStart; i < Math.min(secStart + 150, lines.length); i++) {
+    if (/D.signation/i.test(lines[i]) && /\bType\b/.test(lines[i])) {
+      typeHeaderIdx = i;
+      break;
+    }
+  }
+  if (typeHeaderIdx < 0) return result;
+
+  // Stop markers: new major section (NOT page breaks or H2K date headers)
+  const stopPat = /^(ZONE [13]|INSTALLATION DE CHAUFFAGE|INSTALLATION DU CHAUFFE|INSTALLATION DE CLIMATISATION|SOMMAIRE|PROFIL|VENTILATION MÉCANIQUE|CARACTÉRISTIQUES DE L|SYSTÈME|PERTE DE CHALEUR)/i;
+  // Skip: orientation lines, header continuation lines, page break artifacts
+  const orientPat = /^(nord|sud|est|ouest|nord-est|nord-ouest|sud-est|sud-ouest)$/i;
+  const skipPat = /^(D.signation|largeur|hauteur|\(m\)|Superfi|Fenêtre|CARS|\*RE|Type\b|H2K\b|Page \d+ of \d+)/i;
+  // Window data line: [name]  [6-digit type]  [count]  [decimal ...]
+  const windowPat = /^(.+?)\s+(\d{6})\s+(\d+)\s+\d/;
+
+  for (let i = typeHeaderIdx + 1; i < lines.length; i++) {
+    const raw = lines[i];
+    const trimmed = raw.trim();
+
+    if (stopPat.test(trimmed)) break;
+    if (!trimmed || orientPat.test(trimmed) || skipPat.test(trimmed)) continue;
+
+    const m = trimmed.match(windowPat);
+    if (m) {
+      const designation = m[1].trim();
+      const type = m[2];
+      const count = parseInt(m[3], 10);
+      if (designation && type.length === 6 && count > 0) {
+        result.push({ designation, type, count });
+      }
+    }
+  }
+
+  return result;
 }
 
 function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingInfo"] {

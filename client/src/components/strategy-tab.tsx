@@ -84,6 +84,29 @@ function hasHeatPumpWaterHeater(post: ReportData): boolean {
   return /thermopompe/i.test(post.hotWater?.equipmentType || "");
 }
 
+function hasWindowImprovement(pre: ReportData, post: ReportData): boolean {
+  const preWindows = pre.windows ?? [];
+  const postWindows = post.windows ?? [];
+  if (postWindows.length === 0) return false;
+  const preTypes = new Set(preWindows.map((w) => w.type));
+  return postWindows.some((w) => w.type.length >= 4 && w.type[3] === "2" && !preTypes.has(w.type));
+}
+
+function getWindowChangeInfo(pre: ReportData, post: ReportData): { changedCount: number; totalCount: number; allChanged: boolean } {
+  const preWindows = pre.windows ?? [];
+  const postWindows = post.windows ?? [];
+  const preTypes = new Set(preWindows.map((w) => w.type));
+  let changedCount = 0;
+  let totalCount = 0;
+  for (const w of postWindows) {
+    totalCount += w.count;
+    if (w.type.length >= 4 && w.type[3] === "2" && !preTypes.has(w.type)) {
+      changedCount += w.count;
+    }
+  }
+  return { changedCount, totalCount, allChanged: changedCount > 0 && changedCount === totalCount };
+}
+
 function getHeatingLabel(data: ReportData): string {
   const equip = data.heating?.primaryEquipment || "";
   const type = data.heating?.primaryType || "";
@@ -145,6 +168,8 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
   const showBasementInsulationStrategy = postFoundationRsi > preFoundationRsi;
   const autoBasementRValue = Math.round(postFoundationRsi * 5.678);
   const basementRValue = project.basementInsulationRValue ? Number(project.basementInsulationRValue) : autoBasementRValue;
+  const showWindowImprovementStrategy = hasWindowImprovement(pre, post);
+  const windowChangeInfo = showWindowImprovementStrategy ? getWindowChangeInfo(pre, post) : null;
 
   const address = project.address || pre.buildingInfo?.address || "";
   const city = project.city || pre.buildingInfo?.city || "";
@@ -192,6 +217,14 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
     const type = project.basementInsulationType || "";
     const detail = [inches, type].filter(Boolean).join(" de ");
     postItems.push({ icon: <Building2 className="w-4 h-4" />, label: `Isolation du sous-sol avec R${basementRValue} dans la superficie non isolée${detail ? ` (${detail})` : ""}` });
+  }
+  if (showWindowImprovementStrategy && windowChangeInfo) {
+    postItems.push({
+      icon: <span className="w-4 h-4 flex items-center justify-center text-xs">🪟</span>,
+      label: windowChangeInfo.allChanged
+        ? "Remplacement de toutes les fenêtres haute efficacité"
+        : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} haute efficacité`,
+    });
   }
 
   const handlePrint = async () => {

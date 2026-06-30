@@ -206,6 +206,29 @@ function hasFossilConversion(pre: ReportData, post: ReportData): boolean {
   return (preHeatingFossil !== postHeatingFossil) || (preHotWaterFossil !== postHotWaterFossil);
 }
 
+function hasWindowImprovement(pre: ReportData, post: ReportData): boolean {
+  const preWindows = pre.windows ?? [];
+  const postWindows = post.windows ?? [];
+  if (postWindows.length === 0) return false;
+  const preTypes = new Set(preWindows.map((w) => w.type));
+  return postWindows.some((w) => w.type.length >= 4 && w.type[3] === "2" && !preTypes.has(w.type));
+}
+
+function getWindowChangeInfo(pre: ReportData, post: ReportData): { changedCount: number; totalCount: number; allChanged: boolean } {
+  const preWindows = pre.windows ?? [];
+  const postWindows = post.windows ?? [];
+  const preTypes = new Set(preWindows.map((w) => w.type));
+  let changedCount = 0;
+  let totalCount = 0;
+  for (const w of postWindows) {
+    totalCount += w.count;
+    if (w.type.length >= 4 && w.type[3] === "2" && !preTypes.has(w.type)) {
+      changedCount += w.count;
+    }
+  }
+  return { changedCount, totalCount, allChanged: changedCount > 0 && changedCount === totalCount };
+}
+
 function getPreFossilFuelLabel(pre: ReportData): string {
   const types: string[] = [];
   if (isFossilFuel(pre.heating?.primaryType)) types.push(pre.heating!.primaryType!);
@@ -338,6 +361,8 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   const showBasementInsulationStrategy = postFoundationRsi > preFoundationRsi;
   const autoBasementRValue = Math.round(postFoundationRsi * 5.678);
   const basementRValue = project.basementInsulationRValue ? Number(project.basementInsulationRValue) : autoBasementRValue;
+  const showWindowImprovementStrategy = hasWindowImprovement(pre, post);
+  const windowChangeInfo = getWindowChangeInfo(pre, post);
 
   const activeStrategies: { key: string; label: string }[] = [];
   if (showAirTightnessStrategy) activeStrategies.push({ key: "air", label: "Amélioration de l'étanchéité du bâtiment" });
@@ -349,6 +374,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   if (showGasConversionHeatingToElec) activeStrategies.push({ key: "gasHeat", label: `Conversion du système de chauffage : ${getFuelDisplayName(pre.heating?.primaryType)} vers ${getFuelDisplayName(post.heating?.primaryType)}` });
   if (showGasConversionHotWaterToElec) activeStrategies.push({ key: "gasHW", label: `Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}` });
   if (showBasementInsulationStrategy) activeStrategies.push({ key: "basement", label: `Isolation du sous-sol (R-${basementRValue})` });
+  if (showWindowImprovementStrategy) activeStrategies.push({ key: "window", label: windowChangeInfo.allChanged ? "Remplacement de toutes les fenêtres haute efficacité" : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} haute efficacité` });
 
   const stratNum = (key: string) => activeStrategies.findIndex((s) => s.key === key) + 1;
   const numUnits = getNumUnitsFromOccupants(pre.buildingInfo?.occupants);
@@ -770,6 +796,20 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       {`Conversion énergie primaire du chauffe-eau : ${getFuelDisplayName(pre.hotWater?.primaryType)} vers ${getFuelDisplayName(post.hotWater?.primaryType)}`}
                     </h3>
                     <p>{`Le système actuel de production d'eau chaude domestique, alimenté au ${getFuelDisplayName(pre.hotWater?.primaryType)}, sera converti vers ${getFuelDisplayName(post.hotWater?.primaryType)}.`}</p>
+                  </div>
+                )}
+
+                {showWindowImprovementStrategy && (
+                  <div className="mt-12" data-testid="rec-strategy-window">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("window")}</span>
+                      {windowChangeInfo.allChanged ? "Remplacement de toutes les fenêtres haute efficacité" : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} haute efficacité`}
+                    </h3>
+                    <p>
+                      {windowChangeInfo.allChanged
+                        ? "Le remplacement de toutes les fenêtres par des modèles haute efficacité (triple vitrage ou équivalent) permet de réduire significativement les pertes thermiques par l'enveloppe du bâtiment, d'améliorer le confort des occupants et de diminuer les infiltrations d'air froid."
+                        : `Le remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} par des modèles haute efficacité (triple vitrage ou équivalent) permet de réduire les pertes thermiques par l'enveloppe du bâtiment, d'améliorer le confort des occupants et de diminuer les infiltrations d'air froid.`}
+                    </p>
                   </div>
                 )}
 
