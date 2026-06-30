@@ -871,7 +871,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                             ? "Remplacement de toutes les fenêtres"
                             : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""}`}
                         </p>
-                        <p className="text-xs text-slate-400 mt-0.5">Fenêtres à haute efficacité (Low-E, gaz argon)</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Fenêtres à haute efficacité (Low-E, gaz inerte)</p>
                       </div>
                     </div>
                   </td>

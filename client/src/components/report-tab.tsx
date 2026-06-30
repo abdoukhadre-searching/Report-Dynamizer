@@ -2470,7 +2470,7 @@ export default function ReportTab({
                         : `Remplacement de ${windowChangeInfo.changedCount} fenêtre${windowChangeInfo.changedCount > 1 ? "s" : ""} par des modèles à haute efficacité`}
                     </h3>
                     <p>
-                      Le remplacement des fenêtres existantes par des modèles à haute efficacité énergétique, dotés d'un vitrage isolant à faible émissivité (Low-E) avec gaz argon, permet d'améliorer la performance énergétique globale du bâtiment tout en augmentant le confort des occupants.
+                      Le remplacement des fenêtres existantes par des modèles à haute efficacité énergétique, dotés d'un vitrage isolant à faible émissivité (Low-E) avec gaz inerte, permet d'améliorer la performance énergétique globale du bâtiment tout en augmentant le confort des occupants.
                     </p>
                   </div>
                 )}
