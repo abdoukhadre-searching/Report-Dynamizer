@@ -196,7 +196,7 @@ export async function registerRoutes(
       const reportUrl = `${internalOrigin}/project/${projectId}/print`;
       const pdfBuffer = await renderProjectPdf(reportUrl);
 
-      const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
+      const baseName = sanitizeFileName((project.preReportData as any)?.buildingInfo?.address || project.name || `project-${projectId}`) || `project-${projectId}`;
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${baseName}.pdf"`);
       return res.send(pdfBuffer);
@@ -217,7 +217,7 @@ export async function registerRoutes(
       const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
       const reportUrl = `${internalOrigin}/project/${projectId}/print-recommandations`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#recommandations-content");
-      const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
+      const baseName = sanitizeFileName((project.preReportData as any)?.buildingInfo?.address || project.name || `project-${projectId}`) || `project-${projectId}`;
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="Cahier de Recommandations - ${baseName}.pdf"`);
       return res.send(pdfBuffer);
@@ -238,7 +238,7 @@ export async function registerRoutes(
       const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
       const reportUrl = `${internalOrigin}/project/${projectId}/print-strategie`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#strategy-content");
-      const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
+      const baseName = sanitizeFileName((project.preReportData as any)?.buildingInfo?.address || project.name || `project-${projectId}`) || `project-${projectId}`;
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="Cahier de Stratégie - ${baseName}.pdf"`);
       return res.send(pdfBuffer);
@@ -260,7 +260,7 @@ export async function registerRoutes(
       const queryString = new URLSearchParams(req.query as Record<string, string>).toString();
       const reportUrl = `${internalOrigin}/project/${projectId}/print-empreinte${queryString ? `?${queryString}` : ""}`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#empreinte-content");
-      const baseName = sanitizeFileName(project.name || `project-${projectId}`) || `project-${projectId}`;
+      const baseName = sanitizeFileName((project.preReportData as any)?.buildingInfo?.address || project.name || `project-${projectId}`) || `project-${projectId}`;
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="Empreinte Économique - ${baseName}.pdf"`);
       return res.send(pdfBuffer);
