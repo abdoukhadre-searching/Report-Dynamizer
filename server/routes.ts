@@ -745,18 +745,24 @@ export async function registerRoutes(
     const address = [project.address, project.city, project.postalCode].filter(Boolean).join(", ") || "";
 
     const now = new Date();
-    const day = String(now.getDate()).padStart(2, "0");
-    const monthName = FRENCH_MONTHS[now.getMonth()];
-    const year2 = String(now.getFullYear()).slice(-2);
-    const reportDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    // Always use Eastern Time (Canada/Quebec) regardless of server timezone
+    const etParts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Toronto",
+      year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(now);
+    const etYear = etParts.find((p) => p.type === "year")!.value;
+    const etMonth = etParts.find((p) => p.type === "month")!.value;
+    const etDay = etParts.find((p) => p.type === "day")!.value;
+    const day = etDay;
+    const monthName = FRENCH_MONTHS[parseInt(etMonth, 10) - 1];
+    const year2 = etYear.slice(-2);
+    const reportDate = `${etYear}-${etMonth}-${etDay}`;
 
     // Load the pre-filled template (contains evaluator credentials as real text)
     const templatePath = path.join(process.cwd(), "server/templates/attestation-filled-template.pdf");
     const templateBytes = fs.readFileSync(templatePath);
     const pdfDoc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
     const form = pdfDoc.getForm();
-    // Tell PDF viewers to regenerate appearance streams so long text fits properly
-    form.acroForm.dict.set(PDFName.of("NeedAppearances"), PDFBool.True);
 
     // Helper: set a text field, silently skip if not found
     const setText = (name: string, value: string) => {
@@ -830,10 +836,14 @@ export async function registerRoutes(
     // ── Update digital signature date to download time ────────────────────────
     // The signature annotation's n2 appearance stream contains a hardcoded date.
     // We replace it with the actual download timestamp (no timezone suffix).
-    const sigDateStr = [
-      `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`,
-      ` ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
-    ].join("");
+    const etTimeParts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Toronto",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    }).formatToParts(now);
+    const etHour = etTimeParts.find((p) => p.type === "hour")!.value;
+    const etMin = etTimeParts.find((p) => p.type === "minute")!.value;
+    const etSec = etTimeParts.find((p) => p.type === "second")!.value;
+    const sigDateStr = `${etYear}.${etMonth}.${etDay} ${etHour}:${etMin}:${etSec}`;
 
     for (const page of pdfDoc.getPages()) {
       const annotsRef = page.node.get(PDFName.of("Annots") as any);
