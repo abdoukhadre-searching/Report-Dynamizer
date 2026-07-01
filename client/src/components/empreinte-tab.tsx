@@ -324,39 +324,41 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                   <p className="text-xs text-slate-400">{fullAddress}</p>
                 </div>
               )}
-              {/* Programme type selector */}
-              <div className="flex items-center gap-2 mt-3">
-                {isNewBuilding ? (
-                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#1e3a5f15", color: "#1e3a5f" }}>
-                    Nouvelle construction
-                  </span>
-                ) : exportMode ? (
-                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#1e3a5f15", color: "#1e3a5f" }}>
-                    {programmeType === "remplacement" ? "Optimisation — remplacement de machine" : "Optimisation"}
-                  </span>
-                ) : (
-                  <select
-                    data-testid="select-programme-type"
-                    value={programmeType}
-                    onChange={(e) => saveProgrammeType(e.target.value)}
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      padding: "3px 28px 3px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid #1e3a5f40",
-                      color: "#1e3a5f",
-                      backgroundColor: "#f8fafc",
-                      cursor: "pointer",
-                      outline: "none",
-                      appearance: "auto",
-                    }}
-                  >
-                    <option value="optimisation">Optimisation</option>
-                    <option value="remplacement">Optimisation remplacement de machine</option>
-                  </select>
-                )}
-              </div>
+              {/* Programme type selector — only when heating strategy active */}
+              {(isNewBuilding || showHeatingStrategy) && (
+                <div className="flex items-center gap-2 mt-3">
+                  {isNewBuilding ? (
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#1e3a5f15", color: "#1e3a5f" }}>
+                      Nouvelle construction
+                    </span>
+                  ) : exportMode ? (
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#1e3a5f15", color: "#1e3a5f" }}>
+                      {programmeType === "remplacement" ? "Optimisation — remplacement de machine" : "Optimisation"}
+                    </span>
+                  ) : (
+                    <select
+                      data-testid="select-programme-type"
+                      value={programmeType}
+                      onChange={(e) => saveProgrammeType(e.target.value)}
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        padding: "3px 28px 3px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #1e3a5f40",
+                        color: "#1e3a5f",
+                        backgroundColor: "#f8fafc",
+                        cursor: "pointer",
+                        outline: "none",
+                        appearance: "auto",
+                      }}
+                    >
+                      <option value="optimisation">Optimisation</option>
+                      <option value="remplacement">Optimisation remplacement de machine</option>
+                    </select>
+                  )}
+                </div>
+              )}
               {showHeatingStrategy && !isNewBuilding && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#dc262615", color: "#dc2626" }}>
