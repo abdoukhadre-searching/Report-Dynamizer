@@ -48,9 +48,9 @@ function getProjectId(param: string | string[] | undefined): string {
 function sanitizeFileName(value: string): string {
   return value
     .trim()
-    .replace(/[^a-zA-Z0-9-_\s]/g, "")
-    .replace(/\s+/g, "-")
-    .slice(0, 80);
+    .replace(/[/\\:*?"<>|]/g, "")
+    .replace(/\s+/g, " ")
+    .slice(0, 100);
 }
 export async function registerRoutes(
   httpServer: Server,
