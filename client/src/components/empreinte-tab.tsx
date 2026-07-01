@@ -357,7 +357,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                   </select>
                 )}
               </div>
-              {!isNewBuilding && (
+              {showHeatingStrategy && !isNewBuilding && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#dc262615", color: "#dc2626" }}>
                     Thermopompe TCL T-Pro-25ES
