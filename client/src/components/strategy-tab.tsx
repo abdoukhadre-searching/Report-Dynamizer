@@ -240,7 +240,7 @@ export default function StrategyTab({ project, exportMode = false }: StrategyTab
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `Cahier de Stratégie - ${address || project.name}.pdf`;
+      link.download = `Cahier de Stratégie - ${pre.buildingInfo?.address || address || project.name}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();

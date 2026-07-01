@@ -400,7 +400,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       const downloadUrl = window.URL.createObjectURL(blob);
                       const link = document.createElement("a");
                       link.href = downloadUrl;
-                      link.download = `Empreinte Économique - ${address || project.name}.pdf`;
+                      link.download = `Empreinte Économique - ${pre.buildingInfo?.address || address || project.name}.pdf`;
                       document.body.appendChild(link);
                       link.click();
                       link.remove();
