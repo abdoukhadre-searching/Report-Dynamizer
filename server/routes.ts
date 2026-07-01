@@ -655,14 +655,22 @@ export async function registerRoutes(
     // White-out the signature zone to remove any template content
     page.drawRectangle({ x: SIG_X1 - 2, y: sigPdfYBot - 2, width: SIG_X2 - SIG_X1 + 4, height: sigZoneH + 4, color: WHITE });
 
-    // Format timestamp identical to attestation APH signature
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const dd = String(now.getDate()).padStart(2, "0");
-    const hh = String(now.getHours()).padStart(2, "0");
-    const min = String(now.getMinutes()).padStart(2, "0");
-    const ss = String(now.getSeconds()).padStart(2, "0");
-    const sigDateStr = `${yyyy}.${mm}.${dd} ${hh}:${min}:${ss}`;
+    // Format timestamp in Eastern Time (Canada/Quebec)
+    const etDateParts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Toronto",
+      year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(now);
+    const etTimeParts2 = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Toronto",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    }).formatToParts(now);
+    const cYYYY = etDateParts.find((p) => p.type === "year")!.value;
+    const cMM   = etDateParts.find((p) => p.type === "month")!.value;
+    const cDD   = etDateParts.find((p) => p.type === "day")!.value;
+    const cHH   = etTimeParts2.find((p) => p.type === "hour")!.value;
+    const cMin  = etTimeParts2.find((p) => p.type === "minute")!.value;
+    const cSec  = etTimeParts2.find((p) => p.type === "second")!.value;
+    const sigDateStr = `${cYYYY}.${cMM}.${cDD} ${cHH}:${cMin}:${cSec}`;
 
     // Layout — vertically centered in the zone
     const sigCenterY = sigPdfYBot + sigZoneH / 2;
