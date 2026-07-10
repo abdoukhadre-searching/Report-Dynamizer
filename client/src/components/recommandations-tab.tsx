@@ -664,7 +664,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                           {numUnits > 0 && (<>, comprenant <span className="font-semibold">{residentialUnits} logements locatifs</span>{commercialUnitsCount > 0 && (<> et <span className="font-semibold">{commercialUnitsCount} unité{commercialUnitsCount > 1 ? "s" : ""} commerciale{commercialUnitsCount > 1 ? "s" : ""}</span></>)}</>)}, construit en{" "}
                           <span className="font-semibold">{constructionYear || "N/A"}</span>.
                           {floorsDisplay && (<> Le bâtiment comporte <span className="font-semibold">{floorsLabel}</span>.</>)}{" "}
-                          La façade principale du bâtiment est illustrée ci-dessous par une photographie prise lors de la visite d'inspection.
+                          La façade principale du bâtiment est illustrée ci-dessous.
                         </p>
                         <div className="print:break-inside-avoid">
                           <AnnexImageUpload key="rec-description-building-photo" projectId={project.id} annexType="ledLighting" label="Photo du bâtiment" currentImage={annexImages.ledLighting} maxImageHeight={220} />

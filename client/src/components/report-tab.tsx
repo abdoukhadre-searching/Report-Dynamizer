@@ -1758,8 +1758,7 @@ export default function ReportTab({
                             </>
                           )}{" "}
                           La façade principale du bâtiment est illustrée
-                          ci-dessous par une photographie prise lors de la
-                          visite d'inspection.
+                          ci-dessous.
                         </p>
 
                         <div className="print:break-inside-avoid mt-8">
