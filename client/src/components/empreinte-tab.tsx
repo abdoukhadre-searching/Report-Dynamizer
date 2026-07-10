@@ -428,6 +428,15 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 <button
                   onClick={async () => {
                     if (isExporting) return;
+                    if (showHeatingStrategy && !logisvertPdfUrl) {
+                      toast({
+                        title: "Document manquant",
+                        description: "Veuillez téléverser le document de subvention Logisvert avant de télécharger l'empreinte économique.",
+                        variant: "destructive",
+                      });
+                      document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      return;
+                    }
                     setIsExporting(true);
                     try {
                       const params = new URLSearchParams({
