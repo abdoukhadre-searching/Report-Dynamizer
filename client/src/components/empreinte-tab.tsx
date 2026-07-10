@@ -1323,18 +1323,9 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
               {logisvertPdfUrl ? (
                 <div className="space-y-2">
-                  {logisvertPdfUrl.toLowerCase().endsWith(".pdf") ? (
-                    <object data={logisvertPdfUrl} type="application/pdf" className="w-full rounded-md border border-slate-200 shadow-sm" style={{ height: "500px" }}>
-                      <a href={logisvertPdfUrl} target="_blank" rel="noreferrer" className="text-sm underline">Ouvrir le document PDF</a>
-                    </object>
-                  ) : (
-                    <img src={logisvertPdfUrl} alt="Document de subvention Logisvert" className="w-full rounded-md border border-slate-200 shadow-sm" />
-                  )}
+                  <img src={logisvertPdfUrl} alt="Document de subvention Logisvert" className="w-full rounded border border-slate-200 shadow-sm" />
                   {!exportMode && (
                     <div className="flex items-center gap-3">
-                      <a href={logisvertPdfUrl} target="_blank" rel="noreferrer" className="text-xs underline" style={{ color: "#1e3a5f" }}>
-                        Ouvrir dans un nouvel onglet
-                      </a>
                       <button
                         type="button"
                         data-testid="button-delete-logisvert-pdf"

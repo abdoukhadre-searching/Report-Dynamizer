@@ -657,12 +657,9 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Project not found" });
       }
       const isPdf = req.file.mimetype === "application/pdf" || req.file.originalname?.toLowerCase().endsWith(".pdf");
-      const ext = isPdf ? "pdf" : (path.extname(req.file.originalname || "") || ".jpg").replace(".", "");
-      const fileName = `${projectId}_logisvert_${Date.now()}.${ext}`;
-      const filePath = path.join(UPLOADS_DIR, fileName);
       let detectedAmount: number | null = null;
+      let fileUrl: string;
       if (isPdf) {
-        fs.writeFileSync(filePath, req.file.buffer);
         try {
           const text = await extractTextFromPdf(req.file.buffer);
           detectedAmount = extractLogisvertAmount(text);
@@ -677,15 +674,32 @@ export async function registerRoutes(
             console.error("Error OCR-extracting Logisvert PDF:", err);
           }
         }
+        // Render page 1 as an image so it displays inline like the other fiche technique sections.
+        const imageFileName = `${projectId}_logisvert_${Date.now()}.png`;
+        const imagePath = path.join(UPLOADS_DIR, imageFileName);
+        const tmpDir = os.tmpdir();
+        const uid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+        const tmpPdf = path.join(tmpDir, `logisvert-${uid}.pdf`);
+        const tmpImgPrefix = path.join(tmpDir, `logisvert-${uid}-img`);
+        try {
+          await fs.promises.writeFile(tmpPdf, req.file.buffer);
+          await execFileAsync("pdftoppm", ["-png", "-r", "150", "-f", "1", "-l", "1", tmpPdf, tmpImgPrefix], { timeout: 45000 });
+          await fs.promises.rename(`${tmpImgPrefix}-1.png`, imagePath);
+          fileUrl = `/uploads/${imageFileName}`;
+        } finally {
+          await fs.promises.unlink(tmpPdf).catch(() => {});
+        }
       } else {
+        const fileName = `${projectId}_logisvert_${Date.now()}.jpg`;
+        const filePath = path.join(UPLOADS_DIR, fileName);
         const compressed = await sharp(req.file.buffer)
           .rotate()
           .resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true })
           .jpeg({ quality: 90, mozjpeg: true })
           .toBuffer();
         fs.writeFileSync(filePath, compressed);
+        fileUrl = `/uploads/${fileName}`;
       }
-      const fileUrl = `/uploads/${fileName}`;
       const updateData: any = { logisvertSubventionPdf: fileUrl };
       if (detectedAmount !== null) {
         updateData.subventionThermoManual = String(detectedAmount);
