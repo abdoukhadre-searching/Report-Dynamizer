@@ -30,6 +30,7 @@ interface EmpreinteInitialValues {
   coutElecThermo?: number;
   coutBasementInsul?: number;
   subventionBasementInsul?: number;
+  subventionThermoManual?: number;
   coutFenetres?: number;
   customMeasures?: { id: string; name: string; cost: number }[];
 }
@@ -233,6 +234,56 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
     }
   }
 
+  const [subventionThermoManual, setSubventionThermoManual] = useState<number>(() => {
+    if (initialValues?.subventionThermoManual !== undefined) return Number(initialValues.subventionThermoManual);
+    if (project.subventionThermoManual != null && project.subventionThermoManual !== "") return Number(project.subventionThermoManual);
+    return 0;
+  });
+  const [logisvertPdfUrl, setLogisvertPdfUrl] = useState<string | null>(project.logisvertSubventionPdf ?? null);
+  const [isUploadingLogisvert, setIsUploadingLogisvert] = useState(false);
+
+  async function saveSubventionThermoManual(value: number) {
+    setSubventionThermoManual(value);
+    try {
+      await apiRequest("PATCH", `/api/projects/${project.id}`, { subventionThermoManual: String(value) });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder le montant de la subvention.", variant: "destructive" });
+    }
+  }
+
+  async function handleLogisvertUpload(file: File) {
+    setIsUploadingLogisvert(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/projects/${project.id}/upload-logisvert-pdf`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const updated = await res.json();
+      setLogisvertPdfUrl(updated.logisvertSubventionPdf ?? null);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+      toast({ title: "Document ajouté", description: "Le PDF Logisvert a été enregistré." });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de téléverser le document.", variant: "destructive" });
+    } finally {
+      setIsUploadingLogisvert(false);
+    }
+  }
+
+  async function handleLogisvertDelete() {
+    try {
+      await apiRequest("DELETE", `/api/projects/${project.id}/logisvert-pdf`);
+      setLogisvertPdfUrl(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de supprimer le document.", variant: "destructive" });
+    }
+  }
+
   if (!pre || !post) return null;
 
   const showHeatingStrategy = hasThermopompe(post) && !hasThermopompe(pre);
@@ -269,7 +320,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
   const totalBrut = totalEtancheite + totalThermo + totalElecThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalFenetres + totalCustom;
-  const totalSubventionThermo = showHeatingStrategy ? nbThermo * subventionThermo : 0;
+  const totalSubventionThermo = showHeatingStrategy ? subventionThermoManual : 0;
   const totalSubventionBasement = showBasementInsulationStrategy ? subventionBasementInsul : 0;
   const totalSubvention = totalSubventionThermo + totalSubventionBasement;
   const totalApresSubvention = totalBrut - totalSubvention;
@@ -391,6 +442,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         coutElecThermo: String(coutElecThermo),
                         coutBasementInsul: String(coutBasementInsul),
                         subventionBasementInsul: String(subventionBasementInsul),
+                        subventionThermoManual: String(subventionThermoManual),
                         customMeasures: JSON.stringify(customMeasures),
                       });
                       const response = await fetch(`/api/projects/${project.id}/export-empreinte-pdf?${params}`);
@@ -1067,9 +1119,9 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 </td>
               </tr>
 
-              {totalSubvention > 0 && (
+              {(totalSubvention > 0 || showHeatingStrategy) && (
                 <>
-                  {totalSubventionThermo > 0 && (
+                  {showHeatingStrategy && (
                     <tr className="bg-green-50">
                       <td className="px-5 py-3" colSpan={2}>
                         <div className="flex items-center gap-2">
@@ -1077,7 +1129,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                           <div>
                             <p className="text-xs font-semibold text-green-800">Possibilité de subvention — Thermopompes</p>
                             <p className="text-xs text-green-600 mt-0.5">
-                              {nbThermo} unité{nbThermo > 1 ? "s" : ""} × {subventionThermo.toLocaleString("fr-CA")} $/unité — Programme Logisvert{" "}
+                              Programme Logisvert (montant selon calcul en ligne — voir PDF){" "}
                               <a
                                 href="#section-subvention-logisvert"
                                 onClick={(e) => { e.preventDefault(); document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth" }); }}
@@ -1089,7 +1141,22 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right text-sm text-green-600 font-medium" colSpan={2}>
-                        − {totalSubventionThermo.toLocaleString("fr-CA")} $
+                        {exportMode ? (
+                          `− ${totalSubventionThermo.toLocaleString("fr-CA")} $`
+                        ) : (
+                          <div className="flex items-center justify-end gap-1">
+                            <span>−</span>
+                            <input
+                              data-testid="input-subvention-thermo-manual"
+                              type="number"
+                              value={subventionThermoManual}
+                              onChange={(e) => saveSubventionThermoManual(Number(e.target.value))}
+                              placeholder="0"
+                              style={{ width: "80px", fontSize: "12px", padding: "2px 6px", borderRadius: "5px", border: "1px solid #86efac", outline: "none", backgroundColor: "#f0fdf4", color: "#15803d", textAlign: "right" }}
+                            />
+                            <span>$</span>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )}
@@ -1119,7 +1186,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 </>
               )}
 
-              {totalSubvention === 0 && totalBrut > 0 && (
+              {totalSubvention === 0 && !showHeatingStrategy && totalBrut > 0 && (
                 <tr style={{ backgroundColor: "#1e3a5f" }}>
                   <td colSpan={3} className="px-5 py-4 text-right text-white font-semibold text-xs uppercase tracking-wider">
                     Total estimé des travaux
@@ -1221,7 +1288,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
             </Card>
           )}
 
-          {/* Subvention Logisvert image */}
+          {/* Subvention Logisvert — document + montant */}
           <Card id="section-subvention-logisvert" className="overflow-hidden border shadow-sm">
             <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
               <div className="flex items-center gap-2">
@@ -1231,12 +1298,87 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 </h3>
               </div>
             </CardHeader>
-            <CardContent className="p-4">
-              <img
-                src={tclSubventionImg}
-                alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"
-                className="w-full rounded-md border border-slate-200 shadow-sm"
-              />
+            <CardContent className="p-4 space-y-4">
+              {!exportMode && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm text-slate-600">Montant de la subvention calculé sur Logisvert :</span>
+                  <div className="flex items-center gap-1">
+                    <input
+                      data-testid="input-subvention-thermo-manual-2"
+                      type="number"
+                      value={subventionThermoManual}
+                      onChange={(e) => saveSubventionThermoManual(Number(e.target.value))}
+                      placeholder="0"
+                      className={inputCls}
+                    />
+                    <span className="text-slate-400 text-xs">$</span>
+                  </div>
+                </div>
+              )}
+
+              {logisvertPdfUrl ? (
+                <div className="space-y-2">
+                  {logisvertPdfUrl.toLowerCase().endsWith(".pdf") ? (
+                    <object data={logisvertPdfUrl} type="application/pdf" className="w-full rounded-md border border-slate-200 shadow-sm" style={{ height: "500px" }}>
+                      <a href={logisvertPdfUrl} target="_blank" rel="noreferrer" className="text-sm underline">Ouvrir le document PDF</a>
+                    </object>
+                  ) : (
+                    <img src={logisvertPdfUrl} alt="Document de subvention Logisvert" className="w-full rounded-md border border-slate-200 shadow-sm" />
+                  )}
+                  {!exportMode && (
+                    <div className="flex items-center gap-3">
+                      <a href={logisvertPdfUrl} target="_blank" rel="noreferrer" className="text-xs underline" style={{ color: "#1e3a5f" }}>
+                        Ouvrir dans un nouvel onglet
+                      </a>
+                      <button
+                        type="button"
+                        data-testid="button-delete-logisvert-pdf"
+                        onClick={handleLogisvertDelete}
+                        className="text-xs text-red-600 underline"
+                      >
+                        Supprimer le document
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                !exportMode && (
+                  <label
+                    htmlFor="logisvert-pdf-upload"
+                    className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-lg py-8 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition-colors"
+                  >
+                    {isUploadingLogisvert ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                    ) : (
+                      <>
+                        <DollarSign className="w-5 h-5 text-slate-400" />
+                        <span className="text-sm text-slate-500">Cliquez pour téléverser le PDF (ou capture d'écran) de la subvention Logisvert</span>
+                      </>
+                    )}
+                    <input
+                      id="logisvert-pdf-upload"
+                      data-testid="input-upload-logisvert-pdf"
+                      type="file"
+                      accept="application/pdf,image/*"
+                      className="hidden"
+                      disabled={isUploadingLogisvert}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleLogisvertUpload(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )
+              )}
+
+              {exportMode && !logisvertPdfUrl && (
+                <img
+                  src={tclSubventionImg}
+                  alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"
+                  className="w-full rounded-md border border-slate-200 shadow-sm"
+                />
+              )}
             </CardContent>
           </Card>
         </>

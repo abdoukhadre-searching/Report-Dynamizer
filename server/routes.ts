@@ -567,6 +567,51 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/projects/:id/upload-logisvert-pdf", upload.single("file"), async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      if (!req.file) {
+        return res.status(400).json({ message: "File is required" });
+      }
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      const isPdf = req.file.mimetype === "application/pdf" || req.file.originalname?.toLowerCase().endsWith(".pdf");
+      const ext = isPdf ? "pdf" : (path.extname(req.file.originalname || "") || ".jpg").replace(".", "");
+      const fileName = `${projectId}_logisvert_${Date.now()}.${ext}`;
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      if (isPdf) {
+        fs.writeFileSync(filePath, req.file.buffer);
+      } else {
+        const compressed = await sharp(req.file.buffer)
+          .rotate()
+          .resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 90, mozjpeg: true })
+          .toBuffer();
+        fs.writeFileSync(filePath, compressed);
+      }
+      const fileUrl = `/uploads/${fileName}`;
+      const updated = await storage.updateProject(projectId, { logisvertSubventionPdf: fileUrl });
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error uploading Logisvert PDF:", error);
+      res.status(500).json({ message: error.message || "Failed to upload file" });
+    }
+  });
+
+  app.delete("/api/projects/:id/logisvert-pdf", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const updated = await storage.updateProject(projectId, { logisvertSubventionPdf: null });
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to delete file" });
+    }
+  });
+
   app.delete("/api/projects/:id/annex-image/:annexType", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);
