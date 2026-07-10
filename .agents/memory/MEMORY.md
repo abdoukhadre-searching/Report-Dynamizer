@@ -1,0 +1,1 @@
+- [Logisvert PDF text extraction](logisvert-pdf-ocr.md) — LogisVert subsidy PDFs have custom font encoding that breaks pdftotext; OCR (tesseract) is required as fallback.

@@ -38,11 +38,38 @@ async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   }
 }
 
+function extractAmountFromWindow(window: string): number | null {
+  // OCR sometimes reads "00" as "OO"/"oO" right before the $ sign — normalize that,
+  // and OCR often splits/mis-groups digits (e.g. "18 480,00" -> "1 8480 00").
+  const cleaned = window.replace(/[oO]{2}(?=\s*\$)/g, "00");
+  const match = cleaned.match(/(\d[\d\s.,]{0,20})\$/);
+  if (!match) return null;
+  const collapsed = match[1].replace(/\s/g, "");
+  const decimalMatch = collapsed.match(/^(\d+)[.,](\d{2})$/);
+  if (decimalMatch) {
+    const value = parseFloat(`${decimalMatch[1]}.${decimalMatch[2]}`);
+    return isNaN(value) ? null : value;
+  }
+  if (/^\d+$/.test(collapsed)) {
+    if (collapsed.length > 2) {
+      const dollars = collapsed.slice(0, -2);
+      const cents = collapsed.slice(-2);
+      const value = parseFloat(`${dollars}.${cents}`);
+      return isNaN(value) ? null : value;
+    }
+    const value = parseFloat(collapsed);
+    return isNaN(value) ? null : value;
+  }
+  return null;
+}
+
 function extractLogisvertAmount(text: string): number | null {
   const normalized = text.replace(/\r/g, "");
   const lines = normalized.split("\n");
-  const amountRegex = /(\d{1,3}(?:[\s,]\d{3})*(?:[.,]\d{2})?)\s*\$/;
   const priorityKeywords = [
+    /pourriez\s+avoir\s+droit\s+[àa]/i,
+    /pourriez\s+avoir/i,
+    /vous\s+avez\s+droit\s+[àa]/i,
     /montant\s+total\s+de\s+(la\s+)?subvention/i,
     /subvention\s+totale/i,
     /total\s+de\s+la\s+subvention/i,
@@ -51,33 +78,43 @@ function extractLogisvertAmount(text: string): number | null {
     /montant\s+total/i,
   ];
 
-  function parseAmount(raw: string): number {
-    return parseFloat(raw.replace(/\s/g, "").replace(/,(\d{2})$/, ".$1").replace(/,/g, ""));
-  }
-
   for (const keywordRegex of priorityKeywords) {
     for (let i = 0; i < lines.length; i++) {
       if (keywordRegex.test(lines[i])) {
-        const searchWindow = [lines[i], lines[i + 1] || ""].join(" ");
-        const match = searchWindow.match(amountRegex);
-        if (match) {
-          const value = parseAmount(match[1]);
-          if (!isNaN(value) && value > 0) return value;
-        }
+        const searchWindow = [lines[i], lines[i + 1] || "", lines[i + 2] || ""].join(" ");
+        const value = extractAmountFromWindow(searchWindow);
+        if (value !== null && value > 0) return value;
       }
     }
   }
 
   const allAmounts: number[] = [];
   for (const line of lines) {
-    const match = line.match(amountRegex);
-    if (match) {
-      const value = parseAmount(match[1]);
-      if (!isNaN(value) && value > 0) allAmounts.push(value);
-    }
+    const value = extractAmountFromWindow(line);
+    if (value !== null && value > 0) allAmounts.push(value);
   }
   if (allAmounts.length > 0) return Math.max(...allAmounts);
   return null;
+}
+
+async function extractTextViaOcr(buffer: Buffer): Promise<string> {
+  const tmpDir = os.tmpdir();
+  const uid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  const tmpPdf = path.join(tmpDir, `ocr-${uid}.pdf`);
+  const tmpImgPrefix = path.join(tmpDir, `ocr-${uid}-img`);
+  const tmpTxtPrefix = path.join(tmpDir, `ocr-${uid}-txt`);
+  try {
+    await fs.promises.writeFile(tmpPdf, buffer);
+    await execFileAsync("pdftoppm", ["-png", "-r", "150", "-f", "1", "-l", "1", tmpPdf, tmpImgPrefix], { timeout: 45000 });
+    const imgPath = `${tmpImgPrefix}-1.png`;
+    await execFileAsync("tesseract", [imgPath, tmpTxtPrefix, "-l", "fra", "--psm", "6"], { timeout: 60000 });
+    const text = (await fs.promises.readFile(`${tmpTxtPrefix}.txt`, "utf-8")).trim();
+    await fs.promises.unlink(imgPath).catch(() => {});
+    return text;
+  } finally {
+    await fs.promises.unlink(tmpPdf).catch(() => {});
+    await fs.promises.unlink(`${tmpTxtPrefix}.txt`).catch(() => {});
+  }
 }
 
 function getProjectId(param: string | string[] | undefined): string {
@@ -631,6 +668,14 @@ export async function registerRoutes(
           detectedAmount = extractLogisvertAmount(text);
         } catch (err) {
           console.error("Error extracting text from Logisvert PDF:", err);
+        }
+        if (detectedAmount === null) {
+          try {
+            const ocrText = await extractTextViaOcr(req.file.buffer);
+            detectedAmount = extractLogisvertAmount(ocrText);
+          } catch (err) {
+            console.error("Error OCR-extracting Logisvert PDF:", err);
+          }
         }
       } else {
         const compressed = await sharp(req.file.buffer)
