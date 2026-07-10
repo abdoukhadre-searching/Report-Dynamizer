@@ -38,6 +38,48 @@ async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   }
 }
 
+function extractLogisvertAmount(text: string): number | null {
+  const normalized = text.replace(/\r/g, "");
+  const lines = normalized.split("\n");
+  const amountRegex = /(\d{1,3}(?:[\s,]\d{3})*(?:[.,]\d{2})?)\s*\$/;
+  const priorityKeywords = [
+    /montant\s+total\s+de\s+(la\s+)?subvention/i,
+    /subvention\s+totale/i,
+    /total\s+de\s+la\s+subvention/i,
+    /aide\s+financière\s+totale/i,
+    /montant\s+de\s+l['’]aide/i,
+    /montant\s+total/i,
+  ];
+
+  function parseAmount(raw: string): number {
+    return parseFloat(raw.replace(/\s/g, "").replace(/,(\d{2})$/, ".$1").replace(/,/g, ""));
+  }
+
+  for (const keywordRegex of priorityKeywords) {
+    for (let i = 0; i < lines.length; i++) {
+      if (keywordRegex.test(lines[i])) {
+        const searchWindow = [lines[i], lines[i + 1] || ""].join(" ");
+        const match = searchWindow.match(amountRegex);
+        if (match) {
+          const value = parseAmount(match[1]);
+          if (!isNaN(value) && value > 0) return value;
+        }
+      }
+    }
+  }
+
+  const allAmounts: number[] = [];
+  for (const line of lines) {
+    const match = line.match(amountRegex);
+    if (match) {
+      const value = parseAmount(match[1]);
+      if (!isNaN(value) && value > 0) allAmounts.push(value);
+    }
+  }
+  if (allAmounts.length > 0) return Math.max(...allAmounts);
+  return null;
+}
+
 function getProjectId(param: string | string[] | undefined): string {
   if (Array.isArray(param)) {
     return param[0] ?? "";
@@ -581,8 +623,15 @@ export async function registerRoutes(
       const ext = isPdf ? "pdf" : (path.extname(req.file.originalname || "") || ".jpg").replace(".", "");
       const fileName = `${projectId}_logisvert_${Date.now()}.${ext}`;
       const filePath = path.join(UPLOADS_DIR, fileName);
+      let detectedAmount: number | null = null;
       if (isPdf) {
         fs.writeFileSync(filePath, req.file.buffer);
+        try {
+          const text = await extractTextFromPdf(req.file.buffer);
+          detectedAmount = extractLogisvertAmount(text);
+        } catch (err) {
+          console.error("Error extracting text from Logisvert PDF:", err);
+        }
       } else {
         const compressed = await sharp(req.file.buffer)
           .rotate()
@@ -592,8 +641,12 @@ export async function registerRoutes(
         fs.writeFileSync(filePath, compressed);
       }
       const fileUrl = `/uploads/${fileName}`;
-      const updated = await storage.updateProject(projectId, { logisvertSubventionPdf: fileUrl });
-      res.json(updated);
+      const updateData: any = { logisvertSubventionPdf: fileUrl };
+      if (detectedAmount !== null) {
+        updateData.subventionThermoManual = String(detectedAmount);
+      }
+      const updated = await storage.updateProject(projectId, updateData);
+      res.json({ ...updated, detectedAmount });
     } catch (error: any) {
       console.error("Error uploading Logisvert PDF:", error);
       res.status(500).json({ message: error.message || "Failed to upload file" });

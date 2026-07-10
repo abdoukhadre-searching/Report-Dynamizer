@@ -265,8 +265,13 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
       if (!res.ok) throw new Error("Upload failed");
       const updated = await res.json();
       setLogisvertPdfUrl(updated.logisvertSubventionPdf ?? null);
+      if (updated.detectedAmount != null) {
+        setSubventionThermoManual(Number(updated.detectedAmount));
+        toast({ title: "Document ajouté", description: `Montant détecté automatiquement : ${Number(updated.detectedAmount).toLocaleString("fr-CA")} $` });
+      } else {
+        toast({ title: "Document ajouté", description: "Le PDF Logisvert a été enregistré. Aucun montant n'a pu être détecté automatiquement, veuillez l'inscrire manuellement." });
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
-      toast({ title: "Document ajouté", description: "Le PDF Logisvert a été enregistré." });
     } catch {
       toast({ title: "Erreur", description: "Impossible de téléverser le document.", variant: "destructive" });
     } finally {
