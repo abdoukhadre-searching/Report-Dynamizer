@@ -204,20 +204,22 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
   const page = await browser.newPage();
 
   try {
+    // Set print media BEFORE navigation so Recharts animates in the correct
+    // print layout from the start — calling it after causes a re-render that
+    // restarts animations and leaves the area chart partially drawn.
+    await page.emulateMediaType("print");
+
     console.log(`[pdf] Navigating to: ${reportUrl}`);
     await page.goto(reportUrl, { waitUntil: "load", timeout: 60000 });
     console.log(`[pdf] Page loaded, waiting for selector: ${waitForSelector}`);
     await page.waitForSelector(waitForSelector, { timeout: 60000 });
     console.log(`[pdf] Selector found, rendering PDF...`);
 
-    // Wait for Recharts animations to fully complete (default duration is ~1500ms)
-    await new Promise(r => setTimeout(r, 2500));
-
-    await page.emulateMediaType("print");
-
+    // Wait for fonts + Recharts animations (default ~1500ms) to fully complete
     await page.evaluate(async () => {
       if (document.fonts?.ready) await document.fonts.ready;
     });
+    await new Promise(r => setTimeout(r, 2000));
 
     await page.addScriptTag({ content: IMAGE_COMPRESS_SCRIPT });
     await page.evaluate(() => (window as any).__pdfCompressImages());
