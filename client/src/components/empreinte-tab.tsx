@@ -341,7 +341,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
   const totalBrut = totalEtancheite + totalThermo + totalElecThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalFenetres + totalCustom;
-  const totalSubventionThermo = showHeatingStrategy ? subventionThermoManual : 0;
+  // Non-admissible → standard fixed amount (SUBVENTION_THERMO × nbThermo)
+  // Admissible or unknown → Logisvert manual amount
+  const totalSubventionThermo = showHeatingStrategy
+    ? (logisvertAdmissible === false ? nbThermo * subventionThermo : subventionThermoManual)
+    : 0;
   const totalSubventionBasement = showBasementInsulationStrategy ? subventionBasementInsul : 0;
   const totalSubvention = totalSubventionThermo + totalSubventionBasement;
   const totalApresSubvention = totalBrut - totalSubvention;
@@ -1266,21 +1270,25 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         <div className="flex items-center gap-2">
                           <TrendingDown className="w-3.5 h-3.5 text-green-600" />
                           <div>
-                            <p className="text-xs font-semibold text-green-800">Possibilité de subvention — Thermopompes</p>
+                            <p className="text-xs font-semibold text-green-800">Subvention — Thermopompes</p>
                             <p className="text-xs text-green-600 mt-0.5">
-                              Programme Logisvert (montant selon calcul en ligne — voir PDF){" "}
-                              <a
-                                href="#section-subvention-logisvert"
-                                onClick={(e) => { e.preventDefault(); document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth" }); }}
-                                className="underline font-semibold"
-                                style={{ color: "#16a34a" }}
-                              >↓ Détails</a>
+                              {logisvertAdmissible === false
+                                ? `Subvention standard Hydro-Québec (${subventionThermo.toLocaleString("fr-CA")} $/unité)`
+                                : (<>Programme Logisvert (montant selon calcul en ligne — voir PDF){" "}
+                                    <a
+                                      href="#section-subvention-logisvert"
+                                      onClick={(e) => { e.preventDefault(); document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth" }); }}
+                                      className="underline font-semibold"
+                                      style={{ color: "#16a34a" }}
+                                    >↓ Détails</a>
+                                  </>)
+                              }
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right text-sm text-green-600 font-medium" colSpan={2}>
-                        {exportMode ? (
+                        {(exportMode || logisvertAdmissible === false) ? (
                           `− ${totalSubventionThermo.toLocaleString("fr-CA")} $`
                         ) : (
                           <div className="flex items-center justify-end gap-1">
