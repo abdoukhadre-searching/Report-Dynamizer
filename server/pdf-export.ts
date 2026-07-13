@@ -212,6 +212,34 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
 
     await new Promise(r => setTimeout(r, 400));
 
+    // Disable all CSS animations and transitions so charts render immediately
+    await page.addStyleTag({
+      content: `
+        *, *::before, *::after {
+          animation-duration: 0ms !important;
+          animation-delay: 0ms !important;
+          transition-duration: 0ms !important;
+          transition-delay: 0ms !important;
+        }
+      `,
+    });
+
+    // Wait for Recharts SVG paths to actually have rendered path data
+    await page.evaluate(async () => {
+      await new Promise<void>((resolve) => {
+        const maxWait = 3000;
+        const start = Date.now();
+        const check = () => {
+          const paths = document.querySelectorAll(".recharts-layer path, .recharts-curve");
+          const svgs = document.querySelectorAll(".recharts-wrapper svg");
+          const allReady = svgs.length === 0 || Array.from(paths).some(p => p.getAttribute("d") && p.getAttribute("d") !== "");
+          if (allReady || Date.now() - start > maxWait) resolve();
+          else requestAnimationFrame(check);
+        };
+        check();
+      });
+    });
+
     await page.emulateMediaType("print");
 
     await page.evaluate(async () => {
