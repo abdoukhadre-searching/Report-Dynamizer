@@ -1979,6 +1979,7 @@ export default function ReportTab({
                               cy="42%"
                               outerRadius={95}
                               dataKey="value"
+                              isAnimationActive={false}
                             >
                               {prePieData.map((entry, idx) => (
                                 <Cell
@@ -2138,6 +2139,7 @@ export default function ReportTab({
                                   dataKey={key}
                                   stackId="pre"
                                   fill={color}
+                                  isAnimationActive={false}
                                 />
                               ))}
                             </BarChart>
@@ -2652,12 +2654,14 @@ export default function ReportTab({
                             name="Avant travaux"
                             fill="hsl(var(--chart-1))"
                             radius={[2, 2, 0, 0]}
+                            isAnimationActive={false}
                           />
                           <Bar
                             dataKey="apres"
                             name="Après travaux"
                             fill="hsl(var(--chart-4))"
                             radius={[2, 2, 0, 0]}
+                            isAnimationActive={false}
                           />
                         </BarChart>
                       </ResponsiveContainer>
@@ -2712,6 +2716,7 @@ export default function ReportTab({
                               cy="42%"
                               outerRadius={95}
                               dataKey="value"
+                              isAnimationActive={false}
                             >
                               {postPieData.map((entry, idx) => (
                                 <Cell
@@ -2869,6 +2874,7 @@ export default function ReportTab({
                             stroke="hsl(var(--chart-1))"
                             fill="hsl(var(--chart-1))"
                             fillOpacity={0.2}
+                            isAnimationActive={false}
                           />
                           <Area
                             type="monotone"
@@ -2877,6 +2883,7 @@ export default function ReportTab({
                             stroke="hsl(var(--chart-4))"
                             fill="hsl(var(--chart-4))"
                             fillOpacity={0.2}
+                            isAnimationActive={false}
                           />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -3544,12 +3551,14 @@ export default function ReportTab({
                                     name="Avant travaux"
                                     fill="hsl(var(--chart-1))"
                                     barSize={12}
+                                    isAnimationActive={false}
                                   />
                                   <Bar
                                     dataKey="apres"
                                     name="Après travaux"
                                     fill="hsl(var(--chart-4))"
                                     barSize={12}
+                                    isAnimationActive={false}
                                   />
                                 </BarChart>
                               </ResponsiveContainer>
@@ -3582,8 +3591,8 @@ export default function ReportTab({
                                     <YAxis tick={{ fontSize: 10 }} />
                                     <Tooltip formatter={(value: number) => `${value} T CO₂/an`} />
                                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                                    <Bar dataKey="Avant" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="Après" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="Avant" fill="#2563eb" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                                    <Bar dataKey="Après" fill="#16a34a" radius={[4, 4, 0, 0]} isAnimationActive={false} />
                                   </BarChart>
                                 </ResponsiveContainer>
                               </div>

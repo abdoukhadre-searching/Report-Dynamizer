@@ -215,11 +215,11 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
     await page.waitForSelector(waitForSelector, { timeout: 60000 });
     console.log(`[pdf] Selector found, rendering PDF...`);
 
-    // Wait for fonts + Recharts animations (default ~1500ms) to fully complete
+    // Wait for fonts to load and React to finish rendering
     await page.evaluate(async () => {
       if (document.fonts?.ready) await document.fonts.ready;
     });
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 600));
 
     await page.addScriptTag({ content: IMAGE_COMPRESS_SCRIPT });
     await page.evaluate(() => (window as any).__pdfCompressImages());
