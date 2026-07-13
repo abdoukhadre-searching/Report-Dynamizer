@@ -73,6 +73,7 @@ export const projects = pgTable("projects", {
   nbChauffeEauThermo: integer("nb_chauffe_eau_thermo"),
   logisvertSubventionPdf: text("logisvert_subvention_pdf"),
   subventionThermoManual: text("subvention_thermo_manual"),
+  logisvertAdmissible: boolean("logisvert_admissible"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

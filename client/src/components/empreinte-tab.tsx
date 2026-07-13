@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { Project, ReportData } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import tclPhotoPath from "@assets/182568194_3810005075735040_7297035271127510089_n_1775165080896.jpg";
@@ -241,6 +242,21 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   });
   const [logisvertPdfUrl, setLogisvertPdfUrl] = useState<string | null>(project.logisvertSubventionPdf ?? null);
   const [isUploadingLogisvert, setIsUploadingLogisvert] = useState(false);
+  const [logisvertAdmissible, setLogisvertAdmissible] = useState<boolean | null>(
+    project.logisvertAdmissible ?? null
+  );
+  const [showAdmissibleDialog, setShowAdmissibleDialog] = useState(false);
+  const [pendingExport, setPendingExport] = useState(false);
+
+  async function saveLogisvertAdmissible(value: boolean) {
+    setLogisvertAdmissible(value);
+    try {
+      await apiRequest("PATCH", `/api/projects/${project.id}`, { logisvertAdmissible: value });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    }
+  }
 
   async function saveSubventionThermoManual(value: number) {
     setSubventionThermoManual(value);
@@ -354,8 +370,108 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
     );
   }
 
+  async function triggerExportAfterAdmissible(admissible: boolean) {
+    setShowAdmissibleDialog(false);
+    if (!pendingExport) return;
+    setPendingExport(false);
+    if (admissible === true && !logisvertPdfUrl) {
+      toast({
+        title: "Document manquant",
+        description: "Ce projet est admissible à la bonification Logisvert. Veuillez téléverser le document de subvention avant de télécharger.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+      return;
+    }
+    // proceed with export
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams({
+        nbThermo: String(nbThermo),
+        nbUnits: String(nbUnits),
+        nbChauffeEauThermo: String(nbChauffeEauThermo),
+        nbPlinthes: String(nbPlinthes),
+        nbVrc: String(nbVrc),
+        coutEtancheite: String(coutEtancheite),
+        coutThermo: String(coutThermo),
+        coutChauffeEau: String(coutChauffeEau),
+        coutVrc: String(coutVrc),
+        coutFaibleDebit: String(coutFaibleDebit),
+        coutLed: String(coutLed),
+        coutPlinthes: String(coutPlinthes),
+        coutChauffeEauElecInd: String(coutChauffeEauElecInd),
+        coutElecThermo: String(coutElecThermo),
+        coutBasementInsul: String(coutBasementInsul),
+        subventionBasementInsul: String(subventionBasementInsul),
+        subventionThermoManual: String(subventionThermoManual),
+        customMeasures: JSON.stringify(customMeasures),
+      });
+      const response = await fetch(`/api/projects/${project.id}/export-empreinte-pdf?${params}`);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || "Échec de génération du PDF");
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `Empreinte Économique - ${project.name}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error: any) {
+      toast({ title: "Erreur export PDF", description: error.message || "Impossible d'exporter le rapport", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   return (
     <div id="empreinte-content" className="space-y-6 max-w-4xl mx-auto">
+
+      {/* Admissibilité Logisvert — dialog au clic télécharger */}
+      <Dialog open={showAdmissibleDialog} onOpenChange={(open) => { if (!open) { setShowAdmissibleDialog(false); setPendingExport(false); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle style={{ color: "#1e3a5f" }}>Bonification Logisvert</DialogTitle>
+            <DialogDescription>
+              Ce projet est-il admissible à la bonification du programme Logisvert ?
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-slate-500 -mt-2">
+            Si la zone du bâtiment est admissible, vous devrez téléverser le document de subvention Logisvert. Sinon, le calcul standard sera utilisé.
+          </p>
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={async () => {
+                await saveLogisvertAdmissible(true);
+                triggerExportAfterAdmissible(true);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-80"
+              style={{ backgroundColor: "#16a34a" }}
+              data-testid="button-logisvert-admissible-oui"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Oui, admissible
+            </button>
+            <button
+              onClick={async () => {
+                await saveLogisvertAdmissible(false);
+                triggerExportAfterAdmissible(false);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-80"
+              style={{ backgroundColor: "#64748b" }}
+              data-testid="button-logisvert-admissible-non"
+            >
+              <XCircle className="w-4 h-4" />
+              Non, pas admissible
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Header Card */}
       <Card className="overflow-hidden border-0 shadow-sm" style={{ borderTop: "4px solid #1e3a5f" }}>
@@ -428,14 +544,23 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 <button
                   onClick={async () => {
                     if (isExporting) return;
-                    if (showHeatingStrategy && !logisvertPdfUrl) {
-                      toast({
-                        title: "Document manquant",
-                        description: "Veuillez téléverser le document de subvention Logisvert avant de télécharger l'empreinte économique.",
-                        variant: "destructive",
-                      });
-                      document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth", block: "center" });
-                      return;
+                    if (showHeatingStrategy) {
+                      // If admissibility not yet answered, show dialog first
+                      if (logisvertAdmissible === null) {
+                        setPendingExport(true);
+                        setShowAdmissibleDialog(true);
+                        return;
+                      }
+                      // Admissible but no PDF uploaded yet
+                      if (logisvertAdmissible === true && !logisvertPdfUrl) {
+                        toast({
+                          title: "Document manquant",
+                          description: "Ce projet est admissible à la bonification Logisvert. Veuillez téléverser le document de subvention avant de télécharger.",
+                          variant: "destructive",
+                        });
+                        document.getElementById("section-subvention-logisvert")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        return;
+                      }
                     }
                     setIsExporting(true);
                     try {
@@ -1305,79 +1430,137 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
           {/* Subvention Logisvert — document + montant */}
           <Card id="section-subvention-logisvert" className="overflow-hidden border shadow-sm">
             <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#16a34a" }} />
-                <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                  Programme de subvention — Logisvert
-                </h3>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#16a34a" }} />
+                  <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                    Programme de subvention — Logisvert
+                  </h3>
+                </div>
+                {!exportMode && (
+                  <div className="flex items-center gap-2">
+                    {logisvertAdmissible === true && (
+                      <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#16a34a18", color: "#16a34a" }}>
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Zone admissible
+                      </span>
+                    )}
+                    {logisvertAdmissible === false && (
+                      <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#64748b18", color: "#64748b" }}>
+                        <XCircle className="w-3.5 h-3.5" /> Non admissible
+                      </span>
+                    )}
+                    {logisvertAdmissible !== null && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAdmissibleDialog(true)}
+                        className="text-xs text-slate-400 underline hover:text-slate-600"
+                      >
+                        Modifier
+                      </button>
+                    )}
+                    {logisvertAdmissible === null && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAdmissibleDialog(true)}
+                        className="text-xs font-medium px-2.5 py-1 rounded-full border border-dashed border-amber-400 text-amber-600 hover:bg-amber-50"
+                      >
+                        Confirmer l'admissibilité
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
-              {!exportMode && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm text-slate-600">Montant de la subvention calculé sur Logisvert :</span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      data-testid="input-subvention-thermo-manual-2"
-                      type="number"
-                      value={subventionThermoManual}
-                      onChange={(e) => saveSubventionThermoManual(Number(e.target.value))}
-                      placeholder="0"
-                      className={inputCls}
-                    />
-                    <span className="text-slate-400 text-xs">$</span>
-                  </div>
+              {/* Not admissible — show standard calculation info */}
+              {logisvertAdmissible === false && !exportMode && (
+                <div className="flex items-start gap-3 rounded-lg p-3" style={{ backgroundColor: "#f1f5f9" }}>
+                  <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-400" />
+                  <p className="text-sm text-slate-600">
+                    La zone de ce projet n'est pas admissible à la bonification Logisvert. Le calcul de subvention standard est utilisé.
+                  </p>
                 </div>
               )}
 
-              {logisvertPdfUrl ? (
-                <div className="space-y-2">
-                  <img src={logisvertPdfUrl} alt="Document de subvention Logisvert" className="w-full rounded border border-slate-200 shadow-sm" />
+              {/* Admissible or unknown — show amount + upload */}
+              {logisvertAdmissible !== false && (
+                <>
                   {!exportMode && (
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        data-testid="button-delete-logisvert-pdf"
-                        onClick={handleLogisvertDelete}
-                        className="text-xs text-red-600 underline"
-                      >
-                        Supprimer le document
-                      </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm text-slate-600">Montant de la subvention calculé sur Logisvert :</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          data-testid="input-subvention-thermo-manual-2"
+                          type="number"
+                          value={subventionThermoManual}
+                          onChange={(e) => saveSubventionThermoManual(Number(e.target.value))}
+                          placeholder="0"
+                          className={inputCls}
+                        />
+                        <span className="text-slate-400 text-xs">$</span>
+                      </div>
                     </div>
                   )}
-                </div>
-              ) : (
-                !exportMode && (
-                  <label
-                    htmlFor="logisvert-pdf-upload"
-                    className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-lg py-8 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition-colors"
-                  >
-                    {isUploadingLogisvert ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                    ) : (
-                      <>
-                        <DollarSign className="w-5 h-5 text-slate-400" />
-                        <span className="text-sm text-slate-500">Cliquez pour téléverser le PDF (ou capture d'écran) de la subvention Logisvert</span>
-                      </>
-                    )}
-                    <input
-                      id="logisvert-pdf-upload"
-                      data-testid="input-upload-logisvert-pdf"
-                      type="file"
-                      accept="application/pdf,image/*"
-                      className="hidden"
-                      disabled={isUploadingLogisvert}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleLogisvertUpload(file);
-                        e.target.value = "";
-                      }}
+
+                  {logisvertPdfUrl ? (
+                    <div className="space-y-2">
+                      <img src={logisvertPdfUrl} alt="Document de subvention Logisvert" className="w-full rounded border border-slate-200 shadow-sm" />
+                      {!exportMode && (
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            data-testid="button-delete-logisvert-pdf"
+                            onClick={handleLogisvertDelete}
+                            className="text-xs text-red-600 underline"
+                          >
+                            Supprimer le document
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    !exportMode && (
+                      <label
+                        htmlFor="logisvert-pdf-upload"
+                        className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-lg py-8 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition-colors"
+                      >
+                        {isUploadingLogisvert ? (
+                          <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                        ) : (
+                          <>
+                            <DollarSign className="w-5 h-5 text-slate-400" />
+                            <span className="text-sm text-slate-500">Cliquez pour téléverser le PDF (ou capture d'écran) de la subvention Logisvert</span>
+                          </>
+                        )}
+                        <input
+                          id="logisvert-pdf-upload"
+                          data-testid="input-upload-logisvert-pdf"
+                          type="file"
+                          accept="application/pdf,image/*"
+                          className="hidden"
+                          disabled={isUploadingLogisvert}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleLogisvertUpload(file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    )
+                  )}
+
+                  {exportMode && !logisvertPdfUrl && (
+                    <img
+                      src={tclSubventionImg}
+                      alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"
+                      className="w-full rounded-md border border-slate-200 shadow-sm"
                     />
-                  </label>
-                )
+                  )}
+                </>
               )}
 
-              {exportMode && !logisvertPdfUrl && (
+              {/* Export mode + non admissible — show standard subvention image */}
+              {exportMode && logisvertAdmissible === false && (
                 <img
                   src={tclSubventionImg}
                   alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"

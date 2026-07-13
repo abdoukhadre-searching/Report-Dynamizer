@@ -157,6 +157,13 @@ export class MemoryStorage implements IStorage {
       signatoryCoordonnes: (project as any).signatoryCoordonnes ?? null,
       hasCommercialUnits: (project as any).hasCommercialUnits ?? false,
       commercialUnits: (project as any).commercialUnits ?? 0,
+      basementInsulationType: (project as any).basementInsulationType ?? null,
+      basementInsulationInches: (project as any).basementInsulationInches ?? null,
+      basementInsulationRValue: (project as any).basementInsulationRValue ?? null,
+      nbChauffeEauThermo: (project as any).nbChauffeEauThermo ?? null,
+      logisvertSubventionPdf: (project as any).logisvertSubventionPdf ?? null,
+      subventionThermoManual: (project as any).subventionThermoManual ?? null,
+      logisvertAdmissible: (project as any).logisvertAdmissible ?? null,
       createdAt: new Date(),
     };
     this._projects.unshift(created);
