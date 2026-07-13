@@ -684,10 +684,11 @@ export async function registerRoutes(
         try {
           await fs.promises.writeFile(tmpPdf, req.file.buffer);
           await execFileAsync("pdftoppm", ["-png", "-r", "150", "-f", "1", "-l", "1", tmpPdf, tmpImgPrefix], { timeout: 45000 });
-          await fs.promises.rename(`${tmpImgPrefix}-1.png`, imagePath);
+          await fs.promises.copyFile(`${tmpImgPrefix}-1.png`, imagePath);
           fileUrl = `/uploads/${imageFileName}`;
         } finally {
           await fs.promises.unlink(tmpPdf).catch(() => {});
+          await fs.promises.unlink(`${tmpImgPrefix}-1.png`).catch(() => {});
         }
       } else {
         const fileName = `${projectId}_logisvert_${Date.now()}.jpg`;
