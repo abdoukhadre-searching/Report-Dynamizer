@@ -34,6 +34,7 @@ interface MandatData {
   };
   commentaires: string;
   dateMandat: string;
+  mandataire: string;
 }
 
 const defaultMandatData: MandatData = {
@@ -55,6 +56,7 @@ const defaultMandatData: MandatData = {
   },
   commentaires: "",
   dateMandat: new Date().toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" }),
+  mandataire: "",
 };
 
 const MESURES_LABELS: Record<keyof Omit<MandatData["mesures"], "autreTexte">, string> = {
@@ -157,6 +159,27 @@ export default function MandatTab({ project }: MandatTabProps) {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* ── Left: form ────────────────────────────────────── */}
         <div className="space-y-5 no-print">
+          {/* Mandataire */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Mandataire</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Label className="text-xs mb-1 block">Entreprise mandataire (qui reçoit le mandat)</Label>
+              <Input
+                placeholder="Ex. : BN Énergie"
+                value={mandat.mandataire}
+                onChange={e => setMandat(prev => ({ ...prev, mandataire: e.target.value }))}
+                list="mandat-tab-mandataire-suggestions"
+                data-testid="input-mandataire"
+              />
+              <datalist id="mandat-tab-mandataire-suggestions">
+                <option value="BN Énergie" />
+                <option value="Autre ingénieur" />
+              </datalist>
+            </CardContent>
+          </Card>
+
           {/* Type de mandat */}
           <Card>
             <CardHeader className="pb-3">
@@ -486,12 +509,14 @@ export default function MandatTab({ project }: MandatTabProps) {
                 </h2>
                 <div className="grid grid-cols-2 gap-8">
                   <div>
-                    <p className="text-xs font-semibold text-[#1e3a5f] mb-1">BN Énergie</p>
+                    <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{project.clientName || "MAB Conseil Immobilier"}</p>
+                    <p className="text-[10px] text-muted-foreground mb-1">(Mandant)</p>
                     <div className="h-14 border-b border-gray-400 mb-1" />
                     <p className="text-xs text-muted-foreground">Signature &amp; date</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[#1e3a5f] mb-1">Ingénieur responsable</p>
+                    <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{mandat.mandataire || "Mandataire"}</p>
+                    <p className="text-[10px] text-muted-foreground mb-1">(Mandataire)</p>
                     <div className="h-14 border-b border-gray-400 mb-1" />
                     <p className="text-xs text-muted-foreground">Signature &amp; date</p>
                   </div>
@@ -500,7 +525,7 @@ export default function MandatTab({ project }: MandatTabProps) {
 
               {/* Footer note */}
               <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-gray-100">
-                Document confidentiel — BN Énergie © {new Date().getFullYear()}
+                Document confidentiel — MAB Conseil Immobilier © {new Date().getFullYear()}
               </p>
             </div>
           </div>

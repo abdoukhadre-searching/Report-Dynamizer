@@ -78,6 +78,26 @@ export const projects = pgTable("projects", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const mandats = pgTable("mandats", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  name: text("name").notNull().default("Nouveau mandat"),
+  clientName: text("client_name"),
+  address: text("address"),
+  city: text("city"),
+  province: text("province"),
+  postalCode: text("postal_code"),
+  numUnits: text("num_units"),
+  evaluator: text("evaluator"),
+  mandataire: text("mandataire"),
+  mandatData: jsonb("mandat_data"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMandatSchema = createInsertSchema(mandats).omit({ id: true, createdAt: true });
+export type InsertMandat = z.infer<typeof insertMandatSchema>;
+export type Mandat = typeof mandats.$inferSelect;
+
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   createdAt: true,

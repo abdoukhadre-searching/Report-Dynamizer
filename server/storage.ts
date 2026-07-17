@@ -1,4 +1,4 @@
-import { type Project, type InsertProject, type User, type AuditLog, projects, users, auditLogs } from "@shared/schema";
+import { type Project, type InsertProject, type User, type AuditLog, type Mandat, type InsertMandat, projects, users, auditLogs, mandats } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -9,6 +9,12 @@ export interface IStorage {
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: string, data: Partial<InsertProject>): Promise<Project | undefined>;
   deleteProject(id: string): Promise<void>;
+
+  getMandats(userId?: string): Promise<Mandat[]>;
+  getMandat(id: string): Promise<Mandat | undefined>;
+  createMandat(data: Partial<InsertMandat>): Promise<Mandat>;
+  updateMandat(id: string, data: Partial<InsertMandat>): Promise<Mandat | undefined>;
+  deleteMandat(id: string): Promise<void>;
 
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
@@ -54,6 +60,32 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProject(id: string): Promise<void> {
     await db.delete(projects).where(eq(projects.id, id));
+  }
+
+  async getMandats(userId?: string): Promise<Mandat[]> {
+    if (userId) {
+      return await db.select().from(mandats).where(eq(mandats.userId, userId)).orderBy(desc(mandats.createdAt));
+    }
+    return await db.select().from(mandats).orderBy(desc(mandats.createdAt));
+  }
+
+  async getMandat(id: string): Promise<Mandat | undefined> {
+    const [m] = await db.select().from(mandats).where(eq(mandats.id, id));
+    return m;
+  }
+
+  async createMandat(data: Partial<InsertMandat>): Promise<Mandat> {
+    const [created] = await db.insert(mandats).values({ name: "Nouveau mandat", ...data } as InsertMandat).returning();
+    return created;
+  }
+
+  async updateMandat(id: string, data: Partial<InsertMandat>): Promise<Mandat | undefined> {
+    const [updated] = await db.update(mandats).set(data).where(eq(mandats.id, id)).returning();
+    return updated;
+  }
+
+  async deleteMandat(id: string): Promise<void> {
+    await db.delete(mandats).where(eq(mandats.id, id));
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -164,6 +196,7 @@ export class MemoryStorage implements IStorage {
       logisvertSubventionPdf: (project as any).logisvertSubventionPdf ?? null,
       subventionThermoManual: (project as any).subventionThermoManual ?? null,
       logisvertAdmissible: (project as any).logisvertAdmissible ?? null,
+      mandatData: (project as any).mandatData ?? null,
       createdAt: new Date(),
     };
     this._projects.unshift(created);
@@ -181,6 +214,48 @@ export class MemoryStorage implements IStorage {
 
   async deleteProject(id: string): Promise<void> {
     this._projects = this._projects.filter((project) => project.id !== id);
+  }
+
+  private _mandats: Mandat[] = [];
+
+  async getMandats(userId?: string): Promise<Mandat[]> {
+    const sorted = [...this._mandats].sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
+    return userId ? sorted.filter(m => m.userId === userId) : sorted;
+  }
+
+  async getMandat(id: string): Promise<Mandat | undefined> {
+    return this._mandats.find(m => m.id === id);
+  }
+
+  async createMandat(data: Partial<InsertMandat>): Promise<Mandat> {
+    const m: Mandat = {
+      id: randomUUID(),
+      userId: data.userId ?? null,
+      name: data.name ?? "Nouveau mandat",
+      clientName: data.clientName ?? null,
+      address: data.address ?? null,
+      city: data.city ?? null,
+      province: data.province ?? null,
+      postalCode: data.postalCode ?? null,
+      numUnits: data.numUnits ?? null,
+      evaluator: data.evaluator ?? null,
+      mandataire: data.mandataire ?? null,
+      mandatData: data.mandatData ?? null,
+      createdAt: new Date(),
+    };
+    this._mandats.unshift(m);
+    return m;
+  }
+
+  async updateMandat(id: string, data: Partial<InsertMandat>): Promise<Mandat | undefined> {
+    const idx = this._mandats.findIndex(m => m.id === id);
+    if (idx === -1) return undefined;
+    this._mandats[idx] = { ...this._mandats[idx], ...data };
+    return this._mandats[idx];
+  }
+
+  async deleteMandat(id: string): Promise<void> {
+    this._mandats = this._mandats.filter(m => m.id !== id);
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {

@@ -21,6 +21,7 @@ import {
   Clock,
   MapPin,
   ArrowRight,
+  ClipboardList,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -277,8 +278,34 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Two category cards */}
-        <div className="grid sm:grid-cols-2 gap-5 mb-10">
+        {/* Three category cards */}
+        <div className="grid sm:grid-cols-3 gap-5 mb-10">
+          {/* Feuillesde mandat */}
+          <button
+            className="group relative flex flex-col text-left rounded-2xl border bg-white overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5"
+            style={{ borderColor: "#e8edf4" }}
+            onClick={() => navigate("/mandats")}
+            data-testid="button-section-mandats"
+          >
+            <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: "#7c3aed" }} />
+            <div className="pl-7 pr-6 pt-6 pb-6">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform" style={{ backgroundColor: "#f5f3ff" }}>
+                <ClipboardList className="w-6 h-6" style={{ color: "#7c3aed" }} />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Feuillesde mandat</h3>
+              <p className="text-sm text-slate-500 leading-relaxed mb-5">
+                Définir la portée et les mesures d'efficacité sans rapport H2K.
+              </p>
+              <div className="flex items-center justify-between mt-auto">
+                <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#f5f3ff", color: "#7c3aed" }}>
+                  Indépendant
+                </span>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 transition-colors" />
+              </div>
+            </div>
+          </button>
+
+          {/* Rapports HOT2000 — bâtiments existants */}
           <button
             className="group relative flex flex-col text-left rounded-2xl border bg-white overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5"
             style={{ borderColor: "#e8edf4" }}
@@ -290,9 +317,9 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform" style={{ backgroundColor: "#eef2f8" }}>
                 <Building2 className="w-6 h-6" style={{ color: "#1e3a5f" }} />
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-1">Bâtiments existants</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Rapports HOT2000</h3>
               <p className="text-sm text-slate-500 leading-relaxed mb-5">
-                Analyse avant / après travaux pour immeubles déjà construits.
+                Analyse avant / après pour immeubles existants.
               </p>
               <div className="flex items-center justify-between mt-auto">
                 <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#eef2f8", color: "#1e3a5f" }}>
@@ -303,6 +330,7 @@ export default function HomePage() {
             </div>
           </button>
 
+          {/* Construction neuve */}
           <button
             className="group relative flex flex-col text-left rounded-2xl border bg-white overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5"
             style={{ borderColor: "#e8edf4" }}
@@ -314,7 +342,7 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform" style={{ backgroundColor: "#f0fdf4" }}>
                 <HardHat className="w-6 h-6" style={{ color: "#16a34a" }} />
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-1">Constructions neuves</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Construction neuve</h3>
               <p className="text-sm text-slate-500 leading-relaxed mb-5">
                 Qualification selon le bâtiment de référence CNEB 2017.
               </p>
