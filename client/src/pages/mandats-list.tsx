@@ -30,7 +30,11 @@ export default function MandatsListPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const { data: mandats } = useQuery<Mandat[]>({ queryKey: ["/api/mandats"] });
+  const { data: mandats, isError, refetch } = useQuery<Mandat[]>({
+    queryKey: ["/api/mandats"],
+    retry: 2,
+    staleTime: 0,
+  });
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -40,6 +44,11 @@ export default function MandatsListPage() {
     onSuccess: (data: Mandat) => {
       queryClient.invalidateQueries({ queryKey: ["/api/mandats"] });
       navigate(`/mandats/${data.id}`);
+    },
+    onError: (err: Error) => {
+      if (err.message.startsWith("401")) {
+        refetch();
+      }
     },
   });
 
