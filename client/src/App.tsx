@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
 import MandatsListPage from "@/pages/mandats-list";
 import MandatDetailPage from "@/pages/mandat-detail";
+import RapportsPage from "@/pages/rapports";
 import ProjectsListPage from "@/pages/projects-list";
 import ProjectPage from "@/pages/project";
 import ProjectPrintPage from "@/pages/project-print";
@@ -67,6 +68,9 @@ function Router() {
       <Route path="/project/:id/print-recommandations" component={ProjectPrintRecommandationsPage} />
       <Route path="/project/:id/print-strategie" component={ProjectPrintStrategiePage} />
       <Route path="/project/:id/print-empreinte" component={ProjectPrintEmpreintePage} />
+      <Route path="/rapports">
+        {() => <ProtectedRoute component={RapportsPage} />}
+      </Route>
       <Route path="/mandats">
         {() => <ProtectedRoute component={MandatsListPage} />}
       </Route>
