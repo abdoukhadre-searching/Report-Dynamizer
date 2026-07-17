@@ -1169,42 +1169,45 @@ export async function registerRoutes(
   // ── Mandats CRUD ──────────────────────────────────────────────────────────
   app.get("/api/mandats", async (req: Request, res) => {
     try {
-      const user = (req as any).user;
-      if (!user) return res.status(401).json({ message: "Non authentifié" });
-      const list = await storage.getMandats(user.role === "admin" ? undefined : user.id);
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const isAdmin = req.session.userRole === "admin";
+      const list = await storage.getMandats(isAdmin ? undefined : userId);
       res.json(list);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
   app.post("/api/mandats", async (req: Request, res) => {
     try {
-      const user = (req as any).user;
-      if (!user) return res.status(401).json({ message: "Non authentifié" });
-      const created = await storage.createMandat({ ...req.body, userId: user.id });
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const created = await storage.createMandat({ ...req.body, userId });
       res.status(201).json(created);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
   app.get("/api/mandats/:id", async (req: Request, res) => {
     try {
-      const user = (req as any).user;
-      if (!user) return res.status(401).json({ message: "Non authentifié" });
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const isAdmin = req.session.userRole === "admin";
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const m = await storage.getMandat(id);
       if (!m) return res.status(404).json({ message: "Non trouvé" });
-      if (user.role !== "admin" && m.userId !== user.id) return res.status(403).json({ message: "Interdit" });
+      if (!isAdmin && m.userId !== userId) return res.status(403).json({ message: "Interdit" });
       res.json(m);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
   app.patch("/api/mandats/:id", async (req: Request, res) => {
     try {
-      const user = (req as any).user;
-      if (!user) return res.status(401).json({ message: "Non authentifié" });
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const isAdmin = req.session.userRole === "admin";
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const m = await storage.getMandat(id);
       if (!m) return res.status(404).json({ message: "Non trouvé" });
-      if (user.role !== "admin" && m.userId !== user.id) return res.status(403).json({ message: "Interdit" });
+      if (!isAdmin && m.userId !== userId) return res.status(403).json({ message: "Interdit" });
       const updated = await storage.updateMandat(id, req.body);
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
@@ -1212,12 +1215,13 @@ export async function registerRoutes(
 
   app.delete("/api/mandats/:id", async (req: Request, res) => {
     try {
-      const user = (req as any).user;
-      if (!user) return res.status(401).json({ message: "Non authentifié" });
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const isAdmin = req.session.userRole === "admin";
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const m = await storage.getMandat(id);
       if (!m) return res.status(404).json({ message: "Non trouvé" });
-      if (user.role !== "admin" && m.userId !== user.id) return res.status(403).json({ message: "Interdit" });
+      if (!isAdmin && m.userId !== userId) return res.status(403).json({ message: "Interdit" });
       await storage.deleteMandat(id);
       res.status(204).send();
     } catch (e: any) { res.status(500).json({ message: e.message }); }
