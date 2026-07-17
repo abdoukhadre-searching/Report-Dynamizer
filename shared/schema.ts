@@ -74,6 +74,7 @@ export const projects = pgTable("projects", {
   logisvertSubventionPdf: text("logisvert_subvention_pdf"),
   subventionThermoManual: text("subvention_thermo_manual"),
   logisvertAdmissible: boolean("logisvert_admissible"),
+  mandatData: jsonb("mandat_data"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

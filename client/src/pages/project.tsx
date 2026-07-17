@@ -5,7 +5,7 @@ import type { Project } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Zap, FileText, LayoutDashboard, BookOpen, Building2, ClipboardCheck, BarChart2, DollarSign } from "lucide-react";
+import { ArrowLeft, Zap, FileText, LayoutDashboard, BookOpen, Building2, ClipboardCheck, BarChart2, DollarSign, ClipboardList } from "lucide-react";
 import UploadTab from "@/components/upload-tab";
 import DashboardTab from "@/components/dashboard-tab";
 import ReportTab from "@/components/report-tab";
@@ -14,6 +14,7 @@ import AttestationTab from "@/components/attestation-tab";
 import StrategyTab from "@/components/strategy-tab";
 import EmpreinteTab from "@/components/empreinte-tab";
 import RecommandationsTab from "@/components/recommandations-tab";
+import MandatTab from "@/components/mandat-tab";
 
 export default function ProjectPage() {
   const params = useParams<{ id: string }>();
@@ -98,6 +99,10 @@ export default function ProjectPage() {
               <FileText className="w-3.5 h-3.5" />
               Infos Projet
             </TabsTrigger>
+            <TabsTrigger value="mandat" data-testid="tab-mandat" className="gap-1.5">
+              <ClipboardList className="w-3.5 h-3.5" />
+              Feuille de mandat
+            </TabsTrigger>
             <TabsTrigger value="dashboard" disabled={!tabsUnlocked} data-testid="tab-dashboard" className="gap-1.5">
               <LayoutDashboard className="w-3.5 h-3.5" />
               Tableau de bord
@@ -114,6 +119,10 @@ export default function ProjectPage() {
 
           <TabsContent value="upload">
             <UploadTab project={project} />
+          </TabsContent>
+
+          <TabsContent value="mandat">
+            <MandatTab project={project} />
           </TabsContent>
 
           <TabsContent value="dashboard">
