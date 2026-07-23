@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
+import mabSignaturePath from "@assets/Capture_d’écran_2026-07-23_111628_1784820061660.png";
 
 interface MandatFormData {
   mandatType: "schl" | "analyse" | "combined" | "";
@@ -85,6 +86,8 @@ const PROGRAMMES_OPTIONS = [
   { id: "ecoperformance", label: "ÉcoPerformance" },
 ];
 
+const MANDANT_NAME = "Conseils Immobilier MAB";
+
 const MANDATAIRE_SUGGESTIONS = ["BN Énergie", "Autre ingénieur"];
 
 /** Convertit une valeur de date (ISO ou texte français) en format ISO yyyy-mm-dd pour l'input. */
@@ -114,7 +117,6 @@ export default function MandatDetailPage() {
   });
 
   const [name, setName] = useState("");
-  const [clientName, setClientName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
@@ -127,7 +129,6 @@ export default function MandatDetailPage() {
 
   if (mandat && !initialized) {
     setName(mandat.name ?? "");
-    setClientName(mandat.clientName ?? "");
     setAddress(mandat.address ?? "");
     setCity(mandat.city ?? "");
     setProvince(mandat.province ?? "");
@@ -152,7 +153,7 @@ export default function MandatDetailPage() {
     mutationFn: async () => {
       return apiRequest("PATCH", `/api/mandats/${params.id}`, {
         name,
-        clientName,
+        clientName: MANDANT_NAME,
         address,
         city,
         province,
@@ -233,7 +234,7 @@ export default function MandatDetailPage() {
             </div>
             <div>
               <h1 className="font-semibold leading-tight">{name || "Feuille de mandat"}</h1>
-              {clientName && <p className="text-xs text-muted-foreground">{clientName}</p>}
+              <p className="text-xs text-muted-foreground">{MANDANT_NAME}</p>
             </div>
           </div>
         </div>
@@ -258,10 +259,10 @@ export default function MandatDetailPage() {
                 </div>
                 <div>
                   <Label className="text-xs mb-1 block">Client (mandant)</Label>
-                  <Input value={clientName} onChange={e => setClientName(e.target.value)} placeholder="Nom du client" data-testid="input-client-name" />
+                  <Input value={MANDANT_NAME} readOnly disabled className="bg-muted" data-testid="input-client-name" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">Mandataire</Label>
+                  <Label className="text-xs mb-1 block">Mandataire (sous-traitant qui reçoit le mandat)</Label>
                   <Input value={mandataire} onChange={e => setMandataire(e.target.value)} placeholder="BN Énergie" list="mandataire-suggestions" data-testid="input-mandataire" />
                   <datalist id="mandataire-suggestions">
                     {MANDATAIRE_SUGGESTIONS.map(s => <option key={s} value={s} />)}
@@ -438,7 +439,7 @@ export default function MandatDetailPage() {
                   </div>
                   <div>
                     <span className="font-semibold text-[#1e3a5f]">Client (mandant) : </span>
-                    <span>{clientName || "—"}</span>
+                    <span>{MANDANT_NAME}</span>
                   </div>
                   {cityLine && (
                     <div className="col-span-2">
@@ -535,9 +536,11 @@ export default function MandatDetailPage() {
                   <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-4 pb-1 border-b border-[#1e3a5f]/20">Signatures</h2>
                   <div className="grid grid-cols-2 gap-8">
                     <div>
-                      <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{clientName || "Mandant"}</p>
+                      <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{MANDANT_NAME}</p>
                       <p className="text-[10px] text-muted-foreground mb-1">(Mandant)</p>
-                      <div className="h-14 border-b border-gray-400 mb-1" />
+                      <div className="h-14 border-b border-gray-400 mb-1 flex items-end justify-center">
+                        <img src={mabSignaturePath} alt="Signature" className="h-14 object-contain" data-testid="img-signature-mandant" />
+                      </div>
                       <p className="text-xs text-muted-foreground">Signature &amp; date</p>
                     </div>
                   </div>
