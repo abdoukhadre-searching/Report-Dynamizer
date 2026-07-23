@@ -33,6 +33,7 @@ export default function OffrePrintPage() {
     date: od.date ?? "",
     de: od.de ?? "",
     consultant: od.consultant ?? "",
+    consultantTitre: od.consultantTitre ?? "",
     adresseConsultant: od.adresseConsultant ?? "",
     mandatIntro: od.mandatIntro ?? "",
     services: od.services ?? "",

@@ -20,6 +20,7 @@ interface OffreFormData {
   date: string;
   de: string;
   consultant: string;
+  consultantTitre: string;
   adresseConsultant: string;
   mandatIntro: string;
   services: string;
@@ -36,7 +37,8 @@ interface OffreFormData {
 const defaultForm: OffreFormData = {
   date: "",
   de: "9433-6450 Québec Inc.",
-  consultant: "Marc-André Boucher, évaluateur en efficacité énergétique accrédité",
+  consultant: "Marc-André Boucher",
+  consultantTitre: "évaluateur en efficacité énergétique accrédité",
   adresseConsultant: "133 rue Messier, bureau 200, Mont St-Hilaire (Québec) J3H 2W8",
   mandatIntro:
     "Le consultant, {CONSULTANT}, s'engage à élaborer des stratégies visant à accroître l'efficacité énergétique et de comparer différentes stratégies. Ceci permettra de comparer l'impact en coût d'opération, en coût d'implantation et d'établir les possibilités de subventions qui auront un impact directement sur les coûts d'implantations.\n\nLa présentation sera faite avec différents scénarios, les coûts individuels, les subventions individuelles et vous serez en mesure de choisir l'option qui vous conviendra le mieux en fonction de votre réalité. Le rôle du consultant n'est pas de prendre une décision à votre place mais bien de vous montrer l'impact des différents scénarios et de vous aviser des répercussions de ceux-ci. Nous serons aussi en mesure de démontrer l'impact des différents scénarios sur une valeur économique d'un bâtiment et par le fait même, sur un futur financement.",
@@ -112,6 +114,12 @@ export default function OffreDetailPage() {
         "Le consultant, Marc-André Boucher, expert en évaluation d'efficacité énergétique s'engage",
         "Le consultant, {CONSULTANT}, s'engage",
       );
+      // Migration : ancien champ consultant "Nom, titre" → nom + titre séparés
+      if (!loaded.consultantTitre && loaded.consultant.includes(",")) {
+        const idx = loaded.consultant.indexOf(",");
+        loaded.consultantTitre = loaded.consultant.slice(idx + 1).trim();
+        loaded.consultant = loaded.consultant.slice(0, idx).trim();
+      }
       setForm(loaded);
     } else {
       setForm(defaultForm);
@@ -261,8 +269,12 @@ export default function OffreDetailPage() {
                 </div>
                 <div className="col-span-2">
                   <Label className="text-xs mb-1 block">Consultant</Label>
-                  <Input value={form.consultant} onChange={e => setForm(prev => ({ ...prev, consultant: e.target.value }))} placeholder="Nom, titre (ex. Safa Mghribi, Ingénieure en efficacité énergétique)" data-testid="input-consultant" />
-                  <p className="text-[11px] text-muted-foreground mt-1">Le texte « Mandat et service » s'adapte automatiquement au consultant choisi.</p>
+                  <Input value={form.consultant} onChange={e => setForm(prev => ({ ...prev, consultant: e.target.value }))} placeholder="Ex. Safa Mghribi" data-testid="input-consultant" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Titre du consultant</Label>
+                  <Input value={form.consultantTitre} onChange={e => setForm(prev => ({ ...prev, consultantTitre: e.target.value }))} placeholder="Ex. Ingénieure en efficacité énergétique" data-testid="input-consultant-titre" />
+                  <p className="text-[11px] text-muted-foreground mt-1">Le texte « Mandat et service » s'adapte automatiquement au consultant et à son titre.</p>
                 </div>
                 <div className="col-span-2">
                   <Label className="text-xs mb-1 block">Adresse du consultant</Label>

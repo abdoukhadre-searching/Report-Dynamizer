@@ -8,6 +8,7 @@ export interface OffreDocumentData {
   date: string;
   de: string;
   consultant: string;
+  consultantTitre: string;
   adresseConsultant: string;
   mandatIntro: string;
   services: string;
@@ -28,6 +29,14 @@ function toIsoDate(value: string): string {
   return isNaN(d.getTime()) ? "" : d.toISOString().substring(0, 10);
 }
 
+function formatMontantAffiche(value: string): string {
+  const cleaned = value.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
+  const n = parseFloat(cleaned);
+  if (isNaN(n) || n <= 0) return value;
+  const formatted = Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return `${formatted}$ + taxes`;
+}
+
 export function formatDateFr(value: string): string {
   if (!value) return "";
   const iso = toIsoDate(value);
@@ -43,7 +52,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5 mb-3">
       <span className="w-1 h-4 rounded-full" style={{ backgroundColor: TEAL }} />
-      <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: NAVY }}>{children}</h2>
+      <h2 className="text-[14px] font-bold uppercase tracking-[0.12em]" style={{ color: NAVY }}>{children}</h2>
       <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
     </div>
   );
@@ -51,7 +60,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default function OffreDocument({ data }: { data: OffreDocumentData }) {
   const servicesLines = data.services.split("\n").map(l => l.trim()).filter(Boolean);
-  const mandatIntro = data.mandatIntro.split("{CONSULTANT}").join(data.consultant || "le consultant");
+  const fullConsultant = [data.consultant, data.consultantTitre].filter(Boolean).join(", ");
+  const mandatIntro = data.mandatIntro.split("{CONSULTANT}").join(fullConsultant || "le consultant");
 
   return (
     <div className="bg-white text-sm" style={{ fontFamily: "'Inter', sans-serif", color: "#1f2937" }}>
@@ -96,7 +106,7 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
           </div>
           <div className="col-span-2">
             <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Consultant</p>
-            <p className="font-medium">{data.consultant}</p>
+            <p className="font-medium">{fullConsultant}</p>
             <p className="text-[11px]" style={{ color: "#64748b" }}>{data.adresseConsultant}</p>
           </div>
         </div>
@@ -104,17 +114,17 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
 
       <div className="px-8 py-6 space-y-7">
         {/* Mandat et service — seule section de la page 1 */}
-        <div style={{ breakAfter: "page" }}>
+        <div style={{ breakAfter: "page", paddingTop: "16px" }}>
           <SectionTitle>Mandat et service</SectionTitle>
-          <p className="text-[13px] whitespace-pre-line leading-relaxed text-justify">{mandatIntro}</p>
+          <p className="text-[14px] whitespace-pre-line leading-relaxed text-justify">{mandatIntro}</p>
           {servicesLines.length > 0 && (
             <>
-              <p className="text-[13px] font-semibold mt-4" style={{ color: NAVY }}>
+              <p className="text-[14px] font-semibold mt-4" style={{ color: NAVY }}>
                 Le consultant vous offre les services suivants dans votre offre :
               </p>
               <ul className="space-y-1.5 mt-3">
                 {servicesLines.map((line, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-[13px]">
+                  <li key={i} className="flex items-start gap-2.5 text-[14px]">
                     <span className="mt-[7px] w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: TEAL }} />
                     <span className="leading-relaxed">{line}</span>
                   </li>
@@ -129,21 +139,19 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
           <SectionTitle>Rémunération</SectionTitle>
           {data.montant && (
             <div className="rounded-lg px-4 py-3 mb-3" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-              <p className="text-[13px] leading-relaxed">
-                En contrepartie du service, le client versera au consultant une somme de{" "}
-                <span className="text-base font-bold whitespace-nowrap" style={{ color: NAVY }}>{data.montant}</span>{" "}
-                selon le terme suivant :
+              <p className="text-[14px] leading-relaxed">
+                En contrepartie du service, le client versera au consultant une somme de {formatMontantAffiche(data.montant)} selon le terme suivant :
               </p>
             </div>
           )}
-          <p className="text-[13px] whitespace-pre-line leading-relaxed">{data.remunerationDetails}</p>
+          <p className="text-[14px] whitespace-pre-line leading-relaxed">{data.remunerationDetails}</p>
           {data.prendreNote && (
             <div className="mt-4 rounded-lg overflow-hidden" style={{ border: "1px solid #99f6e4" }}>
               <div className="px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white" style={{ backgroundColor: TEAL }}>
                 Prendre note
               </div>
               <div className="px-4 py-3" style={{ backgroundColor: "#f0fdfa" }}>
-                <p className="text-[13px] whitespace-pre-line leading-relaxed">{data.prendreNote}</p>
+                <p className="text-[14px] whitespace-pre-line leading-relaxed">{data.prendreNote}</p>
               </div>
             </div>
           )}
@@ -152,8 +160,8 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
         {/* Début du contrat */}
         <div>
           <SectionTitle>Début du contrat</SectionTitle>
-          <p className="text-[13px] whitespace-pre-line leading-relaxed">{data.debutContrat}</p>
-          <p className="text-[13px] mt-3">
+          <p className="text-[14px] whitespace-pre-line leading-relaxed">{data.debutContrat}</p>
+          <p className="text-[14px] mt-3">
             <span className="font-semibold" style={{ color: NAVY }}>Courriel :</span> {data.courriel}
             <span className="mx-2" style={{ color: "#cbd5e1" }}>|</span>
             <span className="font-semibold" style={{ color: NAVY }}>Téléphone :</span> {data.telephone}
@@ -165,7 +173,7 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
           <SectionTitle>Signature</SectionTitle>
           <div className="max-w-sm mt-2">
             <div className="h-14 border-b mb-1.5" style={{ borderColor: "#94a3b8" }} />
-            <p className="text-[13px] font-semibold" style={{ color: NAVY }}>{data.signataireClient || data.clientName || "Client"}</p>
+            <p className="text-[14px] font-semibold" style={{ color: NAVY }}>{data.signataireClient || data.clientName || "Client"}</p>
             {data.titreSignataireClient && <p className="text-xs" style={{ color: "#64748b" }}>{data.titreSignataireClient}</p>}
             <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Signature &amp; date</p>
           </div>
