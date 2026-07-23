@@ -1,0 +1,521 @@
+{
+  "id": "3b2209ab-bdc1-4f1b-a963-b220194d4e65",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.audit_logs": {
+      "name": "audit_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_name": {
+          "name": "user_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "project_name": {
+          "name": "project_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "details": {
+          "name": "details",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mandats": {
+      "name": "mandats",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Nouveau mandat'"
+        },
+        "client_name": {
+          "name": "client_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "province": {
+          "name": "province",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "postal_code": {
+          "name": "postal_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "num_units": {
+          "name": "num_units",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evaluator": {
+          "name": "evaluator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mandataire": {
+          "name": "mandataire",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mandat_data": {
+          "name": "mandat_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.projects": {
+      "name": "projects",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "province": {
+          "name": "province",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "postal_code": {
+          "name": "postal_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year_built": {
+          "name": "year_built",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "num_floors": {
+          "name": "num_floors",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "num_units": {
+          "name": "num_units",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_name": {
+          "name": "client_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evaluator": {
+          "name": "evaluator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evaluation_date": {
+          "name": "evaluation_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "building_type": {
+          "name": "building_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'existing'"
+        },
+        "programme_type": {
+          "name": "programme_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'optimisation'"
+        },
+        "thermopompe_model": {
+          "name": "thermopompe_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'tcl'"
+        },
+        "custom_measures": {
+          "name": "custom_measures",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "pre_report_raw": {
+          "name": "pre_report_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_report_raw": {
+          "name": "post_report_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pre_report_data": {
+          "name": "pre_report_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_report_data": {
+          "name": "post_report_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comparison_data": {
+          "name": "comparison_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "annex_climate_zone_image": {
+          "name": "annex_climate_zone_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "annex_thermopompes_image": {
+          "name": "annex_thermopompes_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "annex_robineterie_image": {
+          "name": "annex_robineterie_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "annex_led_lighting_image": {
+          "name": "annex_led_lighting_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "annex_vrc_image": {
+          "name": "annex_vrc_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "annex_chauffe_eau_thermopompe_image": {
+          "name": "annex_chauffe_eau_thermopompe_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signatory_name": {
+          "name": "signatory_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signatory_title": {
+          "name": "signatory_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signatory_coordonnees": {
+          "name": "signatory_coordonnees",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_commercial_units": {
+          "name": "has_commercial_units",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commercial_units": {
+          "name": "commercial_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "basement_insulation_type": {
+          "name": "basement_insulation_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "basement_insulation_inches": {
+          "name": "basement_insulation_inches",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "basement_insulation_r_value": {
+          "name": "basement_insulation_r_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nb_chauffe_eau_thermo": {
+          "name": "nb_chauffe_eau_thermo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logisvert_subvention_pdf": {
+          "name": "logisvert_subvention_pdf",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subvention_thermo_manual": {
+          "name": "subvention_thermo_manual",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logisvert_admissible": {
+          "name": "logisvert_admissible",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mandat_data": {
+          "name": "mandat_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

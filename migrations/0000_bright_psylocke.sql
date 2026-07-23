@@ -1,0 +1,83 @@
+CREATE TABLE "audit_logs" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" varchar,
+	"user_email" text,
+	"user_name" text,
+	"action" text NOT NULL,
+	"project_id" varchar,
+	"project_name" text,
+	"details" text,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "mandats" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" varchar,
+	"name" text DEFAULT 'Nouveau mandat' NOT NULL,
+	"client_name" text,
+	"address" text,
+	"city" text,
+	"province" text,
+	"postal_code" text,
+	"num_units" text,
+	"evaluator" text,
+	"mandataire" text,
+	"mandat_data" jsonb,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "projects" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" varchar,
+	"name" text NOT NULL,
+	"address" text,
+	"city" text,
+	"province" text,
+	"postal_code" text,
+	"year_built" text,
+	"num_floors" text,
+	"num_units" text,
+	"client_name" text,
+	"evaluator" text,
+	"evaluation_date" text,
+	"building_type" text DEFAULT 'existing' NOT NULL,
+	"programme_type" text DEFAULT 'optimisation' NOT NULL,
+	"thermopompe_model" text DEFAULT 'tcl' NOT NULL,
+	"custom_measures" jsonb DEFAULT '[]'::jsonb,
+	"status" text DEFAULT 'draft' NOT NULL,
+	"pre_report_raw" text,
+	"post_report_raw" text,
+	"pre_report_data" jsonb,
+	"post_report_data" jsonb,
+	"comparison_data" jsonb,
+	"annex_climate_zone_image" text,
+	"annex_thermopompes_image" text,
+	"annex_robineterie_image" text,
+	"annex_led_lighting_image" text,
+	"annex_vrc_image" text,
+	"annex_chauffe_eau_thermopompe_image" text,
+	"signatory_name" text,
+	"signatory_title" text,
+	"signatory_coordonnees" text,
+	"has_commercial_units" boolean,
+	"commercial_units" integer DEFAULT 0,
+	"basement_insulation_type" text,
+	"basement_insulation_inches" text,
+	"basement_insulation_r_value" text,
+	"nb_chauffe_eau_thermo" integer,
+	"logisvert_subvention_pdf" text,
+	"subvention_thermo_manual" text,
+	"logisvert_admissible" boolean,
+	"mandat_data" jsonb,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "users" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"email" text NOT NULL,
+	"name" text NOT NULL,
+	"password_hash" text NOT NULL,
+	"role" text DEFAULT 'user' NOT NULL,
+	"created_at" timestamp DEFAULT now(),
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
