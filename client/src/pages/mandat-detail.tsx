@@ -258,11 +258,11 @@ export default function MandatDetailPage() {
                   <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex. : 123 rue des Érables" data-testid="input-mandat-name" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">Client (mandant)</Label>
+                  <Label className="text-xs mb-1 block">Donné par</Label>
                   <Input value={MANDANT_NAME} readOnly disabled className="bg-muted" data-testid="input-client-name" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">Mandataire (sous-traitant qui reçoit le mandat)</Label>
+                  <Label className="text-xs mb-1 block">Confié à (sous-traitant)</Label>
                   <Input value={mandataire} onChange={e => setMandataire(e.target.value)} placeholder="BN Énergie" list="mandataire-suggestions" data-testid="input-mandataire" />
                   <datalist id="mandataire-suggestions">
                     {MANDATAIRE_SUGGESTIONS.map(s => <option key={s} value={s} />)}
@@ -438,7 +438,7 @@ export default function MandatDetailPage() {
                     <span>{name || "—"}</span>
                   </div>
                   <div>
-                    <span className="font-semibold text-[#1e3a5f]">Client (mandant) : </span>
+                    <span className="font-semibold text-[#1e3a5f]">Donné par : </span>
                     <span>{MANDANT_NAME}</span>
                   </div>
                   {cityLine && (
@@ -460,7 +460,7 @@ export default function MandatDetailPage() {
                     </div>
                   )}
                   <div>
-                    <span className="font-semibold text-[#1e3a5f]">Mandataire : </span>
+                    <span className="font-semibold text-[#1e3a5f]">Confié à : </span>
                     <span>{mandataire || "—"}</span>
                   </div>
                   {form.dateLivraison && (
@@ -537,7 +537,7 @@ export default function MandatDetailPage() {
                   <div className="grid grid-cols-2 gap-8">
                     <div>
                       <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{MANDANT_NAME}</p>
-                      <p className="text-[10px] text-muted-foreground mb-1">(Mandant)</p>
+                      <p className="text-[10px] text-muted-foreground mb-1">(Donneur du mandat)</p>
                       <div className="h-14 border-b border-gray-400 mb-1 flex items-end justify-center">
                         <img src={mabSignaturePath} alt="Signature" className="h-14 object-contain" data-testid="img-signature-mandant" />
                       </div>
