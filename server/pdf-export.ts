@@ -1,6 +1,7 @@
 import puppeteer, { Browser } from "puppeteer";
 import * as fs from "fs";
 import * as path from "path";
+import { execSync } from "child_process";
 
 const SYSTEM_CHROMIUM_CANDIDATES = [
   "/nix/store/0n9rl5l9syy808xi9bk4f6dhnfrvhkww-playwright-browsers-chromium/chromium-1080/chrome-linux/chrome",
@@ -40,7 +41,6 @@ function findChromiumExecutable(): string | undefined {
   }
 
   try {
-    const { execSync } = require("child_process");
     const whichChromium = execSync("which chromium 2>/dev/null", { encoding: "utf8" }).trim();
     if (whichChromium) { fs.accessSync(whichChromium, fs.constants.X_OK); return whichChromium; }
   } catch {}
@@ -69,7 +69,6 @@ function findChromiumExecutable(): string | undefined {
   const localChrome = (() => {
     try {
       const cacheDir = path.join(process.cwd(), ".chrome-cache");
-      const { execSync } = require("child_process");
       const result = execSync(`find "${cacheDir}" -name "chrome-headless-shell" -type f 2>/dev/null | head -1`, { encoding: "utf8" }).trim();
       if (result && fs.existsSync(result)) return result;
     } catch {}

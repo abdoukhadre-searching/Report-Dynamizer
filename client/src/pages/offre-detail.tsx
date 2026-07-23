@@ -8,13 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
-  ArrowLeft, Save, Printer, FileSignature, CheckCircle2, Building2, DollarSign, FileText,
+  ArrowLeft, Save, FileDown, FileSignature, CheckCircle2, Building2, DollarSign, FileText, ChevronDown, Pencil,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
+import OffreDocument, { type OffreDocumentData } from "@/components/offre-document";
 
 interface OffreFormData {
   date: string;
@@ -25,6 +25,7 @@ interface OffreFormData {
   services: string;
   montant: string;
   remunerationDetails: string;
+  prendreNote: string;
   debutContrat: string;
   courriel: string;
   telephone: string;
@@ -44,6 +45,8 @@ const defaultForm: OffreFormData = {
   montant: "",
   remunerationDetails:
     "1- Dépôt de 50% du montant total de l'offre de service à verser à la réception de la facture\n2- Paiement du 2e versement 30 jours après la signature de l'offre de service. Une 2e facture vous sera envoyée à cette date.\n3- Vous recevrez ensuite votre rapport final dans les 24/72h suivant le paiement final.",
+  prendreNote:
+    "Du montant total, vous pourriez obtenir une subvention d'Énergir de 50%. Sur le montant restant, vous pourriez obtenir une subvention de 40% d'Hydro-Québec au début des travaux et une autre de 60% à la fin des travaux. Donc le coût pour vos évaluations énergétiques pourrait vous revenir à 0$.",
   debutContrat:
     "Le consultant en évaluation d'efficacité énergétique s'engage à débuter le travail dès la réception du paiement. Aucuns travaux ne seront entamés avant.\n\nNotez que toutes les stratégies doivent être validées avec tous les professionnels et nous n'assumons aucune responsabilité de ceux-ci.\n\nPour toute communication, veuillez svp écrire l'adresse du projet en objet.",
   courriel: "admin@conseilsmab.com",
@@ -57,14 +60,6 @@ function toIsoDate(value: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const d = new Date(value);
   return isNaN(d.getTime()) ? "" : d.toISOString().substring(0, 10);
-}
-
-function formatDateFr(value: string): string {
-  if (!value) return "";
-  const iso = toIsoDate(value);
-  if (!iso) return value;
-  const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" });
 }
 
 export default function OffreDetailPage() {
@@ -83,6 +78,8 @@ export default function OffreDetailPage() {
   const [form, setForm] = useState<OffreFormData>(defaultForm);
   const [initializedId, setInitializedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [numeroError, setNumeroError] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   if (offre && initializedId !== offre.id) {
     setName(offre.name ?? "");
@@ -113,7 +110,45 @@ export default function OffreDetailPage() {
     onError: () => toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" }),
   });
 
-  const servicesLines = form.services.split("\n").map(l => l.trim()).filter(Boolean);
+  function validateNumero(): boolean {
+    if (!numero.trim()) {
+      setNumeroError(true);
+      toast({ title: "Numéro requis", description: "Veuillez entrer le numéro de l'offre (ex. P00363).", variant: "destructive" });
+      return false;
+    }
+    setNumeroError(false);
+    return true;
+  }
+
+  function handleSave() {
+    if (!validateNumero()) return;
+    saveMutation.mutate();
+  }
+
+  async function handleExportPdf() {
+    if (!validateNumero()) return;
+    setExporting(true);
+    try {
+      await saveMutation.mutateAsync();
+      const res = await fetch(`/api/offres/${params.id}/export-pdf`, { credentials: "include" });
+      if (!res.ok) throw new Error("export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Offre de service ${numero || ""}.pdf`.trim() + "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: "Erreur lors de l'export PDF", variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const documentData: OffreDocumentData = { name, numero, clientName, address, ...form };
 
   if (isLoading) {
     return (
@@ -137,16 +172,7 @@ export default function OffreDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          #offre-printable, #offre-printable * { visibility: visible !important; }
-          #offre-printable { position: absolute; left: 0; top: 0; width: 100%; padding: 15mm 18mm; background: white; overflow: visible; border: none !important; box-shadow: none !important; }
-          .no-print { display: none !important; }
-        }
-      `}</style>
-
-      <header className="border-b bg-card no-print">
+      <header className="border-b bg-card">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/offres")} data-testid="button-back">
             <ArrowLeft className="w-4 h-4" />
@@ -166,7 +192,7 @@ export default function OffreDetailPage() {
       <main className="max-w-6xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* ── Left: form ─────────────────────── */}
-          <div className="space-y-4 no-print">
+          <div className="space-y-4">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -176,12 +202,19 @@ export default function OffreDetailPage() {
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs mb-1 block">Nom / titre de l'offre</Label>
-                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex. : 2900 Côte-de-Liesse" data-testid="input-offre-name" />
+                  <Label className="text-xs mb-1 block">Numéro de l'offre <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={numero}
+                    onChange={e => { setNumero(e.target.value); if (e.target.value.trim()) setNumeroError(false); }}
+                    placeholder="P00363"
+                    className={numeroError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    data-testid="input-numero"
+                  />
+                  {numeroError && <p className="text-[11px] text-red-500 mt-1">Le numéro est obligatoire.</p>}
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">Numéro (ex. P00363)</Label>
-                  <Input value={numero} onChange={e => setNumero(e.target.value)} placeholder="P00000" data-testid="input-numero" />
+                  <Label className="text-xs mb-1 block">Nom / titre de l'offre</Label>
+                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex. : 2900 Côte-de-Liesse" data-testid="input-offre-name" />
                 </div>
                 <div>
                   <Label className="text-xs mb-1 block">À l'attention de (client)</Label>
@@ -222,25 +255,38 @@ export default function OffreDetailPage() {
                   Mandat et service
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <Label className="text-xs mb-1 block">Texte d'introduction</Label>
-                  <Textarea
-                    className="min-h-[140px] text-sm"
-                    value={form.mandatIntro}
-                    onChange={e => setForm(prev => ({ ...prev, mandatIntro: e.target.value }))}
-                    data-testid="textarea-mandat-intro"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs mb-1 block">Services offerts (un par ligne)</Label>
-                  <Textarea
-                    className="min-h-[120px] text-sm"
-                    value={form.services}
-                    onChange={e => setForm(prev => ({ ...prev, services: e.target.value }))}
-                    data-testid="textarea-services"
-                  />
-                </div>
+              <CardContent>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Le texte standard est utilisé automatiquement. Ouvrez ci-dessous seulement si vous voulez le modifier.
+                </p>
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 w-full justify-between" data-testid="button-toggle-mandat-text">
+                      <span className="flex items-center gap-2"><Pencil className="w-3.5 h-3.5" /> Modifier le texte et les services</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-3 pt-3">
+                    <div>
+                      <Label className="text-xs mb-1 block">Texte d'introduction</Label>
+                      <Textarea
+                        className="min-h-[140px] text-sm"
+                        value={form.mandatIntro}
+                        onChange={e => setForm(prev => ({ ...prev, mandatIntro: e.target.value }))}
+                        data-testid="textarea-mandat-intro"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs mb-1 block">Services offerts (un par ligne)</Label>
+                      <Textarea
+                        className="min-h-[120px] text-sm"
+                        value={form.services}
+                        onChange={e => setForm(prev => ({ ...prev, services: e.target.value }))}
+                        data-testid="textarea-services"
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </CardContent>
             </Card>
 
@@ -257,12 +303,21 @@ export default function OffreDetailPage() {
                   <Input value={form.montant} onChange={e => setForm(prev => ({ ...prev, montant: e.target.value }))} placeholder="0$ + taxes" data-testid="input-montant" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">Modalités de paiement / subventions</Label>
+                  <Label className="text-xs mb-1 block">Modalités de paiement</Label>
                   <Textarea
-                    className="min-h-[120px] text-sm"
+                    className="min-h-[100px] text-sm"
                     value={form.remunerationDetails}
                     onChange={e => setForm(prev => ({ ...prev, remunerationDetails: e.target.value }))}
                     data-testid="textarea-remuneration"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">« Prendre note » (subventions possibles)</Label>
+                  <Textarea
+                    className="min-h-[100px] text-sm"
+                    value={form.prendreNote}
+                    onChange={e => setForm(prev => ({ ...prev, prendreNote: e.target.value }))}
+                    data-testid="textarea-prendre-note"
                   />
                 </div>
               </CardContent>
@@ -273,15 +328,22 @@ export default function OffreDetailPage() {
                 <CardTitle className="text-base">Début du contrat &amp; signature</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div>
-                  <Label className="text-xs mb-1 block">Texte « Début du contrat »</Label>
-                  <Textarea
-                    className="min-h-[100px] text-sm"
-                    value={form.debutContrat}
-                    onChange={e => setForm(prev => ({ ...prev, debutContrat: e.target.value }))}
-                    data-testid="textarea-debut-contrat"
-                  />
-                </div>
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 w-full justify-between" data-testid="button-toggle-debut-text">
+                      <span className="flex items-center gap-2"><Pencil className="w-3.5 h-3.5" /> Modifier le texte « Début du contrat »</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-3">
+                    <Textarea
+                      className="min-h-[100px] text-sm"
+                      value={form.debutContrat}
+                      onChange={e => setForm(prev => ({ ...prev, debutContrat: e.target.value }))}
+                      data-testid="textarea-debut-contrat"
+                    />
+                  </CollapsibleContent>
+                </Collapsible>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs mb-1 block">Courriel</Label>
@@ -304,117 +366,21 @@ export default function OffreDetailPage() {
             </Card>
 
             <div className="flex gap-3">
-              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} data-testid="button-save-offre" className="gap-2" style={{ backgroundColor: "#0f766e" }}>
+              <Button onClick={handleSave} disabled={saveMutation.isPending} data-testid="button-save-offre" className="gap-2" style={{ backgroundColor: "#0f766e" }}>
                 {saveMutation.isPending ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                 {saved ? "Sauvegardé" : "Sauvegarder"}
               </Button>
-              <Button variant="outline" onClick={() => window.print()} className="gap-2" data-testid="button-print-offre">
-                <Printer className="w-4 h-4" />
-                Imprimer / PDF
+              <Button variant="outline" onClick={handleExportPdf} disabled={exporting} className="gap-2" data-testid="button-export-pdf">
+                {exporting ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <FileDown className="w-4 h-4" />}
+                {exporting ? "Génération…" : "Télécharger le PDF"}
               </Button>
             </div>
           </div>
 
           {/* ── Right: document preview ─────────── */}
           <div>
-            <div
-              id="offre-printable"
-              className="bg-white border rounded-lg shadow-sm overflow-hidden text-sm"
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
-              {/* Header */}
-              <div className="px-8 pt-6 pb-4 border-b border-[#1e3a5f]/30">
-                <div className="flex items-start justify-between gap-4">
-                  <img src={mabLogoPath} alt="MAB Conseils" className="h-16 object-contain" />
-                  <div className="text-right">
-                    {numero && <p className="text-xs font-semibold text-muted-foreground">{numero}</p>}
-                    <h1 className="text-lg font-bold tracking-wide" style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}>
-                      OFFRE DE SERVICE
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-0.5">Consultation en efficacité énergétique</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Info block */}
-              <div className="px-8 py-4 bg-slate-50 border-b">
-                <div className="space-y-1 text-xs">
-                  <div><span className="font-semibold text-[#1e3a5f]">À l'attention de : </span><span>{clientName || "—"}</span></div>
-                  <div><span className="font-semibold text-[#1e3a5f]">Adresse du projet : </span><span>{address || "—"}</span></div>
-                  <div><span className="font-semibold text-[#1e3a5f]">Date : </span><span>{formatDateFr(form.date) || "—"}</span></div>
-                  <div><span className="font-semibold text-[#1e3a5f]">De : </span><span>{form.de}</span></div>
-                  <div><span className="font-semibold text-[#1e3a5f]">Consultant : </span><span>{form.consultant}</span></div>
-                  <div><span className="font-semibold text-[#1e3a5f]">Adresse : </span><span>{form.adresseConsultant}</span></div>
-                </div>
-              </div>
-
-              <div className="px-8 py-5 space-y-5">
-                {/* Mandat et service */}
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Mandat et service</h2>
-                  <p className="text-sm whitespace-pre-line">{form.mandatIntro}</p>
-                  {servicesLines.length > 0 && (
-                    <>
-                      <p className="text-sm mt-3 mb-1.5">Le consultant vous offre les services suivants dans votre offre :</p>
-                      <ul className="space-y-1">
-                        {servicesLines.map((line, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm">
-                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#1e3a5f] shrink-0" />
-                            <span>{line}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Rémunération */}
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Rémunération</h2>
-                  {form.montant && (
-                    <p className="text-sm mb-2">
-                      En contrepartie du service, le client versera au consultant une somme de{" "}
-                      <span className="font-bold text-[#1e3a5f]">{form.montant}</span> selon les termes suivants :
-                    </p>
-                  )}
-                  <p className="text-sm whitespace-pre-line">{form.remunerationDetails}</p>
-                </div>
-
-                <Separator />
-
-                {/* Début du contrat */}
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Début du contrat</h2>
-                  <p className="text-sm whitespace-pre-line">{form.debutContrat}</p>
-                  <p className="text-sm mt-2">
-                    <span className="font-semibold">Courriel :</span> {form.courriel} / <span className="font-semibold">Téléphone :</span> {form.telephone}
-                  </p>
-                </div>
-
-                <Separator />
-
-                {/* Signature */}
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-4 pb-1 border-b border-[#1e3a5f]/20">Signature</h2>
-                  <div className="max-w-sm">
-                    {form.titreSignataireClient && <p className="text-xs text-muted-foreground mb-0.5">{form.titreSignataireClient}</p>}
-                    <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{form.signataireClient || clientName || "Client"}</p>
-                    <div className="h-14 border-b border-gray-400 mb-1" />
-                    <p className="text-xs text-muted-foreground">Signature &amp; date</p>
-                  </div>
-                </div>
-
-                <div className="text-center pt-3">
-                  <p className="text-sm font-semibold" style={{ color: "#1e3a5f" }}>Nous vous remercions pour votre confiance !</p>
-                  <p className="text-xs text-muted-foreground mt-1">L'équipe de MAB Conseils</p>
-                </div>
-
-                <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-gray-100">
-                  Offre de service MAB Conseils © {new Date().getFullYear()}
-                </p>
-              </div>
+            <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+              <OffreDocument data={documentData} />
             </div>
           </div>
         </div>

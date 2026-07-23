@@ -1250,14 +1250,38 @@ export async function registerRoutes(
   app.get("/api/offres/:id", async (req: Request, res) => {
     try {
       const userId = req.session.userId;
+      const isAdmin = req.session.userRole === "admin";
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const o = await storage.getOffre(id);
+      if (!o) return res.status(404).json({ message: "Non trouvé" });
+      // Accès sans session autorisé uniquement pour le rendu PDF interne (localhost)
+      const isInternal = req.ip === "127.0.0.1" || req.ip === "::1" || req.ip === "::ffff:127.0.0.1";
+      if (!userId && !isInternal) return res.status(401).json({ message: "Non authentifié" });
+      if (userId && !isAdmin && o.userId !== userId) return res.status(403).json({ message: "Interdit" });
+      res.json(o);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/offres/:id/export-pdf", async (req: Request, res) => {
+    try {
+      const userId = req.session.userId;
       if (!userId) return res.status(401).json({ message: "Non authentifié" });
       const isAdmin = req.session.userRole === "admin";
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const o = await storage.getOffre(id);
       if (!o) return res.status(404).json({ message: "Non trouvé" });
       if (!isAdmin && o.userId !== userId) return res.status(403).json({ message: "Interdit" });
-      res.json(o);
-    } catch (e: any) { res.status(500).json({ message: e.message }); }
+      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const reportUrl = `${internalOrigin}/offres/${id}/print`;
+      const pdfBuffer = await renderProjectPdf(reportUrl, "#offre-print-content");
+      const baseName = sanitizeFileName(`Offre de service ${o.numero || o.name || id}`) || `offre-${id}`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${baseName}.pdf"`);
+      return res.send(pdfBuffer);
+    } catch (e: any) {
+      console.error("Error exporting offre PDF:", e);
+      res.status(500).json({ message: e.message || "Failed to export PDF" });
+    }
   });
 
   app.patch("/api/offres/:id", async (req: Request, res) => {

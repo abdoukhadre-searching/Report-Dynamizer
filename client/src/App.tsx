@@ -10,6 +10,7 @@ import MandatsListPage from "@/pages/mandats-list";
 import MandatDetailPage from "@/pages/mandat-detail";
 import OffresListPage from "@/pages/offres-list";
 import OffreDetailPage from "@/pages/offre-detail";
+import OffrePrintPage from "@/pages/offre-print";
 import RapportsPage from "@/pages/rapports";
 import ProjectsListPage from "@/pages/projects-list";
 import ProjectPage from "@/pages/project";
@@ -76,6 +77,7 @@ function Router() {
       <Route path="/mandats">
         {() => <ProtectedRoute component={MandatsListPage} />}
       </Route>
+      <Route path="/offres/:id/print" component={OffrePrintPage} />
       <Route path="/offres">
         {() => <ProtectedRoute component={OffresListPage} />}
       </Route>
