@@ -1,4 +1,3 @@
-import { Separator } from "@/components/ui/separator";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 
 export interface OffreDocumentData {
@@ -37,50 +36,86 @@ export function formatDateFr(value: string): string {
   return d.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" });
 }
 
+const NAVY = "#1e3a5f";
+const TEAL = "#0f766e";
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-3">
+      <span className="w-1 h-4 rounded-full" style={{ backgroundColor: TEAL }} />
+      <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: NAVY }}>{children}</h2>
+      <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
+    </div>
+  );
+}
+
 export default function OffreDocument({ data }: { data: OffreDocumentData }) {
   const servicesLines = data.services.split("\n").map(l => l.trim()).filter(Boolean);
 
   return (
-    <div className="bg-white text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* Header */}
-      <div className="px-8 pt-6 pb-4 border-b-2 border-[#1e3a5f]">
-        <div className="flex items-start justify-between gap-4">
-          <img src={mabLogoPath} alt="MAB Conseils" className="h-16 object-contain" />
+    <div className="bg-white text-sm" style={{ fontFamily: "'Inter', sans-serif", color: "#1f2937" }}>
+      {/* Header band */}
+      <div style={{ backgroundColor: NAVY }} className="px-8 py-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="bg-white rounded-lg px-3 py-2">
+            <img src={mabLogoPath} alt="MAB Conseils" className="h-12 object-contain" />
+          </div>
           <div className="text-right">
-            {data.numero && <p className="text-xs font-bold tracking-widest" style={{ color: "#0f766e" }}>{data.numero}</p>}
-            <h1 className="text-xl font-bold tracking-wide" style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}>
-              OFFRE DE SERVICE
+            {data.numero && (
+              <span className="inline-block text-[11px] font-bold tracking-widest text-white px-2.5 py-0.5 rounded-full mb-1.5" style={{ backgroundColor: TEAL }}>
+                {data.numero}
+              </span>
+            )}
+            <h1 className="text-2xl font-bold tracking-wide text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Offre de service
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Consultation en efficacité énergétique</p>
+            <p className="text-xs mt-1" style={{ color: "#b8c8dd" }}>Consultation en efficacité énergétique</p>
           </div>
         </div>
       </div>
 
       {/* Info block */}
-      <div className="px-8 py-4 bg-slate-50 border-b">
-        <div className="space-y-1 text-xs">
-          <div><span className="font-semibold text-[#1e3a5f]">À l'attention de : </span><span>{data.clientName || "—"}</span></div>
-          <div><span className="font-semibold text-[#1e3a5f]">Adresse du projet : </span><span>{data.address || "—"}</span></div>
-          <div><span className="font-semibold text-[#1e3a5f]">Date : </span><span>{formatDateFr(data.date) || "—"}</span></div>
-          <div><span className="font-semibold text-[#1e3a5f]">De : </span><span>{data.de}</span></div>
-          <div><span className="font-semibold text-[#1e3a5f]">Consultant : </span><span>{data.consultant}</span></div>
-          <div><span className="font-semibold text-[#1e3a5f]">Adresse : </span><span>{data.adresseConsultant}</span></div>
+      <div className="px-8 py-5 border-b" style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>À l'attention de</p>
+            <p className="font-semibold" style={{ color: NAVY }}>{data.clientName || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Date</p>
+            <p className="font-medium">{formatDateFr(data.date) || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Adresse du projet</p>
+            <p className="font-medium">{data.address || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>De</p>
+            <p className="font-medium">{data.de}</p>
+          </div>
+          <div className="col-span-2">
+            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Consultant</p>
+            <p className="font-medium">{data.consultant}</p>
+            <p className="text-[11px]" style={{ color: "#64748b" }}>{data.adresseConsultant}</p>
+          </div>
         </div>
       </div>
 
-      <div className="px-8 py-5 space-y-5">
+      <div className="px-8 py-6 space-y-7">
         {/* Mandat et service */}
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Mandat et service</h2>
-          <p className="text-sm whitespace-pre-line leading-relaxed">{data.mandatIntro}</p>
+          <SectionTitle>Mandat et service</SectionTitle>
+          <p className="text-[13px] whitespace-pre-line leading-relaxed text-justify">{data.mandatIntro}</p>
           {servicesLines.length > 0 && (
             <>
-              <p className="text-sm mt-3 mb-1.5">Le consultant vous offre les services suivants dans votre offre :</p>
-              <ul className="space-y-1">
+              <p className="text-[13px] font-semibold mt-4" style={{ color: NAVY }}>
+                Le consultant vous offre les services suivants dans votre offre :
+              </p>
+              <ul className="space-y-1.5 mt-3">
                 {servicesLines.map((line, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#1e3a5f] shrink-0" />
-                    <span>{line}</span>
+                  <li key={i} className="flex items-start gap-2.5 text-[13px]">
+                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: TEAL }} />
+                    <span className="leading-relaxed">{line}</span>
                   </li>
                 ))}
               </ul>
@@ -88,60 +123,60 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
           )}
         </div>
 
-        <Separator />
-
         {/* Rémunération */}
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Rémunération</h2>
+          <SectionTitle>Rémunération</SectionTitle>
           {data.montant && (
-            <p className="text-sm mb-2">
-              En contrepartie du service, le client versera au consultant une somme de{" "}
-              <span className="font-bold text-[#1e3a5f]">{data.montant}</span> selon les termes suivants :
-            </p>
+            <div className="rounded-lg px-4 py-3 mb-3 flex items-center justify-between" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+              <span className="text-[13px]">En contrepartie du service, le client versera au consultant :</span>
+              <span className="text-base font-bold ml-4 whitespace-nowrap" style={{ color: NAVY }}>{data.montant}</span>
+            </div>
           )}
-          <p className="text-sm whitespace-pre-line leading-relaxed">{data.remunerationDetails}</p>
+          <p className="text-[13px] whitespace-pre-line leading-relaxed">{data.remunerationDetails}</p>
           {data.prendreNote && (
-            <div className="mt-3 rounded-md border px-4 py-3" style={{ backgroundColor: "#f0fdfa", borderColor: "#99f6e4" }}>
-              <p className="text-sm whitespace-pre-line leading-relaxed">
-                <span className="font-bold" style={{ color: "#0f766e" }}>Prendre note : </span>
-                {data.prendreNote}
-              </p>
+            <div className="mt-4 rounded-lg overflow-hidden" style={{ border: "1px solid #99f6e4" }}>
+              <div className="px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white" style={{ backgroundColor: TEAL }}>
+                Prendre note
+              </div>
+              <div className="px-4 py-3" style={{ backgroundColor: "#f0fdfa" }}>
+                <p className="text-[13px] whitespace-pre-line leading-relaxed">{data.prendreNote}</p>
+              </div>
             </div>
           )}
         </div>
 
-        <Separator />
-
         {/* Début du contrat */}
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Début du contrat</h2>
-          <p className="text-sm whitespace-pre-line leading-relaxed">{data.debutContrat}</p>
-          <p className="text-sm mt-2">
-            <span className="font-semibold">Courriel :</span> {data.courriel} / <span className="font-semibold">Téléphone :</span> {data.telephone}
+          <SectionTitle>Début du contrat</SectionTitle>
+          <p className="text-[13px] whitespace-pre-line leading-relaxed">{data.debutContrat}</p>
+          <p className="text-[13px] mt-3">
+            <span className="font-semibold" style={{ color: NAVY }}>Courriel :</span> {data.courriel}
+            <span className="mx-2" style={{ color: "#cbd5e1" }}>|</span>
+            <span className="font-semibold" style={{ color: NAVY }}>Téléphone :</span> {data.telephone}
           </p>
         </div>
 
-        <Separator />
-
         {/* Signature */}
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-4 pb-1 border-b border-[#1e3a5f]/20">Signature</h2>
-          <div className="max-w-sm">
-            {data.titreSignataireClient && <p className="text-xs text-muted-foreground mb-0.5">{data.titreSignataireClient}</p>}
-            <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{data.signataireClient || data.clientName || "Client"}</p>
-            <div className="h-14 border-b border-gray-400 mb-1" />
-            <p className="text-xs text-muted-foreground">Signature &amp; date</p>
+          <SectionTitle>Signature</SectionTitle>
+          <div className="max-w-sm mt-2">
+            <div className="h-14 border-b mb-1.5" style={{ borderColor: "#94a3b8" }} />
+            <p className="text-[13px] font-semibold" style={{ color: NAVY }}>{data.signataireClient || data.clientName || "Client"}</p>
+            {data.titreSignataireClient && <p className="text-xs" style={{ color: "#64748b" }}>{data.titreSignataireClient}</p>}
+            <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Signature &amp; date</p>
           </div>
         </div>
 
-        <div className="text-center pt-3">
-          <p className="text-sm font-semibold" style={{ color: "#1e3a5f" }}>Nous vous remercions pour votre confiance !</p>
-          <p className="text-xs text-muted-foreground mt-1">L'équipe de MAB Conseils</p>
+        {/* Footer */}
+        <div className="text-center pt-4 pb-2 border-t" style={{ borderColor: "#e2e8f0" }}>
+          <p className="text-sm font-bold" style={{ color: NAVY, fontFamily: "'Playfair Display', serif" }}>
+            Nous vous remercions pour votre confiance !
+          </p>
+          <p className="text-xs mt-1" style={{ color: "#64748b" }}>L'équipe de MAB Conseils</p>
+          <p className="text-[10px] mt-3" style={{ color: "#94a3b8" }}>
+            Offre de service MAB Conseils © {new Date().getFullYear()}
+          </p>
         </div>
-
-        <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-gray-100">
-          Offre de service MAB Conseils © {new Date().getFullYear()}
-        </p>
       </div>
     </div>
   );

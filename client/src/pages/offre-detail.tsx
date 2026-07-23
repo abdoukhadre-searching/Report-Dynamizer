@@ -55,6 +55,25 @@ const defaultForm: OffreFormData = {
   titreSignataireClient: "",
 };
 
+function parseMontant(value: string): number | null {
+  const digits = value.replace(/[^\d.,]/g, "").replace(/\s/g, "");
+  if (!digits) return null;
+  const n = parseFloat(digits.replace(/\u00a0/g, "").replace(",", "."));
+  return isNaN(n) || n <= 0 ? null : n;
+}
+
+function formatMontant(n: number): string {
+  return n.toLocaleString("fr-CA", { maximumFractionDigits: 0 }).replace(/,/g, " ") + "$";
+}
+
+function buildPrendreNote(montant: string): string {
+  const total = parseMontant(montant);
+  if (!total) return defaultForm.prendreNote;
+  const energir = total * 0.5;
+  const restant = total - energir;
+  return `Du montant de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Énergir de 50% soit un montant de ${formatMontant(energir)}. Sur le montant de ${formatMontant(restant)} restant, vous pourriez obtenir une subvention de 40% d'Hydro-Québec (${formatMontant(restant * 0.4)}) au début des travaux et une autre de 60% (${formatMontant(restant * 0.6)}) à la fin des travaux. Donc le coût pour vos évaluations énergétiques pourrait vous revenir à 0$.`;
+}
+
 function toIsoDate(value: string): string {
   if (!value) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -96,8 +115,9 @@ export default function OffreDetailPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const autoName = clientName.trim() || address.trim() || numero.trim() || "Offre de service";
       return apiRequest("PATCH", `/api/offres/${params.id}`, {
-        name, numero, clientName, address, offreData: form,
+        name: autoName, numero, clientName, address, offreData: form,
       });
     },
     onSuccess: () => {
@@ -182,7 +202,7 @@ export default function OffreDetailPage() {
               <FileSignature className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="font-semibold leading-tight">{name || "Offre de service"}</h1>
+              <h1 className="font-semibold leading-tight">{clientName || name || "Offre de service"}</h1>
               <p className="text-xs text-muted-foreground">MAB Conseils</p>
             </div>
           </div>
@@ -211,10 +231,6 @@ export default function OffreDetailPage() {
                     data-testid="input-numero"
                   />
                   {numeroError && <p className="text-[11px] text-red-500 mt-1">Le numéro est obligatoire.</p>}
-                </div>
-                <div>
-                  <Label className="text-xs mb-1 block">Nom / titre de l'offre</Label>
-                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex. : 2900 Côte-de-Liesse" data-testid="input-offre-name" />
                 </div>
                 <div>
                   <Label className="text-xs mb-1 block">À l'attention de (client)</Label>
@@ -300,26 +316,47 @@ export default function OffreDetailPage() {
               <CardContent className="space-y-3">
                 <div>
                   <Label className="text-xs mb-1 block">Montant (ex. 39 000$ + taxes)</Label>
-                  <Input value={form.montant} onChange={e => setForm(prev => ({ ...prev, montant: e.target.value }))} placeholder="0$ + taxes" data-testid="input-montant" />
-                </div>
-                <div>
-                  <Label className="text-xs mb-1 block">Modalités de paiement</Label>
-                  <Textarea
-                    className="min-h-[100px] text-sm"
-                    value={form.remunerationDetails}
-                    onChange={e => setForm(prev => ({ ...prev, remunerationDetails: e.target.value }))}
-                    data-testid="textarea-remuneration"
+                  <Input
+                    value={form.montant}
+                    onChange={e => {
+                      const montant = e.target.value;
+                      setForm(prev => ({ ...prev, montant, prendreNote: buildPrendreNote(montant) }));
+                    }}
+                    placeholder="0$ + taxes"
+                    data-testid="input-montant"
                   />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Les montants des subventions dans « Prendre note » sont calculés automatiquement.
+                  </p>
                 </div>
-                <div>
-                  <Label className="text-xs mb-1 block">« Prendre note » (subventions possibles)</Label>
-                  <Textarea
-                    className="min-h-[100px] text-sm"
-                    value={form.prendreNote}
-                    onChange={e => setForm(prev => ({ ...prev, prendreNote: e.target.value }))}
-                    data-testid="textarea-prendre-note"
-                  />
-                </div>
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 w-full justify-between" data-testid="button-toggle-remuneration-text">
+                      <span className="flex items-center gap-2"><Pencil className="w-3.5 h-3.5" /> Modifier les modalités et « Prendre note »</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-3 pt-3">
+                    <div>
+                      <Label className="text-xs mb-1 block">Modalités de paiement</Label>
+                      <Textarea
+                        className="min-h-[100px] text-sm"
+                        value={form.remunerationDetails}
+                        onChange={e => setForm(prev => ({ ...prev, remunerationDetails: e.target.value }))}
+                        data-testid="textarea-remuneration"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs mb-1 block">« Prendre note » (subventions possibles)</Label>
+                      <Textarea
+                        className="min-h-[100px] text-sm"
+                        value={form.prendreNote}
+                        onChange={e => setForm(prev => ({ ...prev, prendreNote: e.target.value }))}
+                        data-testid="textarea-prendre-note"
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </CardContent>
             </Card>
 
