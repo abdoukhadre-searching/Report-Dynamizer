@@ -87,6 +87,23 @@ const PROGRAMMES_OPTIONS = [
 
 const MANDATAIRE_SUGGESTIONS = ["BN Énergie", "Autre ingénieur"];
 
+/** Convertit une valeur de date (ISO ou texte français) en format ISO yyyy-mm-dd pour l'input. */
+function toIsoDate(value: string): string {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? "" : d.toISOString().substring(0, 10);
+}
+
+/** Affiche une date (ISO ou texte) en format long français. */
+function formatDateFr(value: string): string {
+  if (!value) return "";
+  const iso = toIsoDate(value);
+  if (!iso) return value;
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" });
+}
+
 export default function MandatDetailPage() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
@@ -367,34 +384,12 @@ export default function MandatDetailPage() {
                   data-testid="textarea-commentaires"
                 />
                 <div>
-                  <Label className="text-xs mb-1 block">Date du mandat</Label>
-                  <Input
-                    type="date"
-                    className="w-44 text-sm"
-                    value={(() => {
-                      try { const d = new Date(form.dateMandat); if (!isNaN(d.getTime())) return d.toISOString().substring(0, 10); } catch {}
-                      return "";
-                    })()}
-                    onChange={e => {
-                      const d = new Date(e.target.value);
-                      if (!isNaN(d.getTime())) setForm(prev => ({ ...prev, dateMandat: d.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" }) }));
-                    }}
-                    data-testid="input-date-mandat"
-                  />
-                </div>
-                <div>
                   <Label className="text-xs mb-1 block">Date de livraison attendue</Label>
                   <Input
                     type="date"
                     className="w-44 text-sm"
-                    value={(() => {
-                      try { const d = new Date(form.dateLivraison); if (!isNaN(d.getTime())) return d.toISOString().substring(0, 10); } catch {}
-                      return "";
-                    })()}
-                    onChange={e => {
-                      const d = new Date(e.target.value);
-                      if (!isNaN(d.getTime())) setForm(prev => ({ ...prev, dateLivraison: d.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" }) }));
-                    }}
+                    value={toIsoDate(form.dateLivraison)}
+                    onChange={e => setForm(prev => ({ ...prev, dateLivraison: e.target.value }))}
                     data-testid="input-date-livraison"
                   />
                 </div>
@@ -467,14 +462,10 @@ export default function MandatDetailPage() {
                     <span className="font-semibold text-[#1e3a5f]">Mandataire : </span>
                     <span>{mandataire || "—"}</span>
                   </div>
-                  <div>
-                    <span className="font-semibold text-[#1e3a5f]">Date : </span>
-                    <span>{form.dateMandat || "—"}</span>
-                  </div>
                   {form.dateLivraison && (
                     <div>
                       <span className="font-semibold text-[#1e3a5f]">Livraison attendue : </span>
-                      <span>{form.dateLivraison}</span>
+                      <span>{formatDateFr(form.dateLivraison)}</span>
                     </div>
                   )}
                 </div>
@@ -551,6 +542,10 @@ export default function MandatDetailPage() {
                     </div>
                   </div>
                 </div>
+
+                <p className="text-xs text-right text-muted-foreground" data-testid="text-date-production">
+                  Fait le {new Date().toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
+                </p>
 
                 <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-gray-100">
                   Document confidentiel — MAB Conseil Immobilier © {new Date().getFullYear()}
