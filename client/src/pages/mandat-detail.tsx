@@ -37,8 +37,10 @@ interface MandatFormData {
     autre: boolean;
     autreTexte: string;
   };
+  mesuresTexte: string;
   commentaires: string;
   dateMandat: string;
+  dateLivraison: string;
 }
 
 const defaultForm: MandatFormData = {
@@ -58,8 +60,10 @@ const defaultForm: MandatFormData = {
     autre: false,
     autreTexte: "",
   },
+  mesuresTexte: "",
   commentaires: "",
   dateMandat: new Date().toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" }),
+  dateLivraison: "",
 };
 
 const MESURES_LABELS: Record<keyof Omit<MandatFormData["mesures"], "autreTexte">, string> = {
@@ -114,7 +118,15 @@ export default function MandatDetailPage() {
     setEvaluator(mandat.evaluator ?? "");
     setMandataire(mandat.mandataire ?? "");
     if (mandat.mandatData && typeof mandat.mandatData === "object") {
-      setForm({ ...defaultForm, ...(mandat.mandatData as MandatFormData) });
+      const loaded = { ...defaultForm, ...(mandat.mandatData as MandatFormData) };
+      // Migration : anciennes feuilles avec cases à cocher → texte libre
+      if (!loaded.mesuresTexte && loaded.mesures) {
+        const lines = (Object.keys(MESURES_LABELS) as Array<keyof typeof MESURES_LABELS>)
+          .filter(k => loaded.mesures[k])
+          .map(k => (k === "autre" && loaded.mesures.autreTexte ? loaded.mesures.autreTexte : MESURES_LABELS[k]));
+        if (lines.length > 0) loaded.mesuresTexte = lines.join("\n");
+      }
+      setForm(loaded);
     }
     setInitialized(true);
   }
@@ -143,9 +155,6 @@ export default function MandatDetailPage() {
     onError: () => toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" }),
   });
 
-  function updateMesure(key: keyof MandatFormData["mesures"], value: boolean | string) {
-    setForm(prev => ({ ...prev, mesures: { ...prev.mesures, [key]: value } }));
-  }
   function toggleProgramme(id: string) {
     setForm(prev => {
       const has = prev.programmes.includes(id);
@@ -155,7 +164,7 @@ export default function MandatDetailPage() {
 
   const showSchlObjectif = form.mandatType === "schl" || form.mandatType === "combined";
   const showProgrammes = form.mandatType === "analyse" || form.mandatType === "combined";
-  const selectedMesures = (Object.keys(MESURES_LABELS) as Array<keyof typeof MESURES_LABELS>).filter(k => form.mesures[k]);
+  const mesuresLines = form.mesuresTexte.split("\n").map(l => l.trim()).filter(Boolean);
   const mandatTypeLabel = {
     schl: "Simulation énergétique pour la SCHL",
     analyse: "Analyse énergétique pour programme(s)",
@@ -232,7 +241,7 @@ export default function MandatDetailPage() {
                 </div>
                 <div>
                   <Label className="text-xs mb-1 block">Client (mandant)</Label>
-                  <Input value={clientName} onChange={e => setClientName(e.target.value)} placeholder="MAB Conseil Immobilier" data-testid="input-client-name" />
+                  <Input value={clientName} onChange={e => setClientName(e.target.value)} placeholder="Nom du client" data-testid="input-client-name" />
                 </div>
                 <div>
                   <Label className="text-xs mb-1 block">Mandataire</Label>
@@ -332,18 +341,15 @@ export default function MandatDetailPage() {
                   Mesures d'efficacité énergétique
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2.5">
-                {(Object.keys(MESURES_LABELS) as Array<keyof typeof MESURES_LABELS>).map(key => (
-                  <div key={key} className="flex items-start gap-3">
-                    <Checkbox id={`mesure-${key}`} checked={form.mesures[key]} onCheckedChange={v => updateMesure(key, !!v)} data-testid={`checkbox-mesure-${key}`} className="mt-0.5" />
-                    <div className="flex-1">
-                      <Label htmlFor={`mesure-${key}`} className="font-normal cursor-pointer leading-snug">{MESURES_LABELS[key]}</Label>
-                      {key === "autre" && form.mesures.autre && (
-                        <Input className="mt-1.5 h-8 text-sm" placeholder="Préciser…" value={form.mesures.autreTexte} onChange={e => updateMesure("autreTexte", e.target.value)} data-testid="input-autre-mesure" />
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <CardContent>
+                <Label className="text-xs mb-1 block">Une mesure par ligne</Label>
+                <Textarea
+                  placeholder={"Ex. :\nInstallation de thermopompes\nÉclairage DEL\nRemplacement des fenêtres"}
+                  className="min-h-[140px] text-sm"
+                  value={form.mesuresTexte}
+                  onChange={e => setForm(prev => ({ ...prev, mesuresTexte: e.target.value }))}
+                  data-testid="textarea-mesures"
+                />
               </CardContent>
             </Card>
 
@@ -374,6 +380,22 @@ export default function MandatDetailPage() {
                       if (!isNaN(d.getTime())) setForm(prev => ({ ...prev, dateMandat: d.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" }) }));
                     }}
                     data-testid="input-date-mandat"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Date de livraison attendue</Label>
+                  <Input
+                    type="date"
+                    className="w-44 text-sm"
+                    value={(() => {
+                      try { const d = new Date(form.dateLivraison); if (!isNaN(d.getTime())) return d.toISOString().substring(0, 10); } catch {}
+                      return "";
+                    })()}
+                    onChange={e => {
+                      const d = new Date(e.target.value);
+                      if (!isNaN(d.getTime())) setForm(prev => ({ ...prev, dateLivraison: d.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" }) }));
+                    }}
+                    data-testid="input-date-livraison"
                   />
                 </div>
               </CardContent>
@@ -421,7 +443,7 @@ export default function MandatDetailPage() {
                   </div>
                   <div>
                     <span className="font-semibold text-[#1e3a5f]">Client (mandant) : </span>
-                    <span>{clientName || "MAB Conseil Immobilier"}</span>
+                    <span>{clientName || "—"}</span>
                   </div>
                   {cityLine && (
                     <div className="col-span-2">
@@ -449,6 +471,12 @@ export default function MandatDetailPage() {
                     <span className="font-semibold text-[#1e3a5f]">Date : </span>
                     <span>{form.dateMandat || "—"}</span>
                   </div>
+                  {form.dateLivraison && (
+                    <div>
+                      <span className="font-semibold text-[#1e3a5f]">Livraison attendue : </span>
+                      <span>{form.dateLivraison}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -484,12 +512,12 @@ export default function MandatDetailPage() {
                 {/* Mesures */}
                 <div>
                   <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Mesures d'efficacité énergétique</h2>
-                  {selectedMesures.length > 0 ? (
+                  {mesuresLines.length > 0 ? (
                     <ul className="space-y-1">
-                      {selectedMesures.map(key => (
-                        <li key={key} className="flex items-start gap-2 text-sm">
+                      {mesuresLines.map((line, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
                           <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#1e3a5f] shrink-0" />
-                          <span>{MESURES_LABELS[key]}{key === "autre" && form.mesures.autreTexte ? ` : ${form.mesures.autreTexte}` : ""}</span>
+                          <span>{line}</span>
                         </li>
                       ))}
                     </ul>
@@ -516,14 +544,8 @@ export default function MandatDetailPage() {
                   <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-4 pb-1 border-b border-[#1e3a5f]/20">Signatures</h2>
                   <div className="grid grid-cols-2 gap-8">
                     <div>
-                      <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{clientName || "MAB Conseil Immobilier"}</p>
+                      <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{clientName || "Mandant"}</p>
                       <p className="text-[10px] text-muted-foreground mb-1">(Mandant)</p>
-                      <div className="h-14 border-b border-gray-400 mb-1" />
-                      <p className="text-xs text-muted-foreground">Signature &amp; date</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{mandataire || "Mandataire"}</p>
-                      <p className="text-[10px] text-muted-foreground mb-1">(Mandataire)</p>
                       <div className="h-14 border-b border-gray-400 mb-1" />
                       <p className="text-xs text-muted-foreground">Signature &amp; date</p>
                     </div>
