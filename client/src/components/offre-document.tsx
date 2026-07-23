@@ -148,15 +148,15 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
         <div>
           <SectionTitle>Rémunération</SectionTitle>
           {data.montant && (
-            <div className="rounded-lg px-4 py-3 mb-3" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+            <div className="rounded-lg px-4 py-3 mb-6" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
               <p className="text-[14px] leading-relaxed">
                 En contrepartie du service, le client versera {feminin ? "à la consultante" : "au consultant"} une somme de {formatMontantAffiche(data.montant)} selon le terme suivant :
               </p>
             </div>
           )}
-          <p className="text-[14px] whitespace-pre-line leading-relaxed">{data.remunerationDetails}</p>
+          <p className="text-[14px] whitespace-pre-line leading-loose">{data.remunerationDetails}</p>
           {data.prendreNote && (
-            <div className="mt-4 rounded-lg overflow-hidden" style={{ border: "1px solid #99f6e4" }}>
+            <div className="mt-8 rounded-lg overflow-hidden" style={{ border: "1px solid #99f6e4" }}>
               <div className="px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white" style={{ backgroundColor: TEAL }}>
                 Prendre note
               </div>
