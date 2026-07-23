@@ -22,7 +22,9 @@ import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import mabSignaturePath from "@assets/Capture_d’écran_2026-07-23_111628_1784820061660.png";
 
 interface MandatFormData {
-  mandatType: "schl" | "analyse" | "combined" | "";
+  mandatType: "schl" | "analyse" | "combined" | "autre" | "";
+  mandatTypeAutre: string;
+  signatureImage: string;
   schlObjectif: "15" | "25" | "40" | "";
   programmes: string[];
   mesures: {
@@ -46,6 +48,8 @@ interface MandatFormData {
 
 const defaultForm: MandatFormData = {
   mandatType: "",
+  mandatTypeAutre: "",
+  signatureImage: "",
   schlObjectif: "",
   programmes: [],
   mesures: {
@@ -187,8 +191,15 @@ export default function MandatDetailPage() {
     schl: "Simulation énergétique pour la SCHL",
     analyse: "Analyse énergétique pour programme(s)",
     combined: "Simulation énergétique pour la SCHL combinée à une analyse énergétique",
+    autre: form.mandatTypeAutre || "Autre",
     "": "",
   }[form.mandatType];
+
+  function handleSignatureUpload(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => setForm(prev => ({ ...prev, signatureImage: String(reader.result) }));
+    reader.readAsDataURL(file);
+  }
 
   const cityLine = [address, city, province].filter(Boolean).join(", ");
 
@@ -309,6 +320,7 @@ export default function MandatDetailPage() {
                     { value: "schl", label: "Simulation énergétique pour la SCHL" },
                     { value: "analyse", label: "Analyse énergétique pour programme(s)" },
                     { value: "combined", label: "Simulation SCHL combinée à une analyse énergétique" },
+                    { value: "autre", label: "Autre (préciser)" },
                   ].map(opt => (
                     <div key={opt.value} className="flex items-start gap-3">
                       <RadioGroupItem value={opt.value} id={`type-${opt.value}`} data-testid={`radio-type-${opt.value}`} className="mt-0.5" />
@@ -316,6 +328,17 @@ export default function MandatDetailPage() {
                     </div>
                   ))}
                 </RadioGroup>
+
+                {form.mandatType === "autre" && (
+                  <div className="mt-3 pl-4 border-l-2 border-[#1e3a5f]/20">
+                    <Input
+                      placeholder="Décrivez le type de mandat…"
+                      value={form.mandatTypeAutre}
+                      onChange={e => setForm(prev => ({ ...prev, mandatTypeAutre: e.target.value }))}
+                      data-testid="input-mandat-type-autre"
+                    />
+                  </div>
+                )}
 
                 {showSchlObjectif && (
                   <div className="mt-4 pl-4 border-l-2 border-[#1e3a5f]/20">
@@ -384,6 +407,24 @@ export default function MandatDetailPage() {
                   onChange={e => setForm(prev => ({ ...prev, commentaires: e.target.value }))}
                   data-testid="textarea-commentaires"
                 />
+                <div>
+                  <Label className="text-xs mb-1 block">Signature (remplacer au besoin)</Label>
+                  <div className="flex items-center gap-3">
+                    <img src={form.signatureImage || mabSignaturePath} alt="Signature actuelle" className="h-10 border rounded bg-white object-contain" />
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="text-sm max-w-56"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleSignatureUpload(f); }}
+                      data-testid="input-signature-upload"
+                    />
+                    {form.signatureImage && (
+                      <Button variant="ghost" size="sm" onClick={() => setForm(prev => ({ ...prev, signatureImage: "" }))} data-testid="button-reset-signature">
+                        Rétablir
+                      </Button>
+                    )}
+                  </div>
+                </div>
                 <div>
                   <Label className="text-xs mb-1 block">Date de livraison attendue</Label>
                   <Input
@@ -539,7 +580,7 @@ export default function MandatDetailPage() {
                       <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{MANDANT_NAME}</p>
                       <p className="text-[10px] text-muted-foreground mb-1">(Donneur du mandat)</p>
                       <div className="h-14 border-b border-gray-400 mb-1 flex items-end justify-center">
-                        <img src={mabSignaturePath} alt="Signature" className="h-14 object-contain" data-testid="img-signature-mandant" />
+                        <img src={form.signatureImage || mabSignaturePath} alt="Signature" className="h-14 object-contain" data-testid="img-signature-mandant" />
                       </div>
                       <p className="text-xs text-muted-foreground">Signature &amp; date</p>
                     </div>
