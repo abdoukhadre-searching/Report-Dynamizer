@@ -20,6 +20,7 @@ interface OffreFormData {
   date: string;
   de: string;
   consultant: string;
+  consultantGenre: string;
   consultantTitre: string;
   adresseConsultant: string;
   mandatIntro: string;
@@ -38,6 +39,7 @@ const defaultForm: OffreFormData = {
   date: "",
   de: "9433-6450 Québec Inc.",
   consultant: "Marc-André Boucher",
+  consultantGenre: "masculin",
   consultantTitre: "évaluateur en efficacité énergétique accrédité",
   adresseConsultant: "133 rue Messier, bureau 200, Mont St-Hilaire (Québec) J3H 2W8",
   mandatIntro:
@@ -278,11 +280,11 @@ export default function OffreDetailPage() {
                   {numeroError && <p className="text-[11px] text-red-500 mt-1">Le numéro est obligatoire.</p>}
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">À l'attention de (client)</Label>
+                  <Label className="text-xs mb-1 block">À l'attention de (client) <span className="text-red-500">*</span></Label>
                   <Input value={clientName} onChange={e => setClientName(e.target.value)} placeholder="Nom du client" data-testid="input-client-name" />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">Date</Label>
+                  <Label className="text-xs mb-1 block">Date <span className="text-red-500">*</span></Label>
                   <Input
                     type="date"
                     value={toIsoDate(form.date)}
@@ -291,24 +293,35 @@ export default function OffreDetailPage() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-xs mb-1 block">Adresse du projet</Label>
+                  <Label className="text-xs mb-1 block">Adresse du projet <span className="text-red-500">*</span></Label>
                   <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 rue Exemple, Ville, QC" data-testid="input-address" />
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-xs mb-1 block">De (entreprise)</Label>
+                  <Label className="text-xs mb-1 block">De (entreprise) <span className="text-red-500">*</span></Label>
                   <Input value={form.de} onChange={e => setForm(prev => ({ ...prev, de: e.target.value }))} data-testid="input-de" />
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-xs mb-1 block">Consultant</Label>
-                  <Input value={form.consultant} onChange={e => setForm(prev => ({ ...prev, consultant: e.target.value }))} placeholder="Ex. Safa Mghribi" data-testid="input-consultant" />
+                  <Label className="text-xs mb-1 block">Consultant <span className="text-red-500">*</span></Label>
+                  <div className="flex gap-2">
+                    <Input value={form.consultant} onChange={e => setForm(prev => ({ ...prev, consultant: e.target.value }))} placeholder="Ex. Safa Mghribi" data-testid="input-consultant" className="flex-1" />
+                    <select
+                      value={form.consultantGenre || "masculin"}
+                      onChange={e => setForm(prev => ({ ...prev, consultantGenre: e.target.value }))}
+                      className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                      data-testid="select-consultant-genre"
+                    >
+                      <option value="masculin">Consultant</option>
+                      <option value="feminin">Consultante</option>
+                    </select>
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-xs mb-1 block">Titre du consultant</Label>
+                  <Label className="text-xs mb-1 block">Titre du consultant <span className="text-red-500">*</span></Label>
                   <Input value={form.consultantTitre} onChange={e => setForm(prev => ({ ...prev, consultantTitre: e.target.value }))} placeholder="Ex. Ingénieure en efficacité énergétique" data-testid="input-consultant-titre" />
                   <p className="text-[11px] text-muted-foreground mt-1">Le texte « Mandat et service » s'adapte automatiquement au consultant et à son titre.</p>
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-xs mb-1 block">Adresse du consultant</Label>
+                  <Label className="text-xs mb-1 block">Adresse du consultant <span className="text-red-500">*</span></Label>
                   <Input value={form.adresseConsultant} onChange={e => setForm(prev => ({ ...prev, adresseConsultant: e.target.value }))} data-testid="input-adresse-consultant" />
                 </div>
               </CardContent>
@@ -334,7 +347,7 @@ export default function OffreDetailPage() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-3 pt-3">
                     <div>
-                      <Label className="text-xs mb-1 block">Texte d'introduction</Label>
+                      <Label className="text-xs mb-1 block">Texte d'introduction <span className="text-red-500">*</span></Label>
                       <Textarea
                         className="min-h-[140px] text-sm"
                         value={form.mandatIntro}
@@ -343,7 +356,7 @@ export default function OffreDetailPage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs mb-1 block">Services offerts (un par ligne)</Label>
+                      <Label className="text-xs mb-1 block">Services offerts (un par ligne) <span className="text-red-500">*</span></Label>
                       <Textarea
                         className="min-h-[120px] text-sm"
                         value={form.services}
@@ -365,7 +378,7 @@ export default function OffreDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label className="text-xs mb-1 block">Montant (ex. 39 000$ + taxes)</Label>
+                  <Label className="text-xs mb-1 block">Montant (ex. 39 000$ + taxes) <span className="text-red-500">*</span></Label>
                   <Input
                     value={form.montant}
                     onChange={e => {
@@ -388,7 +401,7 @@ export default function OffreDetailPage() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-3 pt-3">
                     <div>
-                      <Label className="text-xs mb-1 block">Modalités de paiement</Label>
+                      <Label className="text-xs mb-1 block">Modalités de paiement <span className="text-red-500">*</span></Label>
                       <Textarea
                         className="min-h-[100px] text-sm"
                         value={form.remunerationDetails}
@@ -397,7 +410,7 @@ export default function OffreDetailPage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs mb-1 block">« Prendre note » (subventions possibles)</Label>
+                      <Label className="text-xs mb-1 block">« Prendre note » (subventions possibles) <span className="text-red-500">*</span></Label>
                       <Textarea
                         className="min-h-[100px] text-sm"
                         value={form.prendreNote}
@@ -441,11 +454,11 @@ export default function OffreDetailPage() {
                     <Input value={form.telephone} onChange={e => setForm(prev => ({ ...prev, telephone: e.target.value }))} data-testid="input-telephone" />
                   </div>
                   <div>
-                    <Label className="text-xs mb-1 block">Signataire (client)</Label>
+                    <Label className="text-xs mb-1 block">Signataire (client) <span className="text-red-500">*</span></Label>
                     <Input value={form.signataireClient} onChange={e => setForm(prev => ({ ...prev, signataireClient: e.target.value }))} placeholder="Nom du signataire" data-testid="input-signataire" />
                   </div>
                   <div>
-                    <Label className="text-xs mb-1 block">Titre du signataire</Label>
+                    <Label className="text-xs mb-1 block">Titre du signataire <span className="text-red-500">*</span></Label>
                     <Input value={form.titreSignataireClient} onChange={e => setForm(prev => ({ ...prev, titreSignataireClient: e.target.value }))} placeholder="Ex. : Chief Investment Officer" data-testid="input-titre-signataire" />
                   </div>
                 </div>

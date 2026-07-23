@@ -8,6 +8,7 @@ export interface OffreDocumentData {
   date: string;
   de: string;
   consultant: string;
+  consultantGenre?: string;
   consultantTitre: string;
   adresseConsultant: string;
   mandatIntro: string;
@@ -60,8 +61,17 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default function OffreDocument({ data }: { data: OffreDocumentData }) {
   const servicesLines = data.services.split("\n").map(l => l.trim()).filter(Boolean);
+  const feminin = data.consultantGenre === "feminin";
+  const genre = (text: string) =>
+    feminin
+      ? text
+          .replace(/Le consultant/g, "La consultante")
+          .replace(/le consultant/g, "la consultante")
+          .replace(/du consultant/g, "de la consultante")
+          .replace(/au consultant/g, "à la consultante")
+      : text;
   const fullConsultant = [data.consultant, data.consultantTitre].filter(Boolean).join(", ");
-  const mandatIntro = data.mandatIntro.split("{CONSULTANT}").join(fullConsultant || "le consultant");
+  const mandatIntro = genre(data.mandatIntro).split("{CONSULTANT}").join(fullConsultant || (feminin ? "la consultante" : "le consultant"));
 
   return (
     <div className="bg-white text-sm" style={{ fontFamily: "'Inter', sans-serif", color: "#1f2937" }}>
@@ -105,7 +115,7 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
             <p className="font-medium">{data.de}</p>
           </div>
           <div className="col-span-2">
-            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Consultant</p>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>{feminin ? "Consultante" : "Consultant"}</p>
             <p className="font-medium">{fullConsultant}</p>
             <p className="text-[13px]" style={{ color: "#64748b" }}>{data.adresseConsultant}</p>
           </div>
@@ -120,7 +130,7 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
           {servicesLines.length > 0 && (
             <>
               <p className="text-[14px] font-semibold mt-7" style={{ color: NAVY }}>
-                Le consultant vous offre les services suivants dans votre offre :
+                {feminin ? "La consultante" : "Le consultant"} vous offre les services suivants dans votre offre :
               </p>
               <ul className="space-y-1.5 mt-6">
                 {servicesLines.map((line, i) => (
@@ -140,7 +150,7 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
           {data.montant && (
             <div className="rounded-lg px-4 py-3 mb-3" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
               <p className="text-[14px] leading-relaxed">
-                En contrepartie du service, le client versera au consultant une somme de {formatMontantAffiche(data.montant)} selon le terme suivant :
+                En contrepartie du service, le client versera {feminin ? "à la consultante" : "au consultant"} une somme de {formatMontantAffiche(data.montant)} selon le terme suivant :
               </p>
             </div>
           )}
@@ -160,7 +170,7 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
         {/* Début du contrat */}
         <div>
           <SectionTitle>Début du contrat</SectionTitle>
-          <p className="text-[14px] whitespace-pre-line leading-relaxed">{data.debutContrat}</p>
+          <p className="text-[14px] whitespace-pre-line leading-relaxed">{genre(data.debutContrat)}</p>
           <p className="text-[14px] mt-12">
             <span className="font-semibold" style={{ color: NAVY }}>Courriel :</span> {data.courriel}
             <span className="mx-2" style={{ color: "#cbd5e1" }}>|</span>
