@@ -229,6 +229,7 @@ export default function MandatDetailPage() {
     <div className="min-h-screen bg-background">
       <style>{`
         @media print {
+          #mandat-printable, #mandat-printable * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           body * { visibility: hidden !important; }
           #mandat-printable, #mandat-printable * { visibility: visible !important; }
           #mandat-printable { position: fixed; inset: 0; padding: 20mm 18mm; background: white; overflow: visible; }
@@ -460,56 +461,58 @@ export default function MandatDetailPage() {
               className="bg-white border rounded-lg shadow-sm overflow-hidden text-sm"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              {/* Header */}
-              <div className="px-8 pt-6 pb-4 border-b border-[#1e3a5f]/30">
-                <div className="flex items-start justify-between gap-4">
-                  <img src={mabLogoPath} alt="MAB Conseil Immobilier" className="h-16 object-contain" />
+              {/* Header band */}
+              <div style={{ backgroundColor: "#1e3a5f" }} className="px-8 py-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="bg-white rounded-lg px-3 py-2">
+                    <img src={mabLogoPath} alt="MAB Conseil Immobilier" className="h-12 object-contain" />
+                  </div>
                   <div className="text-right">
-                    <h1 className="text-lg font-bold tracking-wide" style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}>
-                      FEUILLE DE MANDAT
+                    <h1 className="text-2xl font-bold tracking-wide text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      Feuille de mandat
                     </h1>
-                    <p className="text-xs text-muted-foreground mt-0.5">MAB Conseil Immobilier</p>
+                    <p className="text-xs mt-1" style={{ color: "#b8c8dd" }}>MAB Conseil Immobilier</p>
                   </div>
                 </div>
               </div>
 
               {/* Project info */}
-              <div className="px-8 py-4 bg-slate-50 border-b">
-                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+              <div className="px-8 py-5 border-b" style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
                   <div>
-                    <span className="font-semibold text-[#1e3a5f]">Projet : </span>
-                    <span>{name || "—"}</span>
+                    <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Projet</p>
+                    <p className="font-semibold" style={{ color: "#1e3a5f" }}>{name || "—"}</p>
                   </div>
                   <div>
-                    <span className="font-semibold text-[#1e3a5f]">Donné par : </span>
-                    <span>{MANDANT_NAME}</span>
+                    <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Donné par</p>
+                    <p className="font-medium">{MANDANT_NAME}</p>
                   </div>
                   {cityLine && (
                     <div className="col-span-2">
-                      <span className="font-semibold text-[#1e3a5f]">Adresse : </span>
-                      <span>{cityLine}</span>
+                      <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Adresse</p>
+                      <p className="font-medium">{cityLine}</p>
                     </div>
                   )}
                   {numUnits && (
                     <div>
-                      <span className="font-semibold text-[#1e3a5f]">Unités : </span>
-                      <span>{numUnits}</span>
+                      <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Unités</p>
+                      <p className="font-medium">{numUnits}</p>
                     </div>
                   )}
                   {evaluator && (
                     <div>
-                      <span className="font-semibold text-[#1e3a5f]">Évaluateur : </span>
-                      <span>{evaluator}</span>
+                      <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Évaluateur</p>
+                      <p className="font-medium">{evaluator}</p>
                     </div>
                   )}
                   <div>
-                    <span className="font-semibold text-[#1e3a5f]">Confié à : </span>
-                    <span>{mandataire || "—"}</span>
+                    <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Confié à (sous-traitant)</p>
+                    <p className="font-medium">{mandataire || "—"}</p>
                   </div>
                   {form.dateLivraison && (
                     <div>
-                      <span className="font-semibold text-[#1e3a5f]">Livraison attendue : </span>
-                      <span>{formatDateFr(form.dateLivraison)}</span>
+                      <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Livraison attendue</p>
+                      <p className="font-medium">{formatDateFr(form.dateLivraison)}</p>
                     </div>
                   )}
                 </div>
@@ -518,7 +521,11 @@ export default function MandatDetailPage() {
               <div className="px-8 py-5 space-y-5">
                 {/* Type de mandat */}
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Type de mandat</h2>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <span className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0f766e" }} />
+                    <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: "#1e3a5f" }}>Type de mandat</h2>
+                    <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
+                  </div>
                   {form.mandatType ? (
                     <div className="space-y-1.5">
                       <p className="text-sm">{mandatTypeLabel}</p>
@@ -546,12 +553,16 @@ export default function MandatDetailPage() {
 
                 {/* Mesures */}
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Mesures d'efficacité énergétique</h2>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <span className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0f766e" }} />
+                    <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: "#1e3a5f" }}>Mesures d'efficacité énergétique</h2>
+                    <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
+                  </div>
                   {mesuresLines.length > 0 ? (
                     <ul className="space-y-1">
                       {mesuresLines.map((line, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#1e3a5f] shrink-0" />
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: "#0f766e" }} />
                           <span>{line}</span>
                         </li>
                       ))}
@@ -566,7 +577,11 @@ export default function MandatDetailPage() {
                   <>
                     <Separator />
                     <div>
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-2 pb-1 border-b border-[#1e3a5f]/20">Commentaires</h2>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <span className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0f766e" }} />
+                        <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: "#1e3a5f" }}>Commentaires</h2>
+                        <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
+                      </div>
                       <p className="text-sm whitespace-pre-line">{form.commentaires}</p>
                     </div>
                   </>
@@ -576,7 +591,11 @@ export default function MandatDetailPage() {
 
                 {/* Signatures */}
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#1e3a5f] mb-4 pb-1 border-b border-[#1e3a5f]/20">Signatures</h2>
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <span className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0f766e" }} />
+                    <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: "#1e3a5f" }}>Signatures</h2>
+                    <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
+                  </div>
                   <div className="grid grid-cols-2 gap-8">
                     <div>
                       <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{MANDANT_NAME}</p>
@@ -593,9 +612,14 @@ export default function MandatDetailPage() {
                   Fait le {new Date().toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
                 </p>
 
-                <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-gray-100">
-                  Document confidentiel — MAB Conseil Immobilier © {new Date().getFullYear()}
-                </p>
+                <div className="text-center pt-4 pb-2 border-t" style={{ borderColor: "#e2e8f0" }}>
+                  <p className="text-sm font-bold" style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}>
+                    Nous vous remercions pour votre confiance !
+                  </p>
+                  <p className="text-[10px] mt-2" style={{ color: "#94a3b8" }}>
+                    Document confidentiel — MAB Conseil Immobilier © {new Date().getFullYear()}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

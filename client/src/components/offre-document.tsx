@@ -75,27 +75,50 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
 
   return (
     <div className="bg-white text-sm" style={{ fontFamily: "'Inter', sans-serif", color: "#1f2937" }}>
-      {/* En-tête centré, comme le modèle */}
-      <div className="px-8 pt-10 pb-2 text-center">
-        <img src={mabLogoPath} alt="MAB Conseils" className="h-24 object-contain mx-auto" />
-        <div className="mt-6">
-          {data.numero && (
-            <p className="text-lg font-bold tracking-wide" style={{ color: TEAL }}>{data.numero}</p>
-          )}
-          <h1 className="text-2xl font-bold mt-0.5" style={{ color: NAVY }}>Offre de service</h1>
-          <p className="text-[13px] font-semibold mt-1" style={{ color: "#374151" }}>Consultation en efficacité énergétique</p>
+      {/* Header band */}
+      <div style={{ backgroundColor: NAVY }} className="px-8 py-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="bg-white rounded-lg px-3 py-2">
+            <img src={mabLogoPath} alt="MAB Conseils" className="h-12 object-contain" />
+          </div>
+          <div className="text-right">
+            {data.numero && (
+              <span className="inline-block text-[11px] font-bold tracking-widest text-white px-2.5 py-0.5 rounded-full mb-1.5" style={{ backgroundColor: TEAL }}>
+                {data.numero}
+              </span>
+            )}
+            <h1 className="text-2xl font-bold tracking-wide text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Offre de service
+            </h1>
+            <p className="text-xs mt-1" style={{ color: "#b8c8dd" }}>Consultation en efficacité énergétique</p>
+          </div>
         </div>
       </div>
 
-      {/* Bloc d'informations */}
-      <div className="px-8 pt-8">
-        <div className="rounded-lg px-5 py-4 text-[14px] leading-relaxed space-y-0.5" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-          <p><span className="font-bold" style={{ color: NAVY }}>À l'attention de :</span> <span className="font-semibold">{data.clientName || "—"}</span></p>
-          <p><span className="font-bold" style={{ color: NAVY }}>Adresse du projet :</span> {data.address || "—"}</p>
-          <p><span className="font-bold" style={{ color: NAVY }}>Date :</span> {formatDateFr(data.date) || "—"}</p>
-          <p><span className="font-bold" style={{ color: NAVY }}>De :</span> {data.de}</p>
-          <p><span className="font-bold" style={{ color: NAVY }}>{feminin ? "Consultante" : "Consultant"} :</span> {fullConsultant}</p>
-          <p><span className="font-bold" style={{ color: NAVY }}>Adresse :</span> {data.adresseConsultant}</p>
+      {/* Info block */}
+      <div className="px-8 py-5 border-b" style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
+          <div>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>À l'attention de</p>
+            <p className="font-semibold" style={{ color: NAVY }}>{data.clientName || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Date</p>
+            <p className="font-medium">{formatDateFr(data.date) || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Adresse du projet</p>
+            <p className="font-medium">{data.address || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>De</p>
+            <p className="font-medium">{data.de}</p>
+          </div>
+          <div className="col-span-2">
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>{feminin ? "Consultante" : "Consultant"}</p>
+            <p className="font-medium">{fullConsultant}</p>
+            <p className="text-[13px]" style={{ color: "#64748b" }}>{data.adresseConsultant}</p>
+          </div>
         </div>
       </div>
 
