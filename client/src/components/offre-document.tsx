@@ -51,6 +51,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default function OffreDocument({ data }: { data: OffreDocumentData }) {
   const servicesLines = data.services.split("\n").map(l => l.trim()).filter(Boolean);
+  const mandatIntro = data.mandatIntro.split("{CONSULTANT}").join(data.consultant || "le consultant");
 
   return (
     <div className="bg-white text-sm" style={{ fontFamily: "'Inter', sans-serif", color: "#1f2937" }}>
@@ -102,10 +103,10 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
       </div>
 
       <div className="px-8 py-6 space-y-7">
-        {/* Mandat et service */}
-        <div>
+        {/* Mandat et service — seule section de la page 1 */}
+        <div style={{ breakAfter: "page" }}>
           <SectionTitle>Mandat et service</SectionTitle>
-          <p className="text-[13px] whitespace-pre-line leading-relaxed text-justify">{data.mandatIntro}</p>
+          <p className="text-[13px] whitespace-pre-line leading-relaxed text-justify">{mandatIntro}</p>
           {servicesLines.length > 0 && (
             <>
               <p className="text-[13px] font-semibold mt-4" style={{ color: NAVY }}>
@@ -127,9 +128,12 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
         <div>
           <SectionTitle>Rémunération</SectionTitle>
           {data.montant && (
-            <div className="rounded-lg px-4 py-3 mb-3 flex items-center justify-between" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-              <span className="text-[13px]">En contrepartie du service, le client versera au consultant :</span>
-              <span className="text-base font-bold ml-4 whitespace-nowrap" style={{ color: NAVY }}>{data.montant}</span>
+            <div className="rounded-lg px-4 py-3 mb-3" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+              <p className="text-[13px] leading-relaxed">
+                En contrepartie du service, le client versera au consultant une somme de{" "}
+                <span className="text-base font-bold whitespace-nowrap" style={{ color: NAVY }}>{data.montant}</span>{" "}
+                selon le terme suivant :
+              </p>
             </div>
           )}
           <p className="text-[13px] whitespace-pre-line leading-relaxed">{data.remunerationDetails}</p>

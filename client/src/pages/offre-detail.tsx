@@ -39,7 +39,7 @@ const defaultForm: OffreFormData = {
   consultant: "Marc-André Boucher, évaluateur en efficacité énergétique accrédité",
   adresseConsultant: "133 rue Messier, bureau 200, Mont St-Hilaire (Québec) J3H 2W8",
   mandatIntro:
-    "Le consultant, Marc-André Boucher, expert en évaluation d'efficacité énergétique s'engage à élaborer des stratégies visant à accroître l'efficacité énergétique et de comparer différentes stratégies. Ceci permettra de comparer l'impact en coût d'opération, en coût d'implantation et d'établir les possibilités de subventions qui auront un impact directement sur les coûts d'implantations.\n\nLa présentation sera faite avec différents scénarios, les coûts individuels, les subventions individuelles et vous serez en mesure de choisir l'option qui vous conviendra le mieux en fonction de votre réalité. Le rôle du consultant n'est pas de prendre une décision à votre place mais bien de vous montrer l'impact des différents scénarios et de vous aviser des répercussions de ceux-ci. Nous serons aussi en mesure de démontrer l'impact des différents scénarios sur une valeur économique d'un bâtiment et par le fait même, sur un futur financement.",
+    "Le consultant, {CONSULTANT}, s'engage à élaborer des stratégies visant à accroître l'efficacité énergétique et de comparer différentes stratégies. Ceci permettra de comparer l'impact en coût d'opération, en coût d'implantation et d'établir les possibilités de subventions qui auront un impact directement sur les coûts d'implantations.\n\nLa présentation sera faite avec différents scénarios, les coûts individuels, les subventions individuelles et vous serez en mesure de choisir l'option qui vous conviendra le mieux en fonction de votre réalité. Le rôle du consultant n'est pas de prendre une décision à votre place mais bien de vous montrer l'impact des différents scénarios et de vous aviser des répercussions de ceux-ci. Nous serons aussi en mesure de démontrer l'impact des différents scénarios sur une valeur économique d'un bâtiment et par le fait même, sur un futur financement.",
   services:
     "Rapport APH Sélect\nDimensionner les équipements nécessaires\nUn schéma d'implantation\nUne soumission pour les équipements implantés\nUne projection pour les dépenses futures\nUn rapport de comparaison entre les différentes améliorations et les impacts de ceux-ci sur la consommation énergétique de votre bâtiment.",
   montant: "",
@@ -106,7 +106,13 @@ export default function OffreDetailPage() {
     setClientName(offre.clientName ?? "");
     setAddress(offre.address ?? "");
     if (offre.offreData && typeof offre.offreData === "object") {
-      setForm({ ...defaultForm, ...(offre.offreData as OffreFormData) });
+      const loaded = { ...defaultForm, ...(offre.offreData as OffreFormData) };
+      // Migration : anciens textes avec le nom du consultant écrit en dur → gabarit {CONSULTANT}
+      loaded.mandatIntro = loaded.mandatIntro.replace(
+        "Le consultant, Marc-André Boucher, expert en évaluation d'efficacité énergétique s'engage",
+        "Le consultant, {CONSULTANT}, s'engage",
+      );
+      setForm(loaded);
     } else {
       setForm(defaultForm);
     }
@@ -255,7 +261,8 @@ export default function OffreDetailPage() {
                 </div>
                 <div className="col-span-2">
                   <Label className="text-xs mb-1 block">Consultant</Label>
-                  <Input value={form.consultant} onChange={e => setForm(prev => ({ ...prev, consultant: e.target.value }))} data-testid="input-consultant" />
+                  <Input value={form.consultant} onChange={e => setForm(prev => ({ ...prev, consultant: e.target.value }))} placeholder="Nom, titre (ex. Safa Mghribi, Ingénieure en efficacité énergétique)" data-testid="input-consultant" />
+                  <p className="text-[11px] text-muted-foreground mt-1">Le texte « Mandat et service » s'adapte automatiquement au consultant choisi.</p>
                 </div>
                 <div className="col-span-2">
                   <Label className="text-xs mb-1 block">Adresse du consultant</Label>
