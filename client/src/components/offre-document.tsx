@@ -87,27 +87,27 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
 
       {/* Info block */}
       <div className="px-8 py-5 border-b" style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
           <div>
-            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>À l'attention de</p>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>À l'attention de</p>
             <p className="font-semibold" style={{ color: NAVY }}>{data.clientName || "—"}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Date</p>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Date</p>
             <p className="font-medium">{formatDateFr(data.date) || "—"}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Adresse du projet</p>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Adresse du projet</p>
             <p className="font-medium">{data.address || "—"}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>De</p>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>De</p>
             <p className="font-medium">{data.de}</p>
           </div>
           <div className="col-span-2">
-            <p className="text-[10px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Consultant</p>
+            <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Consultant</p>
             <p className="font-medium">{fullConsultant}</p>
-            <p className="text-[11px]" style={{ color: "#64748b" }}>{data.adresseConsultant}</p>
+            <p className="text-[13px]" style={{ color: "#64748b" }}>{data.adresseConsultant}</p>
           </div>
         </div>
       </div>
@@ -119,10 +119,10 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
           <p className="text-[14px] whitespace-pre-line leading-relaxed text-justify">{mandatIntro}</p>
           {servicesLines.length > 0 && (
             <>
-              <p className="text-[14px] font-semibold mt-4" style={{ color: NAVY }}>
+              <p className="text-[14px] font-semibold mt-7" style={{ color: NAVY }}>
                 Le consultant vous offre les services suivants dans votre offre :
               </p>
-              <ul className="space-y-1.5 mt-3">
+              <ul className="space-y-1.5 mt-6">
                 {servicesLines.map((line, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-[14px]">
                     <span className="mt-[7px] w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: TEAL }} />
@@ -161,7 +161,7 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
         <div>
           <SectionTitle>Début du contrat</SectionTitle>
           <p className="text-[14px] whitespace-pre-line leading-relaxed">{data.debutContrat}</p>
-          <p className="text-[14px] mt-3">
+          <p className="text-[14px] mt-12">
             <span className="font-semibold" style={{ color: NAVY }}>Courriel :</span> {data.courriel}
             <span className="mx-2" style={{ color: "#cbd5e1" }}>|</span>
             <span className="font-semibold" style={{ color: NAVY }}>Téléphone :</span> {data.telephone}
@@ -169,7 +169,7 @@ export default function OffreDocument({ data }: { data: OffreDocumentData }) {
         </div>
 
         {/* Signature */}
-        <div>
+        <div className="pt-8">
           <SectionTitle>Signature</SectionTitle>
           <div className="max-w-sm mt-2">
             <div className="h-14 border-b mb-1.5" style={{ borderColor: "#94a3b8" }} />

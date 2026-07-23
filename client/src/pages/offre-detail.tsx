@@ -159,8 +159,39 @@ export default function OffreDetailPage() {
     saveMutation.mutate();
   }
 
+  function validateAllFields(): boolean {
+    if (!validateNumero()) return false;
+    const requis: [string, string][] = [
+      [clientName, "À l'attention de (client)"],
+      [address, "Adresse du projet"],
+      [form.date, "Date"],
+      [form.de, "De"],
+      [form.consultant, "Consultant"],
+      [form.consultantTitre, "Titre du consultant"],
+      [form.adresseConsultant, "Adresse du consultant"],
+      [form.mandatIntro, "Mandat et service"],
+      [form.services, "Services"],
+      [form.montant, "Montant"],
+      [form.remunerationDetails, "Modalités de paiement"],
+      [form.prendreNote, "Prendre note"],
+      [form.debutContrat, "Début du contrat"],
+      [form.signataireClient, "Nom du signataire client"],
+      [form.titreSignataireClient, "Titre du signataire client"],
+    ];
+    const manquants = requis.filter(([v]) => !v.trim()).map(([, label]) => label);
+    if (manquants.length > 0) {
+      toast({
+        title: "Champs à remplir avant de télécharger",
+        description: manquants.join(", "),
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  }
+
   async function handleExportPdf() {
-    if (!validateNumero()) return;
+    if (!validateAllFields()) return;
     setExporting(true);
     try {
       await saveMutation.mutateAsync();
