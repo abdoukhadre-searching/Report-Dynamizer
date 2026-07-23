@@ -128,10 +128,10 @@ export default function MandatDetailPage() {
   const [evaluator, setEvaluator] = useState("");
   const [mandataire, setMandataire] = useState("");
   const [form, setForm] = useState<MandatFormData>(defaultForm);
-  const [initialized, setInitialized] = useState(false);
+  const [initializedId, setInitializedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  if (mandat && !initialized) {
+  if (mandat && initializedId !== mandat.id) {
     setName(mandat.name ?? "");
     setAddress(mandat.address ?? "");
     setCity(mandat.city ?? "");
@@ -149,8 +149,10 @@ export default function MandatDetailPage() {
         if (lines.length > 0) loaded.mesuresTexte = lines.join("\n");
       }
       setForm(loaded);
+    } else {
+      setForm(defaultForm);
     }
-    setInitialized(true);
+    setInitializedId(mandat.id);
   }
 
   const saveMutation = useMutation({

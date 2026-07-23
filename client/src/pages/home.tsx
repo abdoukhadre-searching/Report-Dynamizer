@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import {
-  Zap, ClipboardList, FileBarChart2, ChevronRight,
+  Zap, ClipboardList, FileBarChart2, FileSignature, ChevronRight,
   ChevronDown, User, LogOut, Shield,
 } from "lucide-react";
 import {
@@ -87,7 +87,7 @@ export default function HomePage() {
             <p className="text-sm text-slate-400">Sélectionnez une section pour commencer.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Feuille de mandat */}
             <button
               className="group relative flex flex-col text-left rounded-2xl border-2 bg-white overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 active:translate-y-0"
@@ -134,6 +134,32 @@ export default function HomePage() {
                   Analyser les rapports HOT2000 avant / après travaux et générer les cahiers de qualification APH SELECT.
                 </p>
                 <div className="flex items-center gap-1.5 mt-5" style={{ color: "#1e3a5f" }}>
+                  <span className="text-xs font-semibold">Accéder</span>
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </div>
+            </button>
+
+            {/* Offre de service */}
+            <button
+              className="group relative flex flex-col text-left rounded-2xl border-2 bg-white overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 active:translate-y-0"
+              style={{ borderColor: "#e8edf4" }}
+              onClick={() => navigate("/offres")}
+              data-testid="button-section-offres"
+            >
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl" style={{ backgroundColor: "#0f766e" }} />
+              <div className="pl-8 pr-6 pt-8 pb-7">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: "#f0fdfa" }}
+                >
+                  <FileSignature className="w-7 h-7" style={{ color: "#0f766e" }} />
+                </div>
+                <h2 className="text-lg font-bold text-slate-900 mb-2">Offre de service</h2>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Préparer les offres de service pour vos clients : mandat, services, rémunération et signature.
+                </p>
+                <div className="flex items-center gap-1.5 mt-5" style={{ color: "#0f766e" }}>
                   <span className="text-xs font-semibold">Accéder</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </div>

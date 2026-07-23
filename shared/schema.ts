@@ -98,6 +98,21 @@ export const insertMandatSchema = createInsertSchema(mandats).omit({ id: true, c
 export type InsertMandat = z.infer<typeof insertMandatSchema>;
 export type Mandat = typeof mandats.$inferSelect;
 
+export const offres = pgTable("offres", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  name: text("name").notNull().default("Nouvelle offre"),
+  numero: text("numero"),
+  clientName: text("client_name"),
+  address: text("address"),
+  offreData: jsonb("offre_data"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertOffreSchema = createInsertSchema(offres).omit({ id: true, createdAt: true });
+export type InsertOffre = z.infer<typeof insertOffreSchema>;
+export type Offre = typeof offres.$inferSelect;
+
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   createdAt: true,

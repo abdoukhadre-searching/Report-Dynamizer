@@ -1,4 +1,4 @@
-import { type Project, type InsertProject, type User, type AuditLog, type Mandat, type InsertMandat, projects, users, auditLogs, mandats } from "@shared/schema";
+import { type Project, type InsertProject, type User, type AuditLog, type Mandat, type InsertMandat, type Offre, type InsertOffre, projects, users, auditLogs, mandats, offres } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -15,6 +15,11 @@ export interface IStorage {
   createMandat(data: Partial<InsertMandat>): Promise<Mandat>;
   updateMandat(id: string, data: Partial<InsertMandat>): Promise<Mandat | undefined>;
   deleteMandat(id: string): Promise<void>;
+  getOffres(userId?: string): Promise<Offre[]>;
+  getOffre(id: string): Promise<Offre | undefined>;
+  createOffre(data: Partial<InsertOffre>): Promise<Offre>;
+  updateOffre(id: string, data: Partial<InsertOffre>): Promise<Offre | undefined>;
+  deleteOffre(id: string): Promise<void>;
 
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
@@ -86,6 +91,32 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMandat(id: string): Promise<void> {
     await db.delete(mandats).where(eq(mandats.id, id));
+  }
+
+  async getOffres(userId?: string): Promise<Offre[]> {
+    if (userId) {
+      return await db.select().from(offres).where(eq(offres.userId, userId)).orderBy(desc(offres.createdAt));
+    }
+    return await db.select().from(offres).orderBy(desc(offres.createdAt));
+  }
+
+  async getOffre(id: string): Promise<Offre | undefined> {
+    const [o] = await db.select().from(offres).where(eq(offres.id, id));
+    return o;
+  }
+
+  async createOffre(data: Partial<InsertOffre>): Promise<Offre> {
+    const [created] = await db.insert(offres).values({ name: "Nouvelle offre", ...data } as InsertOffre).returning();
+    return created;
+  }
+
+  async updateOffre(id: string, data: Partial<InsertOffre>): Promise<Offre | undefined> {
+    const [updated] = await db.update(offres).set(data).where(eq(offres.id, id)).returning();
+    return updated;
+  }
+
+  async deleteOffre(id: string): Promise<void> {
+    await db.delete(offres).where(eq(offres.id, id));
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -256,6 +287,43 @@ export class MemoryStorage implements IStorage {
 
   async deleteMandat(id: string): Promise<void> {
     this._mandats = this._mandats.filter(m => m.id !== id);
+  }
+
+  private _offres: Offre[] = [];
+
+  async getOffres(userId?: string): Promise<Offre[]> {
+    const sorted = [...this._offres].sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
+    return userId ? sorted.filter(o => o.userId === userId) : sorted;
+  }
+
+  async getOffre(id: string): Promise<Offre | undefined> {
+    return this._offres.find(o => o.id === id);
+  }
+
+  async createOffre(data: Partial<InsertOffre>): Promise<Offre> {
+    const o: Offre = {
+      id: randomUUID(),
+      userId: data.userId ?? null,
+      name: data.name ?? "Nouvelle offre",
+      numero: data.numero ?? null,
+      clientName: data.clientName ?? null,
+      address: data.address ?? null,
+      offreData: data.offreData ?? null,
+      createdAt: new Date(),
+    };
+    this._offres.unshift(o);
+    return o;
+  }
+
+  async updateOffre(id: string, data: Partial<InsertOffre>): Promise<Offre | undefined> {
+    const idx = this._offres.findIndex(o => o.id === id);
+    if (idx === -1) return undefined;
+    this._offres[idx] = { ...this._offres[idx], ...data };
+    return this._offres[idx];
+  }
+
+  async deleteOffre(id: string): Promise<void> {
+    this._offres = this._offres.filter(o => o.id !== id);
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {

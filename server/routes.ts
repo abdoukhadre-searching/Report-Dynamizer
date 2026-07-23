@@ -1227,5 +1227,66 @@ export async function registerRoutes(
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
+  // ── Offres de service CRUD ────────────────────────────────────────────────
+  app.get("/api/offres", async (req: Request, res) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const isAdmin = req.session.userRole === "admin";
+      const list = await storage.getOffres(isAdmin ? undefined : userId);
+      res.json(list);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/offres", async (req: Request, res) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const created = await storage.createOffre({ ...req.body, userId });
+      res.status(201).json(created);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/offres/:id", async (req: Request, res) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const isAdmin = req.session.userRole === "admin";
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const o = await storage.getOffre(id);
+      if (!o) return res.status(404).json({ message: "Non trouvé" });
+      if (!isAdmin && o.userId !== userId) return res.status(403).json({ message: "Interdit" });
+      res.json(o);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.patch("/api/offres/:id", async (req: Request, res) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const isAdmin = req.session.userRole === "admin";
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const o = await storage.getOffre(id);
+      if (!o) return res.status(404).json({ message: "Non trouvé" });
+      if (!isAdmin && o.userId !== userId) return res.status(403).json({ message: "Interdit" });
+      const updated = await storage.updateOffre(id, req.body);
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.delete("/api/offres/:id", async (req: Request, res) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ message: "Non authentifié" });
+      const isAdmin = req.session.userRole === "admin";
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const o = await storage.getOffre(id);
+      if (!o) return res.status(404).json({ message: "Non trouvé" });
+      if (!isAdmin && o.userId !== userId) return res.status(403).json({ message: "Interdit" });
+      await storage.deleteOffre(id);
+      res.status(204).send();
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
   return httpServer;
 }
