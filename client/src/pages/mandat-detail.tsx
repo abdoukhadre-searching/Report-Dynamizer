@@ -10,15 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft, Save, Printer, ClipboardList, CheckCircle2,
+  ArrowLeft, Save, Printer, Download, ClipboardList, CheckCircle2,
   Building2, ClipboardCheck,
 } from "lucide-react";
+import MandatDocument from "@/components/mandat-document";
 import { useToast } from "@/hooks/use-toast";
-import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import mabSignaturePath from "@assets/Capture_d’écran_2026-07-23_111628_1784820061660.png";
 
 interface MandatFormData {
@@ -102,15 +100,6 @@ function toIsoDate(value: string): string {
   return isNaN(d.getTime()) ? "" : d.toISOString().substring(0, 10);
 }
 
-/** Affiche une date (ISO ou texte) en format long français. */
-function formatDateFr(value: string): string {
-  if (!value) return "";
-  const iso = toIsoDate(value);
-  if (!iso) return value;
-  const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" });
-}
-
 export default function MandatDetailPage() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
@@ -130,6 +119,29 @@ export default function MandatDetailPage() {
   const [form, setForm] = useState<MandatFormData>(defaultForm);
   const [initializedId, setInitializedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportPdf() {
+    setExporting(true);
+    try {
+      await saveMutation.mutateAsync();
+      const res = await fetch(`/api/mandats/${params.id}/export-pdf`, { credentials: "include" });
+      if (!res.ok) throw new Error("export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Feuille de mandat ${name || ""}.pdf`.trim();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: "Erreur lors de l'export PDF", variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   if (mandat && initializedId !== mandat.id) {
     setName(mandat.name ?? "");
@@ -447,9 +459,13 @@ export default function MandatDetailPage() {
                 {saveMutation.isPending ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                 {saved ? "Sauvegardé" : "Sauvegarder"}
               </Button>
+              <Button variant="outline" onClick={handleExportPdf} disabled={exporting} className="gap-2" data-testid="button-export-mandat-pdf">
+                {exporting ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-4 h-4" />}
+                Télécharger le PDF
+              </Button>
               <Button variant="outline" onClick={() => window.print()} className="gap-2" data-testid="button-print-mandat">
                 <Printer className="w-4 h-4" />
-                Imprimer / PDF
+                Imprimer
               </Button>
             </div>
           </div>
@@ -459,168 +475,26 @@ export default function MandatDetailPage() {
             <div
               id="mandat-printable"
               className="bg-white border rounded-lg shadow-sm overflow-hidden text-sm"
-              style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              {/* Header band */}
-              <div style={{ backgroundColor: "#1e3a5f" }} className="px-8 py-6">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="bg-white rounded-lg px-3 py-2">
-                    <img src={mabLogoPath} alt="MAB Conseil Immobilier" className="h-12 object-contain" />
-                  </div>
-                  <div className="text-right">
-                    <h1 className="text-2xl font-bold tracking-wide text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
-                      Feuille de mandat
-                    </h1>
-                    <p className="text-xs mt-1" style={{ color: "#b8c8dd" }}>MAB Conseil Immobilier</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Project info */}
-              <div className="px-8 py-5 border-b" style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Projet</p>
-                    <p className="font-semibold" style={{ color: "#1e3a5f" }}>{name || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Donné par</p>
-                    <p className="font-medium">{MANDANT_NAME}</p>
-                  </div>
-                  {cityLine && (
-                    <div className="col-span-2">
-                      <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Adresse</p>
-                      <p className="font-medium">{cityLine}</p>
-                    </div>
-                  )}
-                  {numUnits && (
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Unités</p>
-                      <p className="font-medium">{numUnits}</p>
-                    </div>
-                  )}
-                  {evaluator && (
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Évaluateur</p>
-                      <p className="font-medium">{evaluator}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Confié à (sous-traitant)</p>
-                    <p className="font-medium">{mandataire || "—"}</p>
-                  </div>
-                  {form.dateLivraison && (
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Livraison attendue</p>
-                      <p className="font-medium">{formatDateFr(form.dateLivraison)}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="px-8 py-5 space-y-5">
-                {/* Type de mandat */}
-                <div>
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <span className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0f766e" }} />
-                    <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: "#1e3a5f" }}>Type de mandat</h2>
-                    <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
-                  </div>
-                  {form.mandatType ? (
-                    <div className="space-y-1.5">
-                      <p className="text-sm">{mandatTypeLabel}</p>
-                      {showSchlObjectif && form.schlObjectif && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-muted-foreground">Objectif SCHL :</span>
-                          <Badge variant="outline" className="text-xs font-bold border-[#1e3a5f] text-[#1e3a5f]">{form.schlObjectif} %</Badge>
-                        </div>
-                      )}
-                      {showProgrammes && form.programmes.length > 0 && (
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="text-xs text-muted-foreground">Programme(s) :</span>
-                          {form.programmes.map(pid => (
-                            <Badge key={pid} variant="secondary" className="text-xs">{PROGRAMMES_OPTIONS.find(p => p.id === pid)?.label ?? pid}</Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground italic">Aucun type de mandat sélectionné.</p>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Mesures */}
-                <div>
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <span className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0f766e" }} />
-                    <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: "#1e3a5f" }}>Mesures d'efficacité énergétique</h2>
-                    <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
-                  </div>
-                  {mesuresLines.length > 0 ? (
-                    <ul className="space-y-1">
-                      {mesuresLines.map((line, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: "#0f766e" }} />
-                          <span>{line}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-xs text-muted-foreground italic">Aucune mesure sélectionnée.</p>
-                  )}
-                </div>
-
-                {/* Commentaires */}
-                {form.commentaires && (
-                  <>
-                    <Separator />
-                    <div>
-                      <div className="flex items-center gap-2.5 mb-3">
-                        <span className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0f766e" }} />
-                        <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: "#1e3a5f" }}>Commentaires</h2>
-                        <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
-                      </div>
-                      <p className="text-sm whitespace-pre-line">{form.commentaires}</p>
-                    </div>
-                  </>
-                )}
-
-                <Separator />
-
-                {/* Signatures */}
-                <div>
-                  <div className="flex items-center gap-2.5 mb-4">
-                    <span className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0f766e" }} />
-                    <h2 className="text-[13px] font-bold uppercase tracking-[0.12em]" style={{ color: "#1e3a5f" }}>Signatures</h2>
-                    <span className="flex-1 h-px" style={{ backgroundColor: "#e2e8f0" }} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-8">
-                    <div>
-                      <p className="text-xs font-semibold text-[#1e3a5f] mb-1">{MANDANT_NAME}</p>
-                      <p className="text-[10px] text-muted-foreground mb-1">(Donneur du mandat)</p>
-                      <div className="h-14 border-b border-gray-400 mb-1 flex items-end justify-center">
-                        <img src={form.signatureImage || mabSignaturePath} alt="Signature" className="h-14 object-contain" data-testid="img-signature-mandant" />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Signature &amp; date</p>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-xs text-right text-muted-foreground" data-testid="text-date-production">
-                  Fait le {new Date().toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
-                </p>
-
-                <div className="text-center pt-4 pb-2 border-t" style={{ borderColor: "#e2e8f0" }}>
-                  <p className="text-sm font-bold" style={{ color: "#1e3a5f", fontFamily: "'Playfair Display', serif" }}>
-                    Nous vous remercions pour votre confiance !
-                  </p>
-                  <p className="text-[10px] mt-2" style={{ color: "#94a3b8" }}>
-                    Document confidentiel — MAB Conseil Immobilier © {new Date().getFullYear()}
-                  </p>
-                </div>
-              </div>
+              <MandatDocument
+                data={{
+                  name,
+                  mandataire,
+                  cityLine,
+                  numUnits,
+                  evaluator,
+                  mandatType: form.mandatType,
+                  mandatTypeLabel,
+                  schlObjectif: form.schlObjectif,
+                  showSchlObjectif,
+                  showProgrammes,
+                  programmes: form.programmes,
+                  mesuresLines,
+                  commentaires: form.commentaires,
+                  dateLivraison: form.dateLivraison,
+                  signatureImage: form.signatureImage,
+                }}
+              />
             </div>
           </div>
         </div>

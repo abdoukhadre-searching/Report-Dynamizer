@@ -1189,14 +1189,39 @@ export async function registerRoutes(
   app.get("/api/mandats/:id", async (req: Request, res) => {
     try {
       const userId = req.session.userId;
+      const isAdmin = req.session.userRole === "admin";
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const m = await storage.getMandat(id);
+      if (!m) return res.status(404).json({ message: "Non trouvé" });
+      // Accès sans session autorisé uniquement pour le rendu PDF interne (localhost)
+      const remote = req.socket.remoteAddress;
+      const isInternal = remote === "127.0.0.1" || remote === "::1" || remote === "::ffff:127.0.0.1";
+      if (!userId && !isInternal) return res.status(401).json({ message: "Non authentifié" });
+      if (userId && !isAdmin && m.userId !== userId) return res.status(403).json({ message: "Interdit" });
+      res.json(m);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/mandats/:id/export-pdf", async (req: Request, res) => {
+    try {
+      const userId = req.session.userId;
       if (!userId) return res.status(401).json({ message: "Non authentifié" });
       const isAdmin = req.session.userRole === "admin";
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const m = await storage.getMandat(id);
       if (!m) return res.status(404).json({ message: "Non trouvé" });
       if (!isAdmin && m.userId !== userId) return res.status(403).json({ message: "Interdit" });
-      res.json(m);
-    } catch (e: any) { res.status(500).json({ message: e.message }); }
+      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const reportUrl = `${internalOrigin}/mandats/${id}/print`;
+      const pdfBuffer = await renderProjectPdf(reportUrl, "#mandat-print-content");
+      const baseName = sanitizeFileName(`Feuille de mandat ${m.name || id}`) || `mandat-${id}`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${baseName}.pdf"`);
+      return res.send(pdfBuffer);
+    } catch (e: any) {
+      console.error("Error exporting mandat PDF:", e);
+      res.status(500).json({ message: e.message || "Failed to export PDF" });
+    }
   });
 
   app.patch("/api/mandats/:id", async (req: Request, res) => {
@@ -1255,7 +1280,8 @@ export async function registerRoutes(
       const o = await storage.getOffre(id);
       if (!o) return res.status(404).json({ message: "Non trouvé" });
       // Accès sans session autorisé uniquement pour le rendu PDF interne (localhost)
-      const isInternal = req.ip === "127.0.0.1" || req.ip === "::1" || req.ip === "::ffff:127.0.0.1";
+      const remote = req.socket.remoteAddress;
+      const isInternal = remote === "127.0.0.1" || remote === "::1" || remote === "::ffff:127.0.0.1";
       if (!userId && !isInternal) return res.status(401).json({ message: "Non authentifié" });
       if (userId && !isAdmin && o.userId !== userId) return res.status(403).json({ message: "Interdit" });
       res.json(o);

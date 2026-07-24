@@ -693,7 +693,7 @@ export default function ReportTab({
   const city = project.city || pre.buildingInfo?.city || "";
   const province = project.province || pre.buildingInfo?.province || "";
   const postalCode = project.postalCode || (pre.buildingInfo as any)?.postalCode || "";
-  const fullAddress = [address, city, postalCode].filter(Boolean).join(", ") || "N/A";
+  const fullAddress = project.name?.trim() || [address, city, postalCode].filter(Boolean).join(", ") || "N/A";
 
   const totalBeforeGJ = comparison.totalBefore ?? 0;
   const totalAfterGJ = comparison.totalAfter ?? 0;
