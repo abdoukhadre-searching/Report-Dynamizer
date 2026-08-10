@@ -3370,6 +3370,23 @@ export default function ReportTab({
                   <p className="text-xs text-slate-500">
                     Évaluateur en efficacité énergétique agréé
                   </p>
+                  {/* Signature numérique — même présentation que l'attestation APH */}
+                  <div className="flex items-center gap-3 mt-3">
+                    <span
+                      className="text-lg font-bold text-slate-900"
+                      style={{ whiteSpace: "nowrap" }}
+                    >
+                      Marc-André Boucher
+                    </span>
+                    <span className="text-[9px] leading-tight text-slate-700">
+                      Signature numérique de Marc-André
+                      <br />
+                      Boucher
+                      <br />
+                      Date : {new Date().toLocaleDateString("fr-CA").replace(/-/g, ".")}{" "}
+                      {new Date().toLocaleTimeString("fr-CA", { hour12: false })}
+                    </span>
+                  </div>
                 </div>
               </div>
             </section>
