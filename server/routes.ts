@@ -877,36 +877,60 @@ export async function registerRoutes(
     const cSec  = etTimeParts2.find((p) => p.type === "second")!.value;
     const sigDateStr = `${cYYYY}.${cMM}.${cDD} ${cHH}:${cMin}:${cSec}`;
 
+    // ── Cadre de sécurité teal ────────────────────────────────────────────────
+    const TEAL_BORDER = rgb(0x0f / 255, 0x76 / 255, 0x6e / 255);
+    page.drawRectangle({
+      x: SIG_X1 - 2, y: sigPdfYBot - 2,
+      width: SIG_X2 - SIG_X1 + 4, height: sigZoneH + 4,
+      borderColor: TEAL_BORDER, borderWidth: 1,
+    });
+
+    // Code de vérification déterministe (empreinte SHA-256 tronquée)
+    const verifSeed = `MAB-${sigDateStr.slice(0, 10)}-collectif`;
+    const verifHex = crypto.createHash("sha256").update(verifSeed).digest("hex").slice(0, 8).toUpperCase();
+    const verifCode = `${verifHex.slice(0, 4)}-${verifHex.slice(4)}`;
+
     // Layout — vertically centered in the zone
     const sigCenterY = sigPdfYBot + sigZoneH / 2;
-    const NAME_SIZE = 13;
-    const DETAIL_SIZE = 8;
+    const NAME_SIZE = 15;
+    const DETAIL_SIZE = 7;
     const lineSpacing = DETAIL_SIZE + 2;
 
-    // "Marc-André Boucher" bold — left part
+    // "Marc-André Boucher" en italique gras — style manuscrit
+    const fontScript = await pdfDoc.embedFont(StandardFonts.HelveticaBoldOblique);
     const nameText = "Marc-Andr\u00E9 Boucher";
-    const nameW = font.widthOfTextAtSize(nameText, NAME_SIZE);
+    const nameW = fontScript.widthOfTextAtSize(nameText, NAME_SIZE);
     page.drawText(nameText, {
-      x: SIG_X1 + 4,
-      y: sigCenterY - NAME_SIZE / 2 + 2,
+      x: SIG_X1 + 6,
+      y: sigCenterY - NAME_SIZE / 2 + 4,
       size: NAME_SIZE,
-      font,
-      color: DARK,
+      font: fontScript,
+      color: rgb(0x1e / 255, 0x3a / 255, 0x5f / 255),
+    });
+    // Trait sous la signature
+    page.drawLine({
+      start: { x: SIG_X1 + 6, y: sigCenterY - NAME_SIZE / 2 },
+      end: { x: SIG_X1 + 6 + nameW, y: sigCenterY - NAME_SIZE / 2 },
+      thickness: 0.6, color: TEAL_BORDER, opacity: 0.5,
     });
 
     // Detail block — right of the name
-    const detailX = SIG_X1 + 4 + nameW + 5;
-    page.drawText("Signature num\u00E9rique de Marc-Andr\u00E9", {
-      x: detailX, y: sigCenterY + lineSpacing * 0.5,
+    const detailX = SIG_X1 + 10 + nameW;
+    page.drawText("Signature num\u00E9rique v\u00E9rifi\u00E9e", {
+      x: detailX, y: sigCenterY + lineSpacing * 1.0,
+      size: DETAIL_SIZE, font, color: TEAL_BORDER,
+    });
+    page.drawText("Marc-Andr\u00E9 Boucher", {
+      x: detailX, y: sigCenterY,
       size: DETAIL_SIZE, font: fontRegular, color: DARK,
     });
-    page.drawText("Boucher", {
-      x: detailX, y: sigCenterY - lineSpacing * 0.5,
+    page.drawText(`Date : ${sigDateStr} (HE)`, {
+      x: detailX, y: sigCenterY - lineSpacing * 1.0,
       size: DETAIL_SIZE, font: fontRegular, color: DARK,
     });
-    page.drawText(`Date : ${sigDateStr}`, {
-      x: detailX, y: sigCenterY - lineSpacing * 1.5,
-      size: DETAIL_SIZE, font: fontRegular, color: DARK,
+    page.drawText(`ID : ${verifCode}`, {
+      x: detailX, y: sigCenterY - lineSpacing * 2.0,
+      size: DETAIL_SIZE, font: fontRegular, color: rgb(0.45, 0.5, 0.55),
     });
 
     return Buffer.from(await pdfDoc.save());

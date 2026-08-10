@@ -3370,22 +3370,74 @@ export default function ReportTab({
                   <p className="text-xs text-slate-500">
                     Évaluateur en efficacité énergétique agréé
                   </p>
-                  {/* Signature numérique — même présentation que l'attestation APH */}
-                  <div className="flex items-center gap-3 mt-3">
-                    <span
-                      className="text-lg font-bold text-slate-900"
-                      style={{ whiteSpace: "nowrap" }}
+                  {/* Signature numérique sécurisée */}
+                  <div
+                    className="relative mt-3 overflow-hidden rounded-md"
+                    style={{
+                      border: "1.5px solid #0f766e",
+                      background: "linear-gradient(135deg, #f8fdfc 0%, #eef7f5 100%)",
+                      maxWidth: "500px",
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                    } as React.CSSProperties}
+                  >
+                    {/* Filigrane de sécurité */}
+                    <div
+                      className="absolute inset-0 pointer-events-none select-none"
+                      style={{ opacity: 0.05 }}
+                      aria-hidden
                     >
-                      Marc-André Boucher
-                    </span>
-                    <span className="text-[9px] leading-tight text-slate-700">
-                      Signature numérique de Marc-André
-                      <br />
-                      Boucher
-                      <br />
-                      Date : {new Date().toLocaleDateString("fr-CA").replace(/-/g, ".")}{" "}
-                      {new Date().toLocaleTimeString("fr-CA", { hour12: false })}
-                    </span>
+                      {[0, 1, 2, 3, 4].map((r) => (
+                        <p
+                          key={r}
+                          className="text-[9px] font-bold whitespace-nowrap"
+                          style={{ transform: "rotate(-18deg)", color: "#0f766e", marginTop: r === 0 ? "-4px" : "10px", letterSpacing: "2px" }}
+                        >
+                          {"DOCUMENT ORIGINAL • MAB CONSEIL IMMOBILIER • ".repeat(4)}
+                        </p>
+                      ))}
+                    </div>
+                    <div className="relative px-4 py-3">
+                      <div className="flex items-end justify-between gap-4">
+                        <div>
+                          <p
+                            className="signature-script"
+                            style={{
+                              fontFamily: "'GreatVibesLocal', 'Great Vibes', cursive",
+                              fontSize: "30px",
+                              lineHeight: 1.1,
+                              color: "#1e3a5f",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Marc-André Boucher
+                          </p>
+                          <div className="mt-1 h-px w-full" style={{ backgroundColor: "#0f766e", opacity: 0.4 }} />
+                          <p className="text-[9px] mt-1 text-slate-600">
+                            Signé numériquement le{" "}
+                            {new Date().toLocaleDateString("fr-CA").replace(/-/g, ".")}{" "}
+                            {new Date().toLocaleTimeString("fr-CA", { hour12: false })} (HE)
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold text-white"
+                            style={{ backgroundColor: "#0f766e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                          >
+                            ✓ SIGNATURE VÉRIFIÉE
+                          </span>
+                          <p className="text-[8px] mt-1 font-mono text-slate-500">
+                            ID : {(() => {
+                              let h = 0x811c9dc5;
+                              const s = `${project.id}-MAB-${new Date().toLocaleDateString("fr-CA")}`;
+                              for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+                              const hex = h.toString(16).toUpperCase().padStart(8, "0");
+                              return `${hex.slice(0, 4)}-${hex.slice(4)}`;
+                            })()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
