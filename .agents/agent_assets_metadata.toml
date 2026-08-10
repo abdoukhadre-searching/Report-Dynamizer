@@ -12,3 +12,10 @@ id = "D5xLMzP2PS5uzGamJ7749"
 uri = "file://DEPLOY-VM.md"
 type = "text"
 title = "Guide déploiement VM — systemd"
+
+[[outputs]]
+id = "3HcjxBIiCdVKh66RynHEJ"
+uri = "file://exports/Documents%20Sainte-Clotilde%20-%20Lot%206199415.zip"
+type = "unspecified"
+title = "Documents Sainte-Clotilde (12 lots)"
+description = "Un dossier par lot (A1–D3) avec les 5 documents : Cahier de Qualification, Stratégie, Recommandations, Empreinte Économique et Attestation APH."
