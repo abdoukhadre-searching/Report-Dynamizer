@@ -3415,8 +3415,8 @@ export default function ReportTab({
                           <div className="mt-1 h-px w-full" style={{ backgroundColor: "#0f766e", opacity: 0.4 }} />
                           <p className="text-[9px] mt-1 text-slate-600">
                             Signé numériquement le{" "}
-                            {new Date().toLocaleDateString("fr-CA").replace(/-/g, ".")}{" "}
-                            {new Date().toLocaleTimeString("fr-CA", { hour12: false })} (HE)
+                            {new Date().toLocaleDateString("fr-CA", { timeZone: "America/Toronto" }).replace(/-/g, ".")}{" "}
+                            {new Date().toLocaleTimeString("fr-CA", { hour12: false, timeZone: "America/Toronto" })} (HE)
                           </p>
                         </div>
                         <div className="text-right shrink-0">
@@ -3429,7 +3429,7 @@ export default function ReportTab({
                           <p className="text-[8px] mt-1 font-mono text-slate-500">
                             ID : {(() => {
                               let h = 0x811c9dc5;
-                              const s = `${project.id}-MAB-${new Date().toLocaleDateString("fr-CA")}`;
+                              const s = `${project.id}-MAB-${new Date().toLocaleDateString("fr-CA", { timeZone: "America/Toronto" })}`;
                               for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
                               const hex = h.toString(16).toUpperCase().padStart(8, "0");
                               return `${hex.slice(0, 4)}-${hex.slice(4)}`;
