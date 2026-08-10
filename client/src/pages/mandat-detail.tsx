@@ -209,10 +209,25 @@ export default function MandatDetailPage() {
     "": "",
   }[form.mandatType];
 
-  function handleSignatureUpload(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => setForm(prev => ({ ...prev, signatureImage: String(reader.result) }));
-    reader.readAsDataURL(file);
+  async function handleSignatureUpload(file: File) {
+    const browserReadable = ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"];
+    if (browserReadable.includes(file.type)) {
+      const reader = new FileReader();
+      reader.onload = () => setForm(prev => ({ ...prev, signatureImage: String(reader.result) }));
+      reader.readAsDataURL(file);
+      return;
+    }
+    // Format non lisible par le navigateur (ex. HEIC) : conversion côté serveur
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/convert-image", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error();
+      const { dataUrl } = await res.json();
+      setForm(prev => ({ ...prev, signatureImage: dataUrl }));
+    } catch {
+      toast({ title: "Format d'image non pris en charge", variant: "destructive" });
+    }
   }
 
   const cityLine = [address, city, province].filter(Boolean).join(", ");
@@ -428,7 +443,7 @@ export default function MandatDetailPage() {
                     <img src={form.signatureImage || mabSignaturePath} alt="Signature actuelle" className="h-10 border rounded bg-white object-contain" />
                     <Input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.heic,.heif"
                       className="text-sm max-w-56"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleSignatureUpload(f); }}
                       data-testid="input-signature-upload"

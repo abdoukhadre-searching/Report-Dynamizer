@@ -38,6 +38,32 @@ async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   }
 }
 
+// Normalise n'importe quel format d'image (HEIC/HEIF, TIFF, BMP, etc.) en un buffer
+// lisible par sharp. Si sharp ne peut pas le lire directement, on convertit via ImageMagick.
+async function normalizeImageBuffer(buffer: Buffer, originalName?: string): Promise<Buffer> {
+  try {
+    const meta = await sharp(buffer).metadata();
+    // sharp reconnaît les HEIC/HEIF mais ne peut pas les décoder (codec HEVC breveté) :
+    // on force la conversion ImageMagick pour ces formats.
+    if (meta.format === "heif") throw new Error("heif: convert via magick");
+    return buffer;
+  } catch {
+    const tmpDir = os.tmpdir();
+    const uid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+    const ext = (originalName?.split(".").pop() || "img").toLowerCase().replace(/[^a-z0-9]/g, "") || "img";
+    const tmpIn = path.join(tmpDir, `imgconv-${uid}.${ext}`);
+    const tmpOut = path.join(tmpDir, `imgconv-${uid}.jpg`);
+    try {
+      await fs.promises.writeFile(tmpIn, buffer);
+      await execFileAsync("magick", [`${tmpIn}[0]`, "-auto-orient", tmpOut], { timeout: 45000 });
+      return await fs.promises.readFile(tmpOut);
+    } finally {
+      await fs.promises.unlink(tmpIn).catch(() => {});
+      await fs.promises.unlink(tmpOut).catch(() => {});
+    }
+  }
+}
+
 function extractAmountFromWindow(window: string): number | null {
   // OCR sometimes reads "00" as "OO"/"oO" right before the $ sign — normalize that,
   // and OCR often splits/mis-groups digits (e.g. "18 480,00" -> "1 8480 00").
@@ -586,6 +612,25 @@ export async function registerRoutes(
     }
   });
 
+  // Convertit n'importe quel format d'image (HEIC, TIFF, etc.) en JPEG (data URL)
+  // pour les usages côté client (ex. signature) où le navigateur ne peut pas lire le format.
+  app.post("/api/convert-image", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.session.userId) return res.status(401).json({ message: "Non authentifié" });
+      if (!req.file) return res.status(400).json({ message: "Image file is required" });
+      const normalized = await normalizeImageBuffer(req.file.buffer, req.file.originalname);
+      const jpeg = await sharp(normalized)
+        .rotate()
+        .resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 90, mozjpeg: true })
+        .toBuffer();
+      res.json({ dataUrl: `data:image/jpeg;base64,${jpeg.toString("base64")}` });
+    } catch (error: any) {
+      console.error("Error converting image:", error);
+      res.status(422).json({ message: "Format d'image non pris en charge" });
+    }
+  });
+
   app.post("/api/projects/:id/upload-annex-image", upload.single("file"), async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);
@@ -622,6 +667,7 @@ export async function registerRoutes(
 
       const fileName = `${projectId}_${annexType}_${Date.now()}.jpg`;
       const filePath = path.join(UPLOADS_DIR, fileName);
+      imageBuffer = await normalizeImageBuffer(imageBuffer, req.file.originalname);
       const compressed = await sharp(imageBuffer)
         .rotate()
         .resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true })
@@ -693,7 +739,8 @@ export async function registerRoutes(
       } else {
         const fileName = `${projectId}_logisvert_${Date.now()}.jpg`;
         const filePath = path.join(UPLOADS_DIR, fileName);
-        const compressed = await sharp(req.file.buffer)
+        const normalizedBuffer = await normalizeImageBuffer(req.file.buffer, req.file.originalname);
+        const compressed = await sharp(normalizedBuffer)
           .rotate()
           .resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true })
           .jpeg({ quality: 90, mozjpeg: true })

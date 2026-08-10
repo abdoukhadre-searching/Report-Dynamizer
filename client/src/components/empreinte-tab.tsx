@@ -1544,7 +1544,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                           id="logisvert-pdf-upload"
                           data-testid="input-upload-logisvert-pdf"
                           type="file"
-                          accept="application/pdf,image/*"
+                          accept="application/pdf,image/*,.heic,.heif"
                           className="hidden"
                           disabled={isUploadingLogisvert}
                           onChange={(e) => {

@@ -133,7 +133,7 @@ function AnnexImageUpload({
             Remplacer (image ou PDF)
             <input
               type="file"
-              accept="image/*,application/pdf"
+              accept="image/*,.heic,.heif,application/pdf"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -169,7 +169,7 @@ function AnnexImageUpload({
           Remplacer par une image ou PDF personnalisé
           <input
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/*,.heic,.heif,application/pdf"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -195,7 +195,7 @@ function AnnexImageUpload({
         Importer image ou PDF pour {label}
         <input
           type="file"
-          accept="image/*,application/pdf"
+          accept="image/*,.heic,.heif,application/pdf"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
