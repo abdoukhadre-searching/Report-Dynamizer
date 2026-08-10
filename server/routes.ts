@@ -908,7 +908,12 @@ export async function registerRoutes(
         ? `${impPct.toFixed(1)} % et ${gesPct.toFixed(1)} %`
         : `${impPct.toFixed(1)} %`;
 
-    const address = [project.address, project.city, project.postalCode].filter(Boolean).join(", ") || "";
+    // Adresse complète : priorité au nom du projet saisi par l'utilisateur (ex. "Lot 6199415 A1 Rue des cèdres, ..."),
+    // suivi du code postal s'il n'y figure pas déjà.
+    const projectName = (project.name || "").trim();
+    const address = projectName
+      ? [projectName, project.postalCode && !projectName.includes(project.postalCode) ? project.postalCode : null].filter(Boolean).join(", ")
+      : [project.address, project.city, project.postalCode].filter(Boolean).join(", ") || "";
 
     const now = new Date();
     // Always use Eastern Time (Canada/Quebec) regardless of server timezone
