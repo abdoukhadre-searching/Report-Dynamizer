@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import QRCode from "qrcode";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import type {
@@ -516,6 +517,16 @@ export default function ReportTab({
 }: ReportTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const signatureInfo = (project as any).signatureInfo as
+    | { date: string; code: string; verifyUrl: string }
+    | undefined;
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!signatureInfo?.verifyUrl) return;
+    QRCode.toDataURL(signatureInfo.verifyUrl, { margin: 0, width: 128 })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [signatureInfo?.verifyUrl]);
   const [constructionYear, setConstructionYear] = useState(
     project.yearBuilt || (project.preReportData as any)?.buildingInfo?.yearBuilt || (project.postReportData as any)?.buildingInfo?.yearBuilt || ""
   );
@@ -3419,22 +3430,30 @@ export default function ReportTab({
                             {new Date().toLocaleTimeString("fr-CA", { hour12: false, timeZone: "America/Toronto" })} (HE)
                           </p>
                         </div>
-                        <div className="text-right shrink-0">
-                          <span
-                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold text-white"
-                            style={{ backgroundColor: "#0f766e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
-                          >
-                            ✓ SIGNATURE VÉRIFIÉE
-                          </span>
-                          <p className="text-[8px] mt-1 font-mono text-slate-500">
-                            ID : {(() => {
-                              let h = 0x811c9dc5;
-                              const s = `${project.id}-MAB-${new Date().toLocaleDateString("fr-CA", { timeZone: "America/Toronto" })}`;
-                              for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-                              const hex = h.toString(16).toUpperCase().padStart(8, "0");
-                              return `${hex.slice(0, 4)}-${hex.slice(4)}`;
-                            })()}
-                          </p>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold text-white"
+                              style={{ backgroundColor: "#0f766e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                            >
+                              ✓ SIGNATURE VÉRIFIÉE
+                            </span>
+                            <p className="text-[8px] mt-1 font-mono text-slate-500">
+                              ID : {signatureInfo?.code || "—"}
+                            </p>
+                            {qrDataUrl && (
+                              <p className="text-[6px] text-slate-400 mt-0.5">Scannez pour vérifier</p>
+                            )}
+                          </div>
+                          {qrDataUrl ? (
+                            <img
+                              src={qrDataUrl}
+                              alt="Code QR de vérification"
+                              style={{ width: "44px", height: "44px" }}
+                            />
+                          ) : signatureInfo ? (
+                            <span id="qr-pending" style={{ width: "44px", height: "44px", display: "inline-block" }} />
+                          ) : null}
                         </div>
                       </div>
                     </div>

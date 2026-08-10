@@ -24,6 +24,7 @@ import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import ProfilePage from "@/pages/profile";
 import AdminPage from "@/pages/admin";
+import VerifierPage from "@/pages/verifier";
 import { useEffect } from "react";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/landing" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
+      <Route path="/verifier" component={VerifierPage} />
       <Route path="/project/:id/print" component={ProjectPrintPage} />
       <Route path="/project/:id/print-recommandations" component={ProjectPrintRecommandationsPage} />
       <Route path="/project/:id/print-strategie" component={ProjectPrintStrategiePage} />

@@ -218,6 +218,10 @@ export async function renderProjectPdf(reportUrl: string, waitForSelector = "#re
     await page.evaluate(async () => {
       if (document.fonts?.ready) await document.fonts.ready;
     });
+    // Wait for the verification QR code (generated async client-side), if any
+    await page
+      .waitForFunction(() => !document.querySelector("#qr-pending"), { timeout: 5000 })
+      .catch(() => {});
     await new Promise(r => setTimeout(r, 600));
 
     await page.addScriptTag({ content: IMAGE_COMPRESS_SCRIPT });
