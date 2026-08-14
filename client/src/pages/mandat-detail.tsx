@@ -113,9 +113,9 @@ export default function MandatDetailPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
-  const [numUnits, setNumUnits] = useState("");
-  const [evaluator, setEvaluator] = useState("");
   const [mandataire, setMandataire] = useState("");
+  const [mandataireAdresse, setMandataireAdresse] = useState("");
+  const [codePostal, setCodePostal] = useState("");
   const [form, setForm] = useState<MandatFormData>(defaultForm);
   const [initializedId, setInitializedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -148,9 +148,9 @@ export default function MandatDetailPage() {
     setAddress(mandat.address ?? "");
     setCity(mandat.city ?? "");
     setProvince(mandat.province ?? "");
-    setNumUnits(mandat.numUnits ?? "");
-    setEvaluator(mandat.evaluator ?? "");
     setMandataire(mandat.mandataire ?? "");
+    setMandataireAdresse((mandat as any).mandataireAdresse ?? "");
+    setCodePostal((mandat as any).codePostal ?? "");
     if (mandat.mandatData && typeof mandat.mandatData === "object") {
       const loaded = { ...defaultForm, ...(mandat.mandatData as MandatFormData) };
       // Migration : anciennes feuilles avec cases à cocher → texte libre
@@ -175,9 +175,9 @@ export default function MandatDetailPage() {
         address,
         city,
         province,
-        numUnits,
-        evaluator,
         mandataire,
+        mandataireAdresse,
+        codePostal,
         mandatData: form,
       });
     },
@@ -309,8 +309,16 @@ export default function MandatDetailPage() {
                     {MANDATAIRE_SUGGESTIONS.map(s => <option key={s} value={s} />)}
                   </datalist>
                 </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Adresse du sous-traitant</Label>
+                  <Input value={mandataireAdresse} onChange={e => setMandataireAdresse(e.target.value)} placeholder="(numéro de rue et rue)" data-testid="input-mandataire-adresse" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Code postal</Label>
+                  <Input value={codePostal} onChange={e => setCodePostal(e.target.value)} placeholder="G1A 1A1" data-testid="input-code-postal" />
+                </div>
                 <div className="col-span-2">
-                  <Label className="text-xs mb-1 block">Adresse</Label>
+                  <Label className="text-xs mb-1 block">Adresse du projet</Label>
                   <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 rue Exemple" data-testid="input-address" />
                 </div>
                 <div>
@@ -320,14 +328,6 @@ export default function MandatDetailPage() {
                 <div>
                   <Label className="text-xs mb-1 block">Province</Label>
                   <Input value={province} onChange={e => setProvince(e.target.value)} placeholder="QC" data-testid="input-province" />
-                </div>
-                <div>
-                  <Label className="text-xs mb-1 block">Nombre d'unités</Label>
-                  <Input value={numUnits} onChange={e => setNumUnits(e.target.value)} placeholder="12" data-testid="input-num-units" />
-                </div>
-                <div>
-                  <Label className="text-xs mb-1 block">Évaluateur</Label>
-                  <Input value={evaluator} onChange={e => setEvaluator(e.target.value)} placeholder="Nom" data-testid="input-evaluator" />
                 </div>
               </CardContent>
             </Card>
@@ -495,9 +495,9 @@ export default function MandatDetailPage() {
                 data={{
                   name,
                   mandataire,
+                  mandataireAdresse,
+                  codePostal,
                   cityLine,
-                  numUnits,
-                  evaluator,
                   mandatType: form.mandatType,
                   mandatTypeLabel,
                   schlObjectif: form.schlObjectif,

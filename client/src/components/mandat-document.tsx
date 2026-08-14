@@ -14,9 +14,9 @@ export const PROGRAMMES_OPTIONS = [
 export interface MandatDocumentData {
   name: string;
   mandataire: string;
+  mandataireAdresse: string;
+  codePostal: string;
   cityLine: string;
-  numUnits: string;
-  evaluator: string;
   mandatType: string;
   mandatTypeLabel: string;
   schlObjectif: string;
@@ -89,21 +89,15 @@ export default function MandatDocument({ data }: { data: MandatDocumentData }) {
               <p className="font-medium">{data.cityLine}</p>
             </div>
           )}
-          {data.numUnits && (
-            <div>
-              <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Unités</p>
-              <p className="font-medium">{data.numUnits}</p>
-            </div>
-          )}
-          {data.evaluator && (
-            <div>
-              <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Évaluateur</p>
-              <p className="font-medium">{data.evaluator}</p>
-            </div>
-          )}
           <div>
             <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Confié à (sous-traitant)</p>
             <p className="font-medium">{data.mandataire || "—"}</p>
+            {data.mandataireAdresse && (
+              <p className="text-xs text-slate-500">{data.mandataireAdresse}</p>
+            )}
+            {data.codePostal && (
+              <p className="text-xs text-slate-500">{data.codePostal}</p>
+            )}
           </div>
           {data.dateLivraison && (
             <div>
