@@ -517,9 +517,8 @@ export default function ReportTab({
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const signatureInfo = (project as any).signatureInfo as
-    | { date: string; code: string; verifyUrl: string; qrDataUrl?: string }
+    | { date: string; code: string }
     | undefined;
-  const qrDataUrl = signatureInfo?.qrDataUrl ?? null;
   const [constructionYear, setConstructionYear] = useState(
     project.yearBuilt || (project.preReportData as any)?.buildingInfo?.yearBuilt || (project.postReportData as any)?.buildingInfo?.yearBuilt || ""
   );
@@ -3434,19 +3433,7 @@ export default function ReportTab({
                             <p className="text-[8px] mt-1 font-mono text-slate-500">
                               ID : {signatureInfo?.code || "—"}
                             </p>
-                            {qrDataUrl && (
-                              <p className="text-[6px] text-slate-400 mt-0.5">Scannez pour vérifier</p>
-                            )}
                           </div>
-                          {qrDataUrl ? (
-                            <img
-                              src={qrDataUrl}
-                              alt="Code QR de vérification"
-                              style={{ width: "44px", height: "44px" }}
-                            />
-                          ) : signatureInfo ? (
-                            <span id="qr-pending" style={{ width: "44px", height: "44px", display: "inline-block" }} />
-                          ) : null}
                         </div>
                       </div>
                     </div>

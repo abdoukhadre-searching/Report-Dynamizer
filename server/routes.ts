@@ -15,57 +15,11 @@ import { PDFDocument, rgb, StandardFonts, PDFName, PDFBool } from "pdf-lib";
 import { inflateSync, deflateSync } from "zlib";
 import { hashPassword, verifyPassword } from "./auth";
 import sharp from "sharp";
-import QRCode from "qrcode";
-
-// ── Vérification de signature (QR / page /verifier) ─────────────────────────
 function torontoDateStr(d = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Toronto",
     year: "numeric", month: "2-digit", day: "2-digit",
   }).format(d); // YYYY-MM-DD
-}
-
-function makeSignatureToken(projectId: string, date: string): string {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) {
-    // Fail-closed : sans secret, aucun jeton de signature ne peut être émis ni validé
-    throw new Error("SESSION_SECRET manquant : impossible de générer un jeton de signature");
-  }
-  return crypto
-    .createHmac("sha256", secret)
-    .update(`${projectId}|${date}`)
-    .digest("hex")
-    .slice(0, 16)
-    .toUpperCase();
-}
-
-function tokensMatch(a: string, b: string): boolean {
-  const ba = Buffer.from(a, "utf8");
-  const bb = Buffer.from(b, "utf8");
-  return ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
-}
-
-function signatureCodeFromToken(token: string): string {
-  return `${token.slice(0, 4)}-${token.slice(4, 8)}`;
-}
-
-function getPublicBaseUrl(): string {
-  if (process.env.APP_URL) return process.env.APP_URL;
-  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  return `http://localhost:${process.env.PORT || 5000}`;
-}
-
-async function buildSignatureInfo(projectId: string) {
-  const date = torontoDateStr();
-  const token = makeSignatureToken(projectId, date);
-  const verifyUrl = `${getPublicBaseUrl()}/verifier?p=${encodeURIComponent(projectId)}&d=${date}&t=${token}`;
-  const qrDataUrl: string = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 128 });
-  return {
-    date,
-    code: signatureCodeFromToken(token),
-    verifyUrl,
-    qrDataUrl,
-  };
 }
 
 const execFileAsync = promisify(execFile);
@@ -321,32 +275,12 @@ export async function registerRoutes(
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
-      res.json({ ...project, signatureInfo: await buildSignatureInfo(project.id) });
+      res.json(project);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch project" });
     }
   });
 
-  // Vérification publique de l'authenticité d'un document (cible du code QR)
-  app.get("/api/verify-document", async (req, res) => {
-    try {
-      const { p, d, t } = req.query as Record<string, string>;
-      if (!p || !d || !t) return res.status(400).json({ valid: false });
-      const expected = makeSignatureToken(p, d);
-      if (!tokensMatch(String(t).toUpperCase(), expected)) return res.json({ valid: false });
-      const project = await storage.getProject(p).catch(() => null);
-      if (!project) return res.json({ valid: false });
-      return res.json({
-        valid: true,
-        projectName: project.name || null,
-        date: d,
-        code: signatureCodeFromToken(expected),
-        signer: "Marc-André Boucher",
-      });
-    } catch {
-      return res.status(500).json({ valid: false });
-    }
-  });
   app.get("/api/projects/:id/export-pdf", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);
@@ -947,28 +881,11 @@ export async function registerRoutes(
       borderColor: TEAL_BORDER, borderWidth: 1,
     });
 
-    // Code de vérification déterministe (HMAC) + URL de vérification (QR)
-    const sigInfo = projectId ? buildSignatureInfo(projectId) : null;
-    const verifCode = sigInfo
-      ? sigInfo.code
-      : (() => {
-          const h = crypto.createHash("sha256").update(`MAB-${sigDateStr.slice(0, 10)}-collectif`).digest("hex").slice(0, 8).toUpperCase();
-          return `${h.slice(0, 4)}-${h.slice(4)}`;
-        })();
-
-    // Code QR de vérification — à droite de la zone
-    let qrSize = 0;
-    if (sigInfo) {
-      qrSize = Math.min(sigZoneH, 30);
-      const qrPng = await QRCode.toBuffer(sigInfo.verifyUrl, { margin: 0, width: 128 });
-      const qrImg = await pdfDoc.embedPng(qrPng);
-      page.drawImage(qrImg, {
-        x: SIG_X2 - qrSize - 3,
-        y: sigPdfYBot + (sigZoneH - qrSize) / 2,
-        width: qrSize,
-        height: qrSize,
-      });
-    }
+    // Code de vérification déterministe
+    const verifCode = (() => {
+      const h = crypto.createHash("sha256").update(`MAB-${sigDateStr.slice(0, 10)}-${projectId || "collectif"}`).digest("hex").slice(0, 8).toUpperCase();
+      return `${h.slice(0, 4)}-${h.slice(4)}`;
+    })();
 
     // Layout — vertically centered in the zone
     const sigCenterY = sigPdfYBot + sigZoneH / 2;

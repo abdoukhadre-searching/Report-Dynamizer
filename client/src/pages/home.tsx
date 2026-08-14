@@ -37,7 +37,7 @@ export default function HomePage() {
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-900 leading-none" data-testid="text-app-title">MAB Projets</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Gestion de projets · Québec</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Gestion de projets</p>
               </div>
             </div>
           </div>
@@ -155,7 +155,7 @@ export default function HomePage() {
                 >
                   <FileBarChart2 className="w-7 h-7" style={{ color: "#1e3a5f" }} />
                 </div>
-                <h2 className="text-lg font-bold text-slate-900 mb-2">Rapports H2K</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-2">Documents APH SELECT</h2>
                 <p className="text-sm text-slate-500 leading-relaxed">
                   Analyser les rapports HOT2000 avant / après travaux et générer les cahiers de qualification APH SELECT.
                 </p>

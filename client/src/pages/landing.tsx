@@ -43,7 +43,7 @@ export default function LandingPage() {
         </Button>
 
         <p className="mt-10 text-xs" style={{ color: "#7a95b0" }}>
-          Marc-André Boucher — Conseils Immobiliers · Québec, Canada
+          Marc-André Boucher — Conseils Immobiliers
         </p>
       </div>
     </div>

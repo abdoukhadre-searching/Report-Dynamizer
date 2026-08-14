@@ -196,7 +196,7 @@ export default function ProjectsListPage({ buildingType }: ProjectsListPageProps
             </div>
             <div>
               <h1 className="text-sm font-bold text-slate-900 leading-none">MAB Projets</h1>
-              <p className="text-[10px] text-slate-400 mt-0.5">Qualification APH SELECT</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Documents APH SELECT</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -1,0 +1,42 @@
+on va enlver le qr code ca bug toujours et npm intsall balace :
+
+root@console:/home/energiqualif/energiqualif# npm install
+npm warn Unknown builtin config "globalignorefile". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm error Exit handler never called!
+npm error This is an error with npm itself. Please report this error at:
+npm error   <https://github.com/npm/cli/issues>
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-08-14T16_59_21_098Z-debug-0.log
+------------
+
+root@console:/home/energiqualif/energiqualif# sudo journalctl -u energiqualif -f
+Aug 14 17:01:22 console.agrobot-manager.cloud energiqualif[399345]:     at Module.require (node:internal/modules/cjs/loader:1463:12)
+Aug 14 17:01:22 console.agrobot-manager.cloud energiqualif[399345]:     at require (node:internal/modules/helpers:147:16)
+Aug 14 17:01:22 console.agrobot-manager.cloud energiqualif[399345]:     at Object.<anonymous> (/home/energiqualif/energiqualif/dist/index.cjs:128:1178)
+Aug 14 17:01:22 console.agrobot-manager.cloud energiqualif[399345]:     at Module._compile (node:internal/modules/cjs/loader:1705:14) {
+Aug 14 17:01:22 console.agrobot-manager.cloud energiqualif[399345]:   code: 'MODULE_NOT_FOUND',
+Aug 14 17:01:22 console.agrobot-manager.cloud energiqualif[399345]:   requireStack: [ '/home/energiqualif/energiqualif/dist/index.cjs' ]
+Aug 14 17:01:22 console.agrobot-manager.cloud energiqualif[399345]: }
+Aug 14 17:01:22 console.agrobot-manager.cloud energiqualif[399345]: Node.js v22.22.1
+Aug 14 17:01:22 console.agrobot-manager.cloud systemd[1]: energiqualif.service: Main process exited, code=exited, status=1/FAILURE
+Aug 14 17:01:22 console.agrobot-manager.cloud systemd[1]: energiqualif.service: Failed with result 'exit-code'.
+Aug 14 17:01:27 console.agrobot-manager.cloud systemd[1]: energiqualif.service: Scheduled restart job, restart counter is at 1.
+Aug 14 17:01:27 console.agrobot-manager.cloud systemd[1]: Started energiqualif.service - EnergiQualif — APH SELECT.
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]: node:internal/modules/cjs/loader:1386
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:   throw err;
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:   ^
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]: Error: Cannot find module 'qrcode'
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]: Require stack:
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]: - /home/energiqualif/energiqualif/dist/index.cjs
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at Module._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at Module._load (node:internal/modules/cjs/loader:1192:37)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at Module.require (node:internal/modules/cjs/loader:1463:12)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at require (node:internal/modules/helpers:147:16)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at Object.<anonymous> (/home/energiqualif/energiqualif/dist/index.cjs:128:1178)
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:     at Module._compile (node:internal/modules/cjs/loader:1705:14) {
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:   code: 'MODULE_NOT_FOUND',
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]:   requireStack: [ '/home/energiqualif/energiqualif/dist/index.cjs' ]
+Aug 14 17:01:27 console.agrobot-manager.cloud energiqualif[399372]: }
