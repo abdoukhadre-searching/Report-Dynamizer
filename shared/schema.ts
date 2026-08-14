@@ -82,7 +82,7 @@ export const projects = pgTable("projects", {
 export const mandats = pgTable("mandats", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id"),
-  name: text("name").notNull().default("Nouveau mandat"),
+  name: text("name").notNull().default(""),
   clientName: text("client_name"),
   address: text("address"),
   city: text("city"),

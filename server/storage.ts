@@ -80,7 +80,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createMandat(data: Partial<InsertMandat>): Promise<Mandat> {
-    const [created] = await db.insert(mandats).values({ name: "Nouveau mandat", ...data } as InsertMandat).returning();
+    const [created] = await db.insert(mandats).values({ name: "", ...data } as InsertMandat).returning();
     return created;
   }
 
@@ -267,7 +267,7 @@ export class MemoryStorage implements IStorage {
     const m: Mandat = {
       id: randomUUID(),
       userId: data.userId ?? null,
-      name: data.name ?? "Nouveau mandat",
+      name: data.name ?? "",
       clientName: data.clientName ?? null,
       address: data.address ?? null,
       city: data.city ?? null,

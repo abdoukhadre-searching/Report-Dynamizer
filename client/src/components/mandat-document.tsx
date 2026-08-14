@@ -14,7 +14,6 @@ export const PROGRAMMES_OPTIONS = [
 export interface MandatDocumentData {
   name: string;
   mandataire: string;
-  mandataireAdresse: string;
   codePostal: string;
   cityLine: string;
   mandatType: string;
@@ -92,13 +91,13 @@ export default function MandatDocument({ data }: { data: MandatDocumentData }) {
           <div>
             <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Confié à (sous-traitant)</p>
             <p className="font-medium">{data.mandataire || "—"}</p>
-            {data.mandataireAdresse && (
-              <p className="text-xs text-slate-500">{data.mandataireAdresse}</p>
-            )}
-            {data.codePostal && (
-              <p className="text-xs text-slate-500">{data.codePostal}</p>
-            )}
           </div>
+          {data.codePostal && (
+            <div>
+              <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Code postal</p>
+              <p className="font-medium">{data.codePostal}</p>
+            </div>
+          )}
           {data.dateLivraison && (
             <div>
               <p className="text-[11px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#94a3b8" }}>Livraison attendue</p>

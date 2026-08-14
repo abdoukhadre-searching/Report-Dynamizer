@@ -114,7 +114,6 @@ export default function MandatDetailPage() {
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
   const [mandataire, setMandataire] = useState("");
-  const [mandataireAdresse, setMandataireAdresse] = useState("");
   const [codePostal, setCodePostal] = useState("");
   const [form, setForm] = useState<MandatFormData>(defaultForm);
   const [initializedId, setInitializedId] = useState<string | null>(null);
@@ -149,7 +148,6 @@ export default function MandatDetailPage() {
     setCity(mandat.city ?? "");
     setProvince(mandat.province ?? "");
     setMandataire(mandat.mandataire ?? "");
-    setMandataireAdresse((mandat as any).mandataireAdresse ?? "");
     setCodePostal((mandat as any).codePostal ?? "");
     if (mandat.mandatData && typeof mandat.mandatData === "object") {
       const loaded = { ...defaultForm, ...(mandat.mandatData as MandatFormData) };
@@ -176,7 +174,6 @@ export default function MandatDetailPage() {
         city,
         province,
         mandataire,
-        mandataireAdresse,
         codePostal,
         mandatData: form,
       });
@@ -306,17 +303,13 @@ export default function MandatDetailPage() {
                   <Label className="text-xs mb-1 block">Confié à (sous-traitant)</Label>
                   <Input value={mandataire} onChange={e => setMandataire(e.target.value)} placeholder="Nom du sous-traitant" data-testid="input-mandataire" />
                 </div>
-                <div>
-                  <Label className="text-xs mb-1 block">Adresse du sous-traitant</Label>
-                  <Input value={mandataireAdresse} onChange={e => setMandataireAdresse(e.target.value)} placeholder="(numéro de rue et rue)" data-testid="input-mandataire-adresse" />
-                </div>
-                <div>
-                  <Label className="text-xs mb-1 block">Code postal</Label>
-                  <Input value={codePostal} onChange={e => setCodePostal(e.target.value)} placeholder="G1A 1A1" data-testid="input-code-postal" />
-                </div>
                 <div className="col-span-2">
                   <Label className="text-xs mb-1 block">Adresse du projet (Numéro de rue et Rue)</Label>
                   <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 rue Exemple" data-testid="input-address" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Code postal du projet</Label>
+                  <Input value={codePostal} onChange={e => setCodePostal(e.target.value)} placeholder="G1A 1A1" data-testid="input-code-postal" />
                 </div>
                 <div>
                   <Label className="text-xs mb-1 block">Ville</Label>
@@ -492,7 +485,6 @@ export default function MandatDetailPage() {
                 data={{
                   name,
                   mandataire,
-                  mandataireAdresse,
                   codePostal,
                   cityLine,
                   mandatType: form.mandatType,
