@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { ArrowLeft, Shield, Clock, Users, FolderOpen, Search, Plus, Upload, Trash2, Edit2, Eye } from "lucide-react";
-import type { AuditLog } from "@shared/schema";
+import {
+  ArrowLeft, Shield, Clock, Users, FolderOpen, Search,
+  Plus, Upload, Trash2, Edit2, Eye, UserPlus, Key, X,
+} from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import type { AuditLog, User } from "@shared/schema";
 
 const actionConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   create_project: { label: "Création", icon: <Plus className="w-3 h-3" />, color: "bg-blue-50 text-blue-700 border-blue-200" },
@@ -24,13 +36,54 @@ function formatDate(d: string | Date | null) {
   return new Date(d).toLocaleString("fr-CA", { dateStyle: "short", timeStyle: "short" });
 }
 
-export default function AdminPage() {
-  const { user, logout } = useAuth();
-  const [, navigate] = useLocation();
-  const [search, setSearch] = useState("");
+type SafeUser = Omit<User, "passwordHash">;
 
-  const { data: logs, isLoading } = useQuery<AuditLog[]>({
-    queryKey: ["/api/audit-logs/all"],
+export default function AdminPage() {
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [resetUserId, setResetUserId] = useState<string | null>(null);
+  const [newUser, setNewUser] = useState({ name: "", username: "", email: "", password: "", role: "user" });
+  const [newPassword, setNewPassword] = useState("");
+
+  const { data: logs, isLoading } = useQuery<AuditLog[]>({ queryKey: ["/api/audit-logs/all"] });
+  const { data: userList, isLoading: usersLoading } = useQuery<SafeUser[]>({ queryKey: ["/api/admin/users"] });
+
+  const createUserMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", "/api/admin/users", newUser),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setShowCreateUser(false);
+      setNewUser({ name: "", username: "", email: "", password: "", role: "user" });
+      toast({ title: "Utilisateur créé avec succès" });
+    },
+    onError: async (e: any) => {
+      const msg = await e?.response?.json?.().catch(() => null);
+      toast({ title: msg?.message || "Erreur lors de la création", variant: "destructive" });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/users/${id}`, undefined),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Utilisateur supprimé" });
+    },
+    onError: () => toast({ title: "Erreur lors de la suppression", variant: "destructive" }),
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("PATCH", `/api/admin/users/${id}`, { password: newPassword }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setResetUserId(null);
+      setNewPassword("");
+      toast({ title: "Mot de passe mis à jour" });
+    },
+    onError: () => toast({ title: "Erreur lors de la mise à jour", variant: "destructive" }),
   });
 
   if (!user || user.role !== "admin") {
@@ -59,6 +112,11 @@ export default function AdminPage() {
 
   const uniqueUsers = [...new Set((logs || []).map((l) => l.userId).filter(Boolean))].length;
   const uniqueProjects = [...new Set((logs || []).map((l) => l.projectId).filter(Boolean))].length;
+
+  const roleLabel = (r: string) => r === "admin" ? "Admin" : "Utilisateur";
+  const roleColor = (r: string) => r === "admin"
+    ? "bg-red-50 text-red-700 border-red-200"
+    : "bg-blue-50 text-blue-700 border-blue-200";
 
   return (
     <div className="min-h-screen bg-background">
@@ -107,7 +165,7 @@ export default function AdminPage() {
                 <Users className="w-5 h-5 text-green-700" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-700">{uniqueUsers}</p>
+                <p className="text-2xl font-bold text-green-700">{userList?.length ?? uniqueUsers}</p>
                 <p className="text-xs text-muted-foreground">Utilisateurs actifs</p>
               </div>
             </CardContent>
@@ -124,6 +182,89 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* ── Gestion des utilisateurs ───────────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <CardTitle className="text-base">Gestion des utilisateurs</CardTitle>
+              </div>
+              <Button
+                size="sm"
+                className="gap-2"
+                style={{ backgroundColor: "#1e3a5f" }}
+                onClick={() => setShowCreateUser(true)}
+              >
+                <UserPlus className="w-4 h-4" />
+                Nouvel accès
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {usersLoading ? (
+              <div className="p-6 space-y-3">
+                {[1, 2].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : !userList?.length ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Aucun utilisateur</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/40">
+                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Nom</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Identifiant</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Courriel</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Rôle</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {userList.map(u => (
+                      <tr key={u.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-2.5 font-medium text-xs">{u.name}</td>
+                        <td className="px-4 py-2.5 text-xs text-muted-foreground font-mono">{(u as any).username || "—"}</td>
+                        <td className="px-4 py-2.5 text-xs text-muted-foreground">{u.email}</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${roleColor(u.role)}`}>
+                            {roleLabel(u.role)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <button
+                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-[#1e3a5f] transition-colors"
+                              onClick={() => { setResetUserId(u.id); setNewPassword(""); }}
+                              title="Réinitialiser le mot de passe"
+                            >
+                              <Key className="w-3.5 h-3.5" />
+                              MDP
+                            </button>
+                            {u.id !== user.id && (
+                              <button
+                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-600 transition-colors"
+                                onClick={() => {
+                                  if (confirm(`Supprimer l'accès de ${u.name} ?`))
+                                    deleteUserMutation.mutate(u.id);
+                                }}
+                                title="Supprimer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                Supprimer
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Log table */}
         <Card>
@@ -148,9 +289,7 @@ export default function AdminPage() {
           <CardContent className="p-0">
             {isLoading ? (
               <div className="p-6 space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
+                {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
@@ -176,23 +315,16 @@ export default function AdminPage() {
                         <tr key={log.id} className="hover:bg-muted/20 transition-colors" data-testid={`admin-log-${log.id}`}>
                           <td className="px-4 py-2.5">
                             <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${cfg.color}`}>
-                              {cfg.icon}
-                              {cfg.label}
+                              {cfg.icon}{cfg.label}
                             </span>
                           </td>
                           <td className="px-4 py-2.5">
                             <div className="font-medium text-xs">{log.userName || "—"}</div>
                             <div className="text-xs text-muted-foreground">{log.userEmail || ""}</div>
                           </td>
-                          <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[150px] truncate">
-                            {log.projectName || "—"}
-                          </td>
-                          <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[180px] truncate">
-                            {log.details || "—"}
-                          </td>
-                          <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
-                            {formatDate(log.createdAt)}
-                          </td>
+                          <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[150px] truncate">{log.projectName || "—"}</td>
+                          <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[180px] truncate">{log.details || "—"}</td>
+                          <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">{formatDate(log.createdAt)}</td>
                         </tr>
                       );
                     })}
@@ -203,6 +335,90 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* ── Modal : créer un utilisateur ───────────────────────────────────── */}
+      <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" style={{ color: "#1e3a5f" }} />
+              Créer un accès
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label className="text-xs mb-1 block">Nom complet *</Label>
+              <Input value={newUser.name} onChange={e => setNewUser(p => ({ ...p, name: e.target.value }))} placeholder="Jean Tremblay" />
+            </div>
+            <div>
+              <Label className="text-xs mb-1 block">Nom d'utilisateur</Label>
+              <Input value={newUser.username} onChange={e => setNewUser(p => ({ ...p, username: e.target.value }))} placeholder="jtremblay01" autoComplete="off" />
+            </div>
+            <div>
+              <Label className="text-xs mb-1 block">Courriel *</Label>
+              <Input type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} placeholder="jean@exemple.com" />
+            </div>
+            <div>
+              <Label className="text-xs mb-1 block">Mot de passe *</Label>
+              <Input type="password" value={newUser.password} onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} placeholder="Minimum 6 caractères" autoComplete="new-password" />
+            </div>
+            <div>
+              <Label className="text-xs mb-1 block">Rôle</Label>
+              <Select value={newUser.role} onValueChange={v => setNewUser(p => ({ ...p, role: v }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Utilisateur</SelectItem>
+                  <SelectItem value="admin">Administrateur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateUser(false)}>Annuler</Button>
+            <Button
+              style={{ backgroundColor: "#1e3a5f" }}
+              disabled={!newUser.name || !newUser.email || !newUser.password || createUserMutation.isPending}
+              onClick={() => createUserMutation.mutate()}
+            >
+              {createUserMutation.isPending ? "Création…" : "Créer l'accès"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal : réinitialiser le mot de passe ──────────────────────────── */}
+      <Dialog open={!!resetUserId} onOpenChange={open => { if (!open) setResetUserId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="w-4 h-4" style={{ color: "#1e3a5f" }} />
+              Nouveau mot de passe
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Label className="text-xs mb-1 block">Nouveau mot de passe</Label>
+            <Input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="Minimum 6 caractères"
+              autoComplete="new-password"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetUserId(null)}>Annuler</Button>
+            <Button
+              style={{ backgroundColor: "#1e3a5f" }}
+              disabled={newPassword.length < 6 || resetPasswordMutation.isPending}
+              onClick={() => resetUserId && resetPasswordMutation.mutate(resetUserId)}
+            >
+              {resetPasswordMutation.isPending ? "Mise à jour…" : "Confirmer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

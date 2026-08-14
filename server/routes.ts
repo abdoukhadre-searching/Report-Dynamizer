@@ -175,6 +175,61 @@ export async function registerRoutes(
     res.status(403).json({ message: "L'inscription publique est désactivée." });
   });
 
+  // ── Gestion des utilisateurs (admin seulement) ──────────────────────────────
+  app.get("/api/admin/users", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    try {
+      const allUsers = await storage.getAllUsers();
+      const safe = allUsers.map(({ passwordHash: _, ...u }) => u);
+      res.json(safe);
+    } catch { res.status(500).json({ message: "Erreur serveur" }); }
+  });
+
+  app.post("/api/admin/users", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    try {
+      const { name, username, email, password, role } = req.body;
+      if (!name || !email || !password)
+        return res.status(400).json({ message: "Nom, courriel et mot de passe requis" });
+      const existing = await storage.getUserByEmail(email);
+      if (existing) return res.status(409).json({ message: "Courriel déjà utilisé" });
+      if (username) {
+        const existingU = await storage.getUserByUsername(username);
+        if (existingU) return res.status(409).json({ message: "Nom d'utilisateur déjà utilisé" });
+      }
+      const passwordHash = await hashPassword(password);
+      const user = await storage.createUser({ name, username: username || null, email, passwordHash, role: role || "user" });
+      const { passwordHash: _, ...safe } = user;
+      res.json(safe);
+    } catch (e: any) { res.status(500).json({ message: e.message || "Erreur serveur" }); }
+  });
+
+  app.delete("/api/admin/users/:id", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    if (req.params.id === req.session.userId)
+      return res.status(400).json({ message: "Impossible de supprimer votre propre compte" });
+    try {
+      await storage.deleteUser(req.params.id);
+      res.json({ success: true });
+    } catch { res.status(500).json({ message: "Erreur serveur" }); }
+  });
+
+  app.patch("/api/admin/users/:id", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    try {
+      const { password, role } = req.body;
+      const updates: Record<string, any> = {};
+      if (role) updates.role = role;
+      if (password) updates.passwordHash = await hashPassword(password);
+      await storage.updateUser(req.params.id, updates);
+      res.json({ success: true });
+    } catch { res.status(500).json({ message: "Erreur serveur" }); }
+  });
+
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email: emailOrUsername, password, rememberMe } = req.body;

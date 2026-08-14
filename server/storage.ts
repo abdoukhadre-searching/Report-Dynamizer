@@ -134,14 +134,23 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(data: { email: string; name: string; passwordHash: string; role?: string }): Promise<User> {
+  async createUser(data: { email: string; name: string; username?: string | null; passwordHash: string; role?: string }): Promise<User> {
     const [user] = await db.insert(users).values({
       email: data.email.toLowerCase(),
+      username: data.username ?? null,
       name: data.name,
       passwordHash: data.passwordHash,
       role: data.role ?? "user",
     }).returning();
     return user;
+  }
+
+  async updateUser(id: string, data: Partial<{ role: string; passwordHash: string }>): Promise<void> {
+    await db.update(users).set(data).where(eq(users.id, id));
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
   }
 
   async createAuditLog(data: {
