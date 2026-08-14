@@ -131,8 +131,8 @@ export default function RapportsPage() {
               <Zap className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900 leading-none" data-testid="text-app-title">Rapports H2K</h1>
-              <p className="text-[10px] text-slate-400 mt-0.5">HOT2000 — Qualification APH SELECT</p>
+              <h1 className="text-sm font-bold text-slate-900 leading-none" data-testid="text-app-title">Documents APH SELECT</h1>
+              <p className="text-[10px] text-slate-400 mt-0.5">HOT2000 — Analyse énergétique</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
