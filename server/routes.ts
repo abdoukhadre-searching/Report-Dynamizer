@@ -55,13 +55,16 @@ function getPublicBaseUrl(): string {
   return `http://localhost:${process.env.PORT || 5000}`;
 }
 
-function buildSignatureInfo(projectId: string) {
+async function buildSignatureInfo(projectId: string) {
   const date = torontoDateStr();
   const token = makeSignatureToken(projectId, date);
+  const verifyUrl = `${getPublicBaseUrl()}/verifier?p=${encodeURIComponent(projectId)}&d=${date}&t=${token}`;
+  const qrDataUrl: string = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 128 });
   return {
     date,
     code: signatureCodeFromToken(token),
-    verifyUrl: `${getPublicBaseUrl()}/verifier?p=${encodeURIComponent(projectId)}&d=${date}&t=${token}`,
+    verifyUrl,
+    qrDataUrl,
   };
 }
 
@@ -213,27 +216,9 @@ export async function registerRoutes(
 
   // ── Auth routes ──────────────────────────────────────────────────────────────
 
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const { email, name, password } = req.body;
-      if (!email || !name || !password) {
-        return res.status(400).json({ message: "Tous les champs sont requis" });
-      }
-      if (password.length < 6) {
-        return res.status(400).json({ message: "Le mot de passe doit contenir au moins 6 caractères" });
-      }
-      const existing = await storage.getUserByEmail(email);
-      if (existing) {
-        return res.status(409).json({ message: "Un compte existe déjà avec cette adresse courriel" });
-      }
-      const passwordHash = await hashPassword(password);
-      const user = await storage.createUser({ email, name, passwordHash });
-      const { passwordHash: _, ...safeUser } = user;
-      res.status(201).json(safeUser);
-    } catch (err) {
-      console.error("Register error:", err);
-      res.status(500).json({ message: "Erreur lors de l'inscription" });
-    }
+  // Inscription publique désactivée — compte unique géré directement
+  app.post("/api/auth/register", (_req, res) => {
+    res.status(403).json({ message: "L'inscription publique est désactivée." });
   });
 
   app.post("/api/auth/login", async (req, res) => {
@@ -329,7 +314,7 @@ export async function registerRoutes(
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
-      res.json({ ...project, signatureInfo: buildSignatureInfo(project.id) });
+      res.json({ ...project, signatureInfo: await buildSignatureInfo(project.id) });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch project" });
     }

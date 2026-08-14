@@ -115,16 +115,16 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-5 text-center">
-              <p className="text-sm text-muted-foreground">
-                Pas encore de compte ?{" "}
-                <button
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Pour réinitialiser votre mot de passe,<br />
+                contactez{" "}
+                <a
+                  href="mailto:marc-andre@gestion-mb.com"
                   className="font-medium hover:underline"
                   style={{ color: "#1e3a5f" }}
-                  onClick={() => navigate("/register")}
-                  data-testid="link-register"
                 >
-                  Créer un compte
-                </button>
+                  marc-andre@gestion-mb.com
+                </a>
               </p>
             </div>
           </CardContent>

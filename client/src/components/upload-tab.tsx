@@ -36,7 +36,8 @@ export default function UploadTab({ project }: UploadTabProps) {
   const hasAddress = !!(project.address || project.city);
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(() => {
-    if (!hasAddress) return 1;
+    // Skip building-type step if the project was created with an explicit type
+    if (!hasAddress) return project.buildingType ? 2 : 1;
     const bothLoaded = !!project.preReportData && !!project.postReportData;
     if (bothLoaded && project.hasCommercialUnits === null) return 4;
     return 3;

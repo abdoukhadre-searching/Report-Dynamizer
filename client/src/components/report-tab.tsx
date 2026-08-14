@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import QRCode from "qrcode";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import type {
@@ -518,15 +517,9 @@ export default function ReportTab({
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const signatureInfo = (project as any).signatureInfo as
-    | { date: string; code: string; verifyUrl: string }
+    | { date: string; code: string; verifyUrl: string; qrDataUrl?: string }
     | undefined;
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!signatureInfo?.verifyUrl) return;
-    QRCode.toDataURL(signatureInfo.verifyUrl, { margin: 0, width: 128 })
-      .then(setQrDataUrl)
-      .catch(() => setQrDataUrl(null));
-  }, [signatureInfo?.verifyUrl]);
+  const qrDataUrl = signatureInfo?.qrDataUrl ?? null;
   const [constructionYear, setConstructionYear] = useState(
     project.yearBuilt || (project.preReportData as any)?.buildingInfo?.yearBuilt || (project.postReportData as any)?.buildingInfo?.yearBuilt || ""
   );
