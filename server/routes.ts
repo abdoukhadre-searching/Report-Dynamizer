@@ -223,7 +223,7 @@ export async function registerRoutes(
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email: emailOrUsername, password } = req.body;
+      const { email: emailOrUsername, password, rememberMe } = req.body;
       if (!emailOrUsername || !password) {
         return res.status(400).json({ message: "Identifiant et mot de passe requis" });
       }
@@ -240,6 +240,10 @@ export async function registerRoutes(
       }
       req.session.userId = user.id;
       req.session.userRole = user.role;
+      // Extend session to 30 days if "remember me" is checked
+      if (rememberMe) {
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+      }
       const { passwordHash: _, ...safeUser } = user;
       res.json({ user: safeUser });
     } catch (err) {

@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 interface AuthContextValue {
   user: Omit<User, "passwordHash"> | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -36,8 +36,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const login = async (email: string, password: string) => {
-    const res = await apiRequest("POST", "/api/auth/login", { email, password });
+  const login = async (email: string, password: string, rememberMe = false) => {
+    const res = await apiRequest("POST", "/api/auth/login", { email, password, rememberMe });
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.message || "Échec de la connexion");

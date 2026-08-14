@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,10 +25,10 @@ export default function LoginPage() {
     if (!username || !password) return;
     setIsLoading(true);
     try {
-      await login(username, password);
+      await login(username, password, rememberMe);
       toast({
         title: "Connexion réussie !",
-        description: "Bienvenue sur QualifPRO.",
+        description: "Bienvenue sur MAB Projets.",
       });
       navigate("/");
     } catch (err: any) {
@@ -64,7 +66,7 @@ export default function LoginPage() {
         <Card className="shadow-2xl border-0">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl" style={{ color: "#1e3a5f" }}>Connexion</CardTitle>
-            <CardDescription>Accédez à votre espace QualifPRO</CardDescription>
+            <CardDescription>Accédez à votre espace MAB Projets</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -104,6 +106,16 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(v) => setRememberMe(!!v)}
+                />
+                <label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer select-none">
+                  Rester connecté
+                </label>
               </div>
               <Button
                 type="submit"

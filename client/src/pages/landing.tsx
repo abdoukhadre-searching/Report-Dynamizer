@@ -1,6 +1,5 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Shield } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 
 export default function LandingPage() {
@@ -21,13 +20,6 @@ export default function LandingPage() {
         {/* Logo */}
         <div className="bg-white rounded-2xl p-3.5 shadow-md mb-10 border border-slate-100">
           <img src={mabLogoPath} alt="MAB Conseil Immobilier" className="h-12 w-auto object-contain" />
-        </div>
-
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-8 text-xs font-semibold tracking-wider uppercase"
-          style={{ backgroundColor: "rgba(30,58,95,0.08)", border: "1px solid rgba(30,58,95,0.18)", color: "#1e3a5f" }}>
-          <Shield className="w-3.5 h-3.5" />
-          Programme APH SELECT — Québec
         </div>
 
         <h1 className="text-5xl sm:text-6xl font-bold mb-5 leading-[1.08]"
