@@ -302,12 +302,9 @@ export default function MandatDetailPage() {
                   <Label className="text-xs mb-1 block">Donné par</Label>
                   <Input value={MANDANT_NAME} readOnly disabled className="bg-muted" data-testid="input-client-name" />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <Label className="text-xs mb-1 block">Confié à (sous-traitant)</Label>
-                  <Input value={mandataire} onChange={e => setMandataire(e.target.value)} placeholder="BN Énergie" list="mandataire-suggestions" data-testid="input-mandataire" />
-                  <datalist id="mandataire-suggestions">
-                    {MANDATAIRE_SUGGESTIONS.map(s => <option key={s} value={s} />)}
-                  </datalist>
+                  <Input value={mandataire} onChange={e => setMandataire(e.target.value)} placeholder="Nom du sous-traitant" data-testid="input-mandataire" />
                 </div>
                 <div>
                   <Label className="text-xs mb-1 block">Adresse du sous-traitant</Label>
@@ -318,7 +315,7 @@ export default function MandatDetailPage() {
                   <Input value={codePostal} onChange={e => setCodePostal(e.target.value)} placeholder="G1A 1A1" data-testid="input-code-postal" />
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-xs mb-1 block">Adresse du projet</Label>
+                  <Label className="text-xs mb-1 block">Adresse du projet (Numéro de rue et Rue)</Label>
                   <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 rue Exemple" data-testid="input-address" />
                 </div>
                 <div>

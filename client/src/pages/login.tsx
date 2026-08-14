@@ -92,7 +92,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder=""
                     required
                     autoComplete="current-password"
                     data-testid="input-password"
