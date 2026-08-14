@@ -195,7 +195,7 @@ export default function ProjectsListPage({ buildingType }: ProjectsListPageProps
               <Zap className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900 leading-none">EnergiQualif</h1>
+              <h1 className="text-sm font-bold text-slate-900 leading-none">QualifPRO</h1>
               <p className="text-[10px] text-slate-400 mt-0.5">Qualification APH SELECT</p>
             </div>
           </div>

@@ -36,8 +36,8 @@ export default function HomePage() {
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900 leading-none" data-testid="text-app-title">EnergiQualif</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Qualification APH SELECT</p>
+                <p className="text-sm font-bold text-slate-900 leading-none" data-testid="text-app-title">QualifPRO</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">APH SELECT · Québec</p>
               </div>
             </div>
           </div>

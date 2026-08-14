@@ -13,20 +13,20 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!username || !password) return;
     setIsLoading(true);
     try {
-      await login(email, password);
+      await login(username, password);
       toast({
         title: "Connexion réussie !",
-        description: "Bienvenue sur EnergiQualif.",
+        description: "Bienvenue sur QualifPRO.",
       });
       navigate("/");
     } catch (err: any) {
@@ -64,20 +64,21 @@ export default function LoginPage() {
         <Card className="shadow-2xl border-0">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl" style={{ color: "#1e3a5f" }}>Connexion</CardTitle>
-            <CardDescription>Accédez à votre espace EnergiQualif</CardDescription>
+            <CardDescription>Accédez à votre espace QualifPRO</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email">Adresse courriel</Label>
+                <Label htmlFor="username">Nom d'utilisateur</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="vous@exemple.com"
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Marcandre026"
                   required
                   autoFocus
+                  autoComplete="username"
                   data-testid="input-email"
                 />
               </div>
@@ -91,6 +92,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    autoComplete="current-password"
                     data-testid="input-password"
                     className="pr-9"
                   />
@@ -113,20 +115,6 @@ export default function LoginPage() {
                 {isLoading ? "Connexion…" : "Se connecter"}
               </Button>
             </form>
-
-            <div className="mt-5 text-center">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Pour réinitialiser votre mot de passe,<br />
-                contactez{" "}
-                <a
-                  href="mailto:marc-andre@gestion-mb.com"
-                  className="font-medium hover:underline"
-                  style={{ color: "#1e3a5f" }}
-                >
-                  marc-andre@gestion-mb.com
-                </a>
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

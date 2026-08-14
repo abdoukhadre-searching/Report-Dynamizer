@@ -223,11 +223,14 @@ export async function registerRoutes(
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ message: "Courriel et mot de passe requis" });
+      const { email: emailOrUsername, password } = req.body;
+      if (!emailOrUsername || !password) {
+        return res.status(400).json({ message: "Identifiant et mot de passe requis" });
       }
-      const user = await storage.getUserByEmail(email);
+      // Accept username or email
+      let user = emailOrUsername.includes("@")
+        ? await storage.getUserByEmail(emailOrUsername)
+        : await storage.getUserByUsername(emailOrUsername);
       if (!user) {
         return res.status(401).json({ message: "Identifiants incorrects" });
       }
