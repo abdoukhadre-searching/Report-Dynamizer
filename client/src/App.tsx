@@ -24,7 +24,6 @@ import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import ProfilePage from "@/pages/profile";
 import AdminPage from "@/pages/admin";
-import TechniquePage from "@/pages/technique";
 import VerifierPage from "@/pages/verifier";
 import { useEffect } from "react";
 
@@ -106,9 +105,6 @@ function Router() {
       </Route>
       <Route path="/admin">
         {() => <ProtectedRoute component={AdminPage} />}
-      </Route>
-      <Route path="/technique">
-        {() => <ProtectedRoute component={TechniquePage} />}
       </Route>
       <Route path="/" component={RootRoute} />
       <Route component={NotFound} />
