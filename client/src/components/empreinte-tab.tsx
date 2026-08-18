@@ -173,7 +173,10 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const post = project.postReportData as ReportData | null;
 
   const isNewBuilding = project.buildingType === "new";
-  const subventionThermo = SUBVENTION_THERMO;
+  const hpSubventionAmount = (selectedHeatPump as any)?.subventionAmount;
+  const subventionThermo = (hpSubventionAmount && Number(hpSubventionAmount) > 0)
+    ? Number(hpSubventionAmount)
+    : SUBVENTION_THERMO;
 
   async function saveProgrammeType(value: string) {
     setProgrammeType(value);
@@ -1605,6 +1608,18 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     </div>
                   )}
 
+                  {/* Image du document LogisVert uploadée lors de la création de la thermopompe (catalogue) */}
+                  {(selectedHeatPump as any)?.logisvertPdf && (
+                    <div className="rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                      <img
+                        src={(selectedHeatPump as any).logisvertPdf}
+                        alt={`Programme de subvention — ${selectedHeatPump?.name ?? "thermopompe"}`}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+
+                  {/* Document Logisvert spécifique au projet (upload par projet) */}
                   {logisvertPdfUrl ? (
                     <div className="space-y-2">
                       <img src={logisvertPdfUrl} alt="Document de subvention Logisvert" className="w-full rounded border border-slate-200 shadow-sm" />
@@ -1652,7 +1667,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     )
                   )}
 
-                  {exportMode && !logisvertPdfUrl && (
+                  {/* Export mode sans document projet ni image catalogue — image de secours */}
+                  {exportMode && !logisvertPdfUrl && !(selectedHeatPump as any)?.logisvertPdf && (
                     <img
                       src={tclSubventionImg}
                       alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"
@@ -1662,11 +1678,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 </>
               )}
 
-              {/* Export mode + non admissible — show standard subvention image */}
+              {/* Export mode + non admissible — image catalogue ou image de secours */}
               {exportMode && logisvertAdmissible === false && (
                 <img
-                  src={tclSubventionImg}
-                  alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"
+                  src={(selectedHeatPump as any)?.logisvertPdf ?? tclSubventionImg}
+                  alt="Tableau des subventions Hydro-Québec"
                   className="w-full rounded-md border border-slate-200 shadow-sm"
                 />
               )}

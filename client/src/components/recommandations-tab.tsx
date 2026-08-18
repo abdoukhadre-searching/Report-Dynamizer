@@ -1046,12 +1046,6 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                                     <img src={url} alt={`${selectedHeatPump.name} — fiche technique page ${i + 1}`} className="w-full rounded-md border" />
                                   </div>
                                 ))}
-                                {(selectedHeatPump as any).logisvertPdf && (
-                                  <div className="print:break-before-page mt-4">
-                                    <p className="text-xs font-semibold text-green-700 mb-1">Programme subvention LogisVert</p>
-                                    <img src={(selectedHeatPump as any).logisvertPdf} alt="Programme subvention LogisVert" className="w-full rounded-md border" />
-                                  </div>
-                                )}
                               </>
                             ) : (
                               <>
@@ -1094,12 +1088,6 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                                   <img src={url} alt={`${selectedWaterHeater.name} — fiche technique page ${i + 1}`} className="w-full rounded border" />
                                 </div>
                               ))}
-                              {(selectedWaterHeater as any).logisvertPdf && (
-                                <div className="print:break-before-page mt-4">
-                                  <p className="text-xs font-semibold text-green-700 mb-1">Programme subvention LogisVert</p>
-                                  <img src={(selectedWaterHeater as any).logisvertPdf} alt="Programme subvention LogisVert" className="w-full rounded-md border" />
-                                </div>
-                              )}
                             </>
                           ) : (
                             <>
