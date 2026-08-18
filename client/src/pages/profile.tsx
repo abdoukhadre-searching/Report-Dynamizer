@@ -40,7 +40,7 @@ function formatDate(d: string | Date | null) {
 // ─── Modal ajout / édition équipement ────────────────────────────────────────
 
 function HeatPumpModal({
-  hp,
+  hp: hpProp,
   defaultType,
   onClose,
 }: {
@@ -48,19 +48,21 @@ function HeatPumpModal({
   defaultType: "heatpump" | "waterheater";
   onClose: () => void;
 }) {
-  const isEdit = !!hp;
-  const type = hp?.type ?? defaultType; // fixé, pas modifiable
+  // currentHp suit l'état du serveur après création/modification
+  const [currentHp, setCurrentHp] = useState<HeatPump | null>(hpProp);
+  const isEdit = !!currentHp;
+  const type = currentHp?.type ?? defaultType; // fixé, pas modifiable
   const isHP = type === "heatpump";
 
-  const [name, setName] = useState(hp?.name ?? "");
-  const [brand, setBrand] = useState(hp?.brand ?? "");
-  const [model, setModel] = useState(hp?.model ?? "");
-  const [capacity, setCapacity] = useState(hp?.capacity ?? "");
-  const [hspf2, setHspf2] = useState(hp?.hspf2 ?? "");
-  const [seer2, setSeer2] = useState(hp?.seer2 ?? "");
-  const [isDefault, setIsDefault] = useState(hp?.isDefault ?? false);
-  const [images, setImages] = useState<string[]>((hp?.images as string[]) ?? []);
-  const [specPages, setSpecPages] = useState<string[]>((hp?.specPages as string[]) ?? []);
+  const [name, setName] = useState(currentHp?.name ?? "");
+  const [brand, setBrand] = useState(currentHp?.brand ?? "");
+  const [model, setModel] = useState(currentHp?.model ?? "");
+  const [capacity, setCapacity] = useState(currentHp?.capacity ?? "");
+  const [hspf2, setHspf2] = useState(currentHp?.hspf2 ?? "");
+  const [seer2, setSeer2] = useState(currentHp?.seer2 ?? "");
+  const [isDefault, setIsDefault] = useState(currentHp?.isDefault ?? false);
+  const [images, setImages] = useState<string[]>((currentHp?.images as string[]) ?? []);
+  const [specPages, setSpecPages] = useState<string[]>((currentHp?.specPages as string[]) ?? []);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingSpec, setUploadingSpec] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -76,11 +78,11 @@ function HeatPumpModal({
   }
 
   async function handleUpload(files: FileList | null, field: "image" | "spec") {
-    if (!files || files.length === 0 || !hp) return;
+    if (!files || files.length === 0 || !currentHp) return;
     field === "image" ? setUploadingImage(true) : setUploadingSpec(true);
     try {
-      let updated: HeatPump = hp;
-      for (const f of Array.from(files)) updated = await uploadFile(f, field, hp.id);
+      let updated: HeatPump = currentHp;
+      for (const f of Array.from(files)) updated = await uploadFile(f, field, currentHp.id);
       setImages((updated.images as string[]) ?? []);
       setSpecPages((updated.specPages as string[]) ?? []);
       qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
@@ -89,9 +91,9 @@ function HeatPumpModal({
   }
 
   async function handleDeleteImage(url: string, field: "images" | "specPages") {
-    if (!hp) return;
+    if (!currentHp) return;
     try {
-      const res = await apiRequest("DELETE", `/api/heat-pumps/${hp.id}/image`, { url, field });
+      const res = await apiRequest("DELETE", `/api/heat-pumps/${currentHp.id}/image`, { url, field });
       const updated = await res.json() as HeatPump;
       setImages((updated.images as string[]) ?? []);
       setSpecPages((updated.specPages as string[]) ?? []);
@@ -104,12 +106,19 @@ function HeatPumpModal({
     setSaving(true); setError("");
     try {
       if (isEdit) {
-        await apiRequest("PATCH", `/api/heat-pumps/${hp!.id}`, { name, brand, model, capacity, hspf2, seer2, isDefault });
+        await apiRequest("PATCH", `/api/heat-pumps/${currentHp!.id}`, { name, brand, model, capacity, hspf2, seer2, isDefault });
+        qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
+        onClose();
       } else {
-        await apiRequest("POST", "/api/heat-pumps", { name, brand, model, capacity, hspf2, seer2, type, isDefault });
+        // Création : rester ouvert pour permettre l'upload de photos
+        const res = await apiRequest("POST", "/api/heat-pumps", { name, brand, model, capacity, hspf2, seer2, type, isDefault });
+        const created = await res.json() as HeatPump;
+        setCurrentHp(created);
+        setImages((created.images as string[]) ?? []);
+        setSpecPages((created.specPages as string[]) ?? []);
+        qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
+        // Ne pas fermer — l'utilisateur peut maintenant ajouter photos/fiches
       }
-      qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
-      onClose();
     } catch (e: any) { setError(e.message ?? "Erreur"); }
     finally { setSaving(false); }
   }
@@ -174,75 +183,90 @@ function HeatPumpModal({
             </span>
           </label>
 
-          {/* Upload — seulement en édition */}
-          {isEdit && (
-            <>
-              <div className="border-t pt-3">
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Photos</Label>
+          {/* Upload — toujours visible, activé après enregistrement */}
+          <div className="border-t pt-3 space-y-4">
+            {!currentHp && (
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                💡 Enregistrez d'abord l'équipement pour pouvoir ajouter des photos et des fiches techniques.
+              </p>
+            )}
+            {currentHp && (
+              <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                ✓ Équipement enregistré — ajoutez vos photos et fiches ci-dessous, puis fermez quand vous avez terminé.
+              </p>
+            )}
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Photos</Label>
+                {currentHp ? (
                   <label className="cursor-pointer">
                     <input type="file" accept="image/*,.pdf,application/pdf" multiple className="hidden" onChange={e => handleUpload(e.target.files, "image")} />
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
                       {uploadingImage ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
                     </span>
                   </label>
-                </div>
-                {images.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">Aucune photo.</p>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {images.map((url, i) => (
-                      <div key={i} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
-                        <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                        <button onClick={() => handleDeleteImage(url, "images")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <span className="text-xs text-slate-300 border border-slate-100 px-2.5 py-1.5 rounded-lg">Ajouter</span>
                 )}
               </div>
+              {images.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">Aucune photo.</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {images.map((url, i) => (
+                    <div key={i} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
+                      <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                      <button onClick={() => handleDeleteImage(url, "images")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Pages de fiche technique</Label>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Pages de fiche technique</Label>
+                {currentHp ? (
                   <label className="cursor-pointer">
                     <input type="file" accept="image/*,.pdf,application/pdf" multiple className="hidden" onChange={e => handleUpload(e.target.files, "spec")} />
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
                       {uploadingSpec ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
                     </span>
                   </label>
-                </div>
-                {specPages.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">Aucune page.</p>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {specPages.map((url, i) => (
-                      <div key={i} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
-                        <img src={url} alt={`Fiche ${i + 1}`} className="w-full h-full object-cover" />
-                        <button onClick={() => handleDeleteImage(url, "specPages")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <span className="text-xs text-slate-300 border border-slate-100 px-2.5 py-1.5 rounded-lg">Ajouter</span>
                 )}
               </div>
-            </>
-          )}
-
-          {!isEdit && (
-            <p className="text-xs text-slate-400 italic">💡 Vous pourrez ajouter des photos et fiches après la création.</p>
-          )}
+              {specPages.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">Aucune page.</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {specPages.map((url, i) => (
+                    <div key={i} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
+                      <img src={url} alt={`Fiche ${i + 1}`} className="w-full h-full object-cover" />
+                      <button onClick={() => handleDeleteImage(url, "specPages")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
-          <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: "#1e3a5f" }}>
-            {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer"}
-          </Button>
+          <Button variant="outline" onClick={onClose}>{currentHp && !hpProp ? "Fermer" : "Annuler"}</Button>
+          {(!currentHp || hpProp) && (
+            <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: "#1e3a5f" }}>
+              {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer l'équipement"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

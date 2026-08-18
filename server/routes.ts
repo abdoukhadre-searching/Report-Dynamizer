@@ -1578,24 +1578,25 @@ export async function registerRoutes(
       const isPdf = req.file.mimetype === "application/pdf" || req.file.originalname.toLowerCase().endsWith(".pdf");
 
       if (isPdf) {
-        // Convertir chaque page PDF en JPEG via pdftoppm
-        const os = require("os");
-        const { execFile } = require("child_process");
+        // Convertir chaque page PDF en JPEG via pdftoppm (utilise les imports en haut du fichier)
+        const execFileAsync = promisify(execFile);
         const tmpId = `hp-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-        const tmpPdf = path.join(os.tmpdir(), `${tmpId}.pdf`);
-        const tmpOutPrefix = path.join(os.tmpdir(), tmpId);
+        const tmpDir = os.tmpdir();
+        const tmpPdf = path.join(tmpDir, `${tmpId}.pdf`);
+        const tmpOutPrefix = path.join(tmpDir, tmpId);
         await fs.promises.writeFile(tmpPdf, req.file.buffer);
-        await new Promise<void>((resolve, reject) => {
-          execFile("pdftoppm", ["-jpeg", "-r", "150", tmpPdf, tmpOutPrefix], (err: Error | null) => {
-            if (err) reject(err); else resolve();
-          });
-        });
-        const allFiles = await fs.promises.readdir(os.tmpdir());
+        try {
+          await execFileAsync("pdftoppm", ["-jpeg", "-r", "150", tmpPdf, tmpOutPrefix]);
+        } catch (convErr) {
+          await fs.promises.unlink(tmpPdf).catch(() => {});
+          throw convErr;
+        }
+        const allFiles = await fs.promises.readdir(tmpDir);
         const pageFiles = allFiles
           .filter((f: string) => f.startsWith(path.basename(tmpOutPrefix)) && (f.endsWith(".jpg") || f.endsWith(".jpeg") || f.endsWith(".ppm")))
           .sort();
         for (const pageFile of pageFiles) {
-          const pagePath = path.join(os.tmpdir(), pageFile);
+          const pagePath = path.join(tmpDir, pageFile);
           const pageBuf = await fs.promises.readFile(pagePath);
           const destUid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
           const destPath = path.join(hpDir, `${destUid}.jpg`);
