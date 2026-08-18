@@ -576,7 +576,6 @@ export default function ReportTab({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ annexPreuvesTitle: preuvesTitle }),
-        credentials: "include",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
     } catch {}
@@ -590,7 +589,7 @@ export default function ReportTab({
       for (const f of Array.from(files)) {
         const fd = new FormData();
         fd.append("file", f);
-        const res = await fetch(`/api/projects/${project.id}/preuves/upload`, { method: "POST", body: fd, credentials: "include" });
+        const res = await fetch(`/api/projects/${project.id}/preuves/upload`, { method: "POST", body: fd });
         if (!res.ok) throw new Error("Échec upload");
         lastProject = await res.json();
       }
@@ -606,7 +605,6 @@ export default function ReportTab({
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
-        credentials: "include",
       });
       if (!res.ok) throw new Error();
       const updated = await res.json();

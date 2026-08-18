@@ -142,6 +142,15 @@ function HeatPumpModal({
 
   async function handleSave() {
     if (!name.trim()) { setError("Le nom est requis."); return; }
+    if (!brand.trim()) { setError("La marque est requise."); return; }
+    if (!model.trim()) { setError("Le modèle est requis."); return; }
+    if (!capacity.trim()) { setError("La capacité est requise."); return; }
+    if (isHP && !hspf2.trim()) { setError("Le HSPF2 est requis."); return; }
+    if (isHP && !seer2.trim()) { setError("Le SEER2 est requis."); return; }
+    if (!subventionAmount.trim()) { setError("Le montant de subvention est requis."); return; }
+    if (pendingImages.length === 0 && images.length === 0) { setError("Au moins une photo est requise."); return; }
+    if (pendingSpecs.length === 0 && specPages.length === 0) { setError("Au moins une page de fiche technique est requise."); return; }
+    if (!pendingLogisvert && !logisvertPdf) { setError("Le document LogisVert est requis."); return; }
     setSaving(true); setError("");
     try {
       let hpId = savedId;
@@ -333,11 +342,11 @@ function HeatPumpModal({
           {/* ── Subvention LogisVert ── */}
           <div className="border-t pt-3">
             <div className="mb-3">
-              <Label>Montant de la subvention par unité (LogisVert)</Label>
+              <Label>Montant de la subvention par unité (LogisVert) en $ CAD *</Label>
               <Input
                 value={subventionAmount}
                 onChange={e => setSubventionAmount(e.target.value)}
-                placeholder="ex: 2 600 $"
+                placeholder="ex: 2600"
                 className="mt-1"
               />
             </div>
