@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import {
-  Zap, ClipboardList, FileBarChart2, FileSignature, ChevronRight,
+  Zap, ClipboardList, FileBarChart2, FileSignature, Thermometer, ChevronRight,
   ChevronDown, User, LogOut, Shield,
 } from "lucide-react";
 import {
@@ -87,7 +87,33 @@ export default function HomePage() {
             <p className="text-sm text-slate-400">Sélectionnez une section pour commencer.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:grid-cols-4">
+            {/* Partie technique */}
+            <button
+              className="group relative flex flex-col text-left rounded-2xl border-2 bg-white overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 active:translate-y-0"
+              style={{ borderColor: "#e8edf4" }}
+              onClick={() => navigate("/technique")}
+              data-testid="button-section-technique"
+            >
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl" style={{ backgroundColor: "#dc2626" }} />
+              <div className="pl-8 pr-6 pt-8 pb-7">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: "#fff1f2" }}
+                >
+                  <Thermometer className="w-7 h-7" style={{ color: "#dc2626" }} />
+                </div>
+                <h2 className="text-lg font-bold text-slate-900 mb-2">Partie technique</h2>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Gérer le catalogue d'équipements : thermopompes et chauffe-eaux avec photos et fiches techniques.
+                </p>
+                <div className="flex items-center gap-1.5 mt-5" style={{ color: "#dc2626" }}>
+                  <span className="text-xs font-semibold">Accéder</span>
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </div>
+            </button>
+
             {/* Feuille de mandats */}
             <button
               className="group relative flex flex-col text-left rounded-2xl border-2 bg-white overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 active:translate-y-0"

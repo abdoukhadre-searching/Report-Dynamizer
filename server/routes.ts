@@ -1512,8 +1512,8 @@ export async function registerRoutes(
   });
 
   app.post("/api/heat-pumps", async (req, res) => {
-    if (!req.session.userId || req.session.userRole !== "admin")
-      return res.status(403).json({ message: "Accès refusé" });
+    if (!req.session.userId)
+      return res.status(401).json({ message: "Non authentifié" });
     try {
       const { name, brand, model, capacity, hspf2, seer2, type, isDefault } = req.body;
       if (!name) return res.status(400).json({ message: "Nom requis" });
@@ -1530,8 +1530,8 @@ export async function registerRoutes(
   });
 
   app.patch("/api/heat-pumps/:id", async (req, res) => {
-    if (!req.session.userId || req.session.userRole !== "admin")
-      return res.status(403).json({ message: "Accès refusé" });
+    if (!req.session.userId)
+      return res.status(401).json({ message: "Non authentifié" });
     try {
       const id = req.params.id;
       const hp = await storage.getHeatPump(id);
@@ -1553,8 +1553,8 @@ export async function registerRoutes(
   });
 
   app.delete("/api/heat-pumps/:id", async (req, res) => {
-    if (!req.session.userId || req.session.userRole !== "admin")
-      return res.status(403).json({ message: "Accès refusé" });
+    if (!req.session.userId)
+      return res.status(401).json({ message: "Non authentifié" });
     try {
       await storage.deleteHeatPump(req.params.id);
       res.status(204).send();
@@ -1563,8 +1563,8 @@ export async function registerRoutes(
 
   // Upload d'une image (photo ou page de fiche technique) pour une thermopompe
   app.post("/api/heat-pumps/:id/upload-image", upload.single("file"), async (req, res) => {
-    if (!req.session.userId || req.session.userRole !== "admin")
-      return res.status(403).json({ message: "Accès refusé" });
+    if (!req.session.userId)
+      return res.status(401).json({ message: "Non authentifié" });
     try {
       const hp = await storage.getHeatPump(req.params.id);
       if (!hp) return res.status(404).json({ message: "Non trouvé" });
@@ -1589,8 +1589,8 @@ export async function registerRoutes(
   });
 
   app.delete("/api/heat-pumps/:id/image", async (req, res) => {
-    if (!req.session.userId || req.session.userRole !== "admin")
-      return res.status(403).json({ message: "Accès refusé" });
+    if (!req.session.userId)
+      return res.status(401).json({ message: "Non authentifié" });
     try {
       const hp = await storage.getHeatPump(req.params.id);
       if (!hp) return res.status(404).json({ message: "Non trouvé" });
