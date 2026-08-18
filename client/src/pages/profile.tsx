@@ -1,12 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, ArrowLeft, Clock, Plus, Upload, Trash2, Edit2, Eye, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { LogOut, ArrowLeft, Clock, Plus, Upload, Trash2, Edit2, Eye, RefreshCw, User, KeyRound, Save } from "lucide-react";
 import type { AuditLog } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const actionConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   create_project: { label: "Création de projet", icon: <Plus className="w-3.5 h-3.5" />, color: "bg-blue-50 text-blue-700 border-blue-200" },
@@ -25,9 +30,28 @@ function formatDate(d: string | Date | null) {
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  // ── Username form
+  const [newUsername, setNewUsername] = useState("");
+  const [editingUsername, setEditingUsername] = useState(false);
+
+  // ── Password form
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [editingPassword, setEditingPassword] = useState(false);
 
   const { data: logs, isLoading, isFetching, refetch } = useQuery<AuditLog[]>({
     queryKey: ["/api/audit-logs/mine"],
+  });
+
+  const profileMutation = useMutation({
+    mutationFn: (body: Record<string, any>) => apiRequest("PATCH", "/api/auth/profile", body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
   });
 
   const handleLogout = async () => {
@@ -35,7 +59,41 @@ export default function ProfilePage() {
     navigate("/login");
   };
 
+  async function saveUsername() {
+    if (!newUsername.trim()) return;
+    try {
+      await profileMutation.mutateAsync({ username: newUsername.trim() });
+      toast({ title: "Nom d'utilisateur mis à jour" });
+      setEditingUsername(false);
+      setNewUsername("");
+    } catch (e: any) {
+      const msg = await e?.response?.json?.().catch(() => null);
+      toast({ title: msg?.message || "Erreur", variant: "destructive" });
+    }
+  }
+
+  async function savePassword() {
+    if (!currentPassword || !newPassword) return;
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Les mots de passe ne correspondent pas", variant: "destructive" });
+      return;
+    }
+    try {
+      await profileMutation.mutateAsync({ currentPassword, newPassword });
+      toast({ title: "Mot de passe mis à jour" });
+      setEditingPassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (e: any) {
+      const msg = await e?.response?.json?.().catch(() => null);
+      toast({ title: msg?.message || "Erreur", variant: "destructive" });
+    }
+  }
+
   if (!user) return null;
+
+  const currentUsername = (user as any).username;
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,6 +115,7 @@ export default function ProfilePage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+
         {/* Profile card */}
         <Card>
           <CardContent className="p-6">
@@ -70,6 +129,9 @@ export default function ProfilePage() {
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-semibold truncate">{user.name}</h1>
                 <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                {currentUsername && (
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">@{currentUsername}</p>
+                )}
                 <div className="mt-1.5 flex items-center gap-2">
                   <Badge variant={user.role === "admin" ? "default" : "secondary"} className="text-xs capitalize">
                     {user.role === "admin" ? "Administrateur" : "Utilisateur"}
@@ -81,6 +143,128 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Modifier les identifiants ─────────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-muted-foreground" />
+              <CardTitle className="text-base">Identifiants de connexion</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+
+            {/* Nom d'utilisateur */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Nom d'utilisateur</Label>
+                {!editingUsername && (
+                  <button
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                    onClick={() => { setEditingUsername(true); setNewUsername(currentUsername ?? ""); }}
+                  >
+                    Modifier
+                  </button>
+                )}
+              </div>
+              {editingUsername ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newUsername}
+                    onChange={e => setNewUsername(e.target.value)}
+                    placeholder="Nouveau nom d'utilisateur"
+                    autoComplete="off"
+                    className="flex-1"
+                    onKeyDown={e => { if (e.key === "Enter") saveUsername(); if (e.key === "Escape") setEditingUsername(false); }}
+                  />
+                  <Button
+                    size="sm"
+                    style={{ backgroundColor: "#1e3a5f" }}
+                    disabled={!newUsername.trim() || profileMutation.isPending}
+                    onClick={saveUsername}
+                    className="gap-1.5"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    Enregistrer
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setEditingUsername(false); setNewUsername(""); }}>
+                    Annuler
+                  </Button>
+                </div>
+              ) : (
+                <div className="px-3 py-2 rounded-md bg-muted/50 text-sm font-mono">
+                  {currentUsername || <span className="text-muted-foreground italic">Non défini</span>}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t" />
+
+            {/* Mot de passe */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Mot de passe</Label>
+                </div>
+                {!editingPassword && (
+                  <button
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                    onClick={() => setEditingPassword(true)}
+                  >
+                    Modifier
+                  </button>
+                )}
+              </div>
+
+              {editingPassword ? (
+                <div className="space-y-2">
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    placeholder="Mot de passe actuel"
+                    autoComplete="current-password"
+                  />
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Nouveau mot de passe (min. 6 caractères)"
+                    autoComplete="new-password"
+                  />
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Confirmer le nouveau mot de passe"
+                    autoComplete="new-password"
+                    onKeyDown={e => { if (e.key === "Enter") savePassword(); if (e.key === "Escape") setEditingPassword(false); }}
+                  />
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      style={{ backgroundColor: "#1e3a5f" }}
+                      disabled={!currentPassword || !newPassword || newPassword.length < 6 || profileMutation.isPending}
+                      onClick={savePassword}
+                      className="gap-1.5"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      Enregistrer
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditingPassword(false); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); }}>
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-3 py-2 rounded-md bg-muted/50 text-sm text-muted-foreground">
+                  ••••••••••••
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -33,6 +33,28 @@ export const auditLogs = pgTable("audit_logs", {
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 
+// ── Catalogue thermopompes ───────────────────────────────────────────────────
+
+export const heatPumps = pgTable("heat_pumps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  brand: text("brand"),
+  model: text("model"),
+  capacity: text("capacity"),   // ex: "12 000 BTU"
+  hspf2: text("hspf2"),         // ex: "10.5"
+  seer2: text("seer2"),         // ex: "25"
+  type: text("type").notNull().default("heatpump"), // 'heatpump' | 'waterheater'
+  isDefault: boolean("is_default").notNull().default(false),
+  images: jsonb("images").default([]),        // string[] — URL paths
+  specPages: jsonb("spec_pages").default([]), // string[] — URL paths
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type HeatPump = typeof heatPumps.$inferSelect;
+export type InsertHeatPump = typeof heatPumps.$inferInsert;
+
+// ── Projects ─────────────────────────────────────────────────────────────────
+
 export const projects = pgTable("projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id"),
@@ -50,6 +72,8 @@ export const projects = pgTable("projects", {
   buildingType: text("building_type").notNull().default("existing"),
   programmeType: text("programme_type").notNull().default("optimisation"),
   thermopompeModel: text("thermopompe_model").notNull().default("tcl"),
+  selectedHeatPumpId: varchar("selected_heat_pump_id"),
+  selectedWaterHeaterId: varchar("selected_water_heater_id"),
   customMeasures: jsonb("custom_measures").default([]),
   status: text("status").notNull().default("draft"),
   preReportRaw: text("pre_report_raw"),

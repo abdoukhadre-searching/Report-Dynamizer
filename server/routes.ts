@@ -1462,5 +1462,151 @@ export async function registerRoutes(
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
+  // ── Profil utilisateur (propre compte) ───────────────────────────────────
+
+  app.patch("/api/auth/profile", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "Non authentifié" });
+    try {
+      const { currentPassword, newPassword, username } = req.body;
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) return res.status(404).json({ message: "Utilisateur introuvable" });
+
+      const updates: Record<string, any> = {};
+
+      // Changement de mot de passe
+      if (newPassword) {
+        if (!currentPassword) return res.status(400).json({ message: "Mot de passe actuel requis" });
+        const valid = await verifyPassword(currentPassword, user.passwordHash);
+        if (!valid) return res.status(401).json({ message: "Mot de passe actuel incorrect" });
+        if (newPassword.length < 6) return res.status(400).json({ message: "Le nouveau mot de passe doit contenir au moins 6 caractères" });
+        updates.passwordHash = await hashPassword(newPassword);
+      }
+
+      // Changement de nom d'utilisateur
+      if (username !== undefined && username !== user.username) {
+        if (username) {
+          const existing = await storage.getUserByUsername(username);
+          if (existing && existing.id !== user.id) return res.status(409).json({ message: "Nom d'utilisateur déjà utilisé" });
+        }
+        updates.username = username || null;
+      }
+
+      if (Object.keys(updates).length === 0)
+        return res.status(400).json({ message: "Aucune modification détectée" });
+
+      await storage.updateUser(req.session.userId, updates);
+      const updated = await storage.getUserById(req.session.userId);
+      const { passwordHash: _, ...safe } = updated!;
+      res.json(safe);
+    } catch (e: any) { res.status(500).json({ message: e.message || "Erreur serveur" }); }
+  });
+
+  // ── Catalogue thermopompes ────────────────────────────────────────────────
+
+  app.get("/api/heat-pumps", async (req, res) => {
+    try {
+      const type = req.query.type as string | undefined;
+      const list = await storage.getHeatPumps(type);
+      res.json(list);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/heat-pumps", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    try {
+      const { name, brand, model, capacity, hspf2, seer2, type, isDefault } = req.body;
+      if (!name) return res.status(400).json({ message: "Nom requis" });
+      // Si isDefault → retirer le défaut actuel du même type
+      if (isDefault) {
+        const existing = await storage.getHeatPumps(type || "heatpump");
+        for (const hp of existing.filter(h => h.isDefault)) {
+          await storage.updateHeatPump(hp.id, { isDefault: false });
+        }
+      }
+      const hp = await storage.createHeatPump({ name, brand, model, capacity, hspf2, seer2, type: type || "heatpump", isDefault: !!isDefault });
+      res.json(hp);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.patch("/api/heat-pumps/:id", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    try {
+      const id = req.params.id;
+      const hp = await storage.getHeatPump(id);
+      if (!hp) return res.status(404).json({ message: "Non trouvé" });
+      const { isDefault, type, ...rest } = req.body;
+      const updates: any = { ...rest };
+      if (typeof isDefault === "boolean") {
+        if (isDefault) {
+          const existing = await storage.getHeatPumps(hp.type);
+          for (const h of existing.filter(h => h.isDefault && h.id !== id)) {
+            await storage.updateHeatPump(h.id, { isDefault: false });
+          }
+        }
+        updates.isDefault = isDefault;
+      }
+      const updated = await storage.updateHeatPump(id, updates);
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.delete("/api/heat-pumps/:id", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    try {
+      await storage.deleteHeatPump(req.params.id);
+      res.status(204).send();
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  // Upload d'une image (photo ou page de fiche technique) pour une thermopompe
+  app.post("/api/heat-pumps/:id/upload-image", upload.single("file"), async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    try {
+      const hp = await storage.getHeatPump(req.params.id);
+      if (!hp) return res.status(404).json({ message: "Non trouvé" });
+      if (!req.file) return res.status(400).json({ message: "Aucun fichier" });
+
+      const hpDir = path.join("uploads", "heat-pumps");
+      await fs.promises.mkdir(hpDir, { recursive: true });
+      const uid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+      const destName = `${uid}.jpg`;
+      const destPath = path.join(hpDir, destName);
+
+      const normalizedBuf = await normalizeImageBuffer(req.file.buffer, req.file.originalname);
+      const jpegBuf = await sharp(normalizedBuf).jpeg({ quality: 90 }).toBuffer();
+      await fs.promises.writeFile(destPath, jpegBuf);
+
+      const url = `/uploads/heat-pumps/${destName}`;
+      const field = req.query.field === "spec" ? "specPages" : "images";
+      const current = (hp[field] as string[]) ?? [];
+      const updated = await storage.updateHeatPump(hp.id, { [field]: [...current, url] });
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.delete("/api/heat-pumps/:id/image", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "admin")
+      return res.status(403).json({ message: "Accès refusé" });
+    try {
+      const hp = await storage.getHeatPump(req.params.id);
+      if (!hp) return res.status(404).json({ message: "Non trouvé" });
+      const { url, field = "images" } = req.body as { url: string; field?: string };
+      const key = field === "spec" || field === "specPages" ? "specPages" : "images";
+      const current = (hp[key] as string[]) ?? [];
+      const updated = current.filter(u => u !== url);
+      const result = await storage.updateHeatPump(hp.id, { [key]: updated });
+      // Supprimer le fichier physique
+      if (url.startsWith("/uploads/")) {
+        const filePath = url.slice(1); // retire le /
+        await fs.promises.unlink(filePath).catch(() => {});
+      }
+      res.json(result);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
   return httpServer;
 }

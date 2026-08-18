@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { Project, ReportData } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import type { Project, ReportData, HeatPump } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2, CheckCircle2, XCircle } from "lucide-react";
@@ -133,6 +134,22 @@ const SUBVENTION_THERMO = 1680;
 export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const { data: heatPumpsData } = useQuery<HeatPump[]>({ queryKey: ["/api/heat-pumps"] });
+  const defaultHeatPump = heatPumpsData?.find(hp => hp.type === "heatpump" && hp.isDefault) ?? heatPumpsData?.filter(hp => hp.type === "heatpump")[0];
+  const defaultWaterHeater = heatPumpsData?.find(hp => hp.type === "waterheater" && hp.isDefault) ?? heatPumpsData?.filter(hp => hp.type === "waterheater")[0];
+  const [selectedHeatPumpId, setSelectedHeatPumpId] = useState<string | null>((project as any).selectedHeatPumpId ?? null);
+  const [selectedWaterHeaterId, setSelectedWaterHeaterId] = useState<string | null>((project as any).selectedWaterHeaterId ?? null);
+  const selectedHeatPump: HeatPump | undefined = (selectedHeatPumpId ? heatPumpsData?.find(hp => hp.id === selectedHeatPumpId) : undefined) ?? defaultHeatPump;
+  const selectedWaterHeater: HeatPump | undefined = (selectedWaterHeaterId ? heatPumpsData?.find(hp => hp.id === selectedWaterHeaterId) : undefined) ?? defaultWaterHeater;
+
+  async function saveSelectedHeatPumpId(id: string) {
+    setSelectedHeatPumpId(id);
+    try { await apiRequest("PATCH", `/api/projects/${project.id}`, { selectedHeatPumpId: id }); } catch {}
+  }
+  async function saveSelectedWaterHeaterId(id: string) {
+    setSelectedWaterHeaterId(id);
+    try { await apiRequest("PATCH", `/api/projects/${project.id}`, { selectedWaterHeaterId: id }); } catch {}
+  }
   const [coutElecThermo, setCoutElecThermo] = useState(initialValues?.coutElecThermo ?? 500);
   const [coutBasementInsul, setCoutBasementInsul] = useState(initialValues?.coutBasementInsul ?? 0);
   const [subventionBasementInsul, setSubventionBasementInsul] = useState(initialValues?.subventionBasementInsul ?? 0);
@@ -537,9 +554,21 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
               )}
               {showHeatingStrategy && !isNewBuilding && (
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#dc262615", color: "#dc2626" }}>
-                    Thermopompe TCL T-Pro-25ES
-                  </span>
+                  {!exportMode && heatPumpsData && heatPumpsData.filter(hp => hp.type === "heatpump").length > 1 ? (
+                    <select
+                      value={selectedHeatPumpId ?? (defaultHeatPump?.id ?? "")}
+                      onChange={e => saveSelectedHeatPumpId(e.target.value)}
+                      style={{ fontSize: "12px", fontWeight: 600, padding: "3px 24px 3px 10px", borderRadius: "6px", border: "1px solid #dc262640", color: "#dc2626", backgroundColor: "#fff5f5", cursor: "pointer", outline: "none", appearance: "auto" }}
+                    >
+                      {heatPumpsData.filter(hp => hp.type === "heatpump").map(hp => (
+                        <option key={hp.id} value={hp.id}>{hp.name}{hp.model ? ` ${hp.model}` : ""}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#dc262615", color: "#dc2626" }}>
+                      {selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompe TCL T-Pro-25ES"}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -690,8 +719,16 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     <div className="flex items-center gap-3">
                       <IconBox><Zap className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
-                        <p className="font-semibold text-slate-800">Thermopompe TCL T-Pro-25ES</p>
-                        <p className="text-xs text-slate-400 mt-0.5">12 000 BTU | HSPF2 10.5 | SEER2 25</p>
+                        <p className="font-semibold text-slate-800">
+                          {selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompe TCL T-Pro-25ES"}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {[
+                            selectedHeatPump?.capacity,
+                            selectedHeatPump?.hspf2 ? `HSPF2 ${selectedHeatPump.hspf2}` : null,
+                            selectedHeatPump?.seer2 ? `SEER2 ${selectedHeatPump.seer2}` : null,
+                          ].filter(Boolean).join(" | ") || "12 000 BTU | HSPF2 10.5 | SEER2 25"}
+                        </p>
                       </div>
                     </div>
                   </td>
@@ -770,7 +807,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       <IconBox><Droplets className="w-4 h-4" style={{ color: "#1e3a5f" }} /></IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">Chauffe-eau thermopompe</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Installation de chauffe-eau thermopompe Rheem</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {selectedWaterHeater
+                            ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}`
+                            : "Installation de chauffe-eau thermopompe Rheem"}
+                        </p>
                       </div>
                     </div>
                   </td>
@@ -1385,22 +1426,55 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
           <Card className="overflow-hidden border shadow-sm">
             <div style={{ breakInside: "avoid" }}>
               <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
-                  <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                    Fiche technique — Thermopompe TCL T-Pro-25ES
-                  </h3>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
+                    <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                      Fiche technique — {selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompe TCL T-Pro-25ES"}
+                    </h3>
+                  </div>
+                  {!exportMode && heatPumpsData && heatPumpsData.filter(hp => hp.type === "heatpump").length > 1 && (
+                    <select
+                      value={selectedHeatPumpId ?? (defaultHeatPump?.id ?? "")}
+                      onChange={e => saveSelectedHeatPumpId(e.target.value)}
+                      className="text-xs border rounded px-2 py-1 text-slate-600 bg-white"
+                    >
+                      {heatPumpsData.filter(hp => hp.type === "heatpump").map(hp => (
+                        <option key={hp.id} value={hp.id}>{hp.name}{hp.model ? ` ${hp.model}` : ""}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </CardHeader>
-              <>
-                <div className="p-4">
-                  <img src={tclPhotoPath} alt="TCL T-Pro-25ES — Thermopompe murale" className="w-full rounded border border-slate-200 shadow-sm" />
-                </div>
-                <div className="p-4 space-y-4">
-                  <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded border border-slate-200 shadow-sm" />
-                  <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded border border-slate-200 shadow-sm" />
-                </div>
-              </>
+              {/* Images dynamiques du catalogue, ou fallback TCL hardcodé */}
+              {selectedHeatPump && ((selectedHeatPump.images as string[])?.length > 0 || (selectedHeatPump.specPages as string[])?.length > 0) ? (
+                <>
+                  {(selectedHeatPump.images as string[])?.length > 0 && (
+                    <div className="p-4 space-y-4">
+                      {(selectedHeatPump.images as string[]).map((url, i) => (
+                        <img key={i} src={url} alt={`${selectedHeatPump.name} — photo ${i + 1}`} className="w-full rounded border border-slate-200 shadow-sm" />
+                      ))}
+                    </div>
+                  )}
+                  {(selectedHeatPump.specPages as string[])?.length > 0 && (
+                    <div className="p-4 space-y-4">
+                      {(selectedHeatPump.specPages as string[]).map((url, i) => (
+                        <img key={i} src={url} alt={`${selectedHeatPump.name} — fiche technique page ${i + 1}`} className="w-full rounded border border-slate-200 shadow-sm" />
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="p-4">
+                    <img src={tclPhotoPath} alt="TCL T-Pro-25ES — Thermopompe murale" className="w-full rounded border border-slate-200 shadow-sm" />
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded border border-slate-200 shadow-sm" />
+                    <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded border border-slate-200 shadow-sm" />
+                  </div>
+                </>
+              )}
             </div>
           </Card>
 
@@ -1408,30 +1482,43 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
           {showHeatPumpWaterHeaterStrategy && (
             <Card className="overflow-hidden border shadow-sm">
               <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
-                  <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
-                    Fiche technique — Chauffe-eau thermopompe Rheem
-                  </h3>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#1e3a5f" }} />
+                    <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                      Fiche technique — {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}` : "Chauffe-eau thermopompe Rheem"}
+                    </h3>
+                  </div>
+                  {!exportMode && heatPumpsData && heatPumpsData.filter(hp => hp.type === "waterheater").length > 1 && (
+                    <select
+                      value={selectedWaterHeaterId ?? (defaultWaterHeater?.id ?? "")}
+                      onChange={e => saveSelectedWaterHeaterId(e.target.value)}
+                      className="text-xs border rounded px-2 py-1 text-slate-600 bg-white"
+                    >
+                      {heatPumpsData.filter(hp => hp.type === "waterheater").map(hp => (
+                        <option key={hp.id} value={hp.id}>{hp.name}{hp.model ? ` ${hp.model}` : ""}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </CardHeader>
-              <CardContent className="p-4 space-y-4">
-                <img
-                  src={rheemPage1Path}
-                  alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1"
-                  className="w-full rounded border border-slate-200 shadow-sm"
-                />
-                <img
-                  src={rheemPage2Path}
-                  alt="Données techniques Rheem ProTerra — page 2"
-                  className="w-full rounded border border-slate-200 shadow-sm"
-                />
-                <img
-                  src={rheemSpecPath}
-                  alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star"
-                  className="w-full rounded border border-slate-200 shadow-sm"
-                />
-              </CardContent>
+              {/* Images dynamiques du catalogue, ou fallback Rheem hardcodé */}
+              {selectedWaterHeater && ((selectedWaterHeater.images as string[])?.length > 0 || (selectedWaterHeater.specPages as string[])?.length > 0) ? (
+                <CardContent className="p-4 space-y-4">
+                  {(selectedWaterHeater.images as string[])?.map((url, i) => (
+                    <img key={i} src={url} alt={`${selectedWaterHeater.name} — photo ${i + 1}`} className="w-full rounded border border-slate-200 shadow-sm" />
+                  ))}
+                  {(selectedWaterHeater.specPages as string[])?.map((url, i) => (
+                    <img key={i} src={url} alt={`${selectedWaterHeater.name} — fiche technique page ${i + 1}`} className="w-full rounded border border-slate-200 shadow-sm" />
+                  ))}
+                </CardContent>
+              ) : (
+                <CardContent className="p-4 space-y-4">
+                  <img src={rheemPage1Path} alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1" className="w-full rounded border border-slate-200 shadow-sm" />
+                  <img src={rheemPage2Path} alt="Données techniques Rheem ProTerra — page 2" className="w-full rounded border border-slate-200 shadow-sm" />
+                  <img src={rheemSpecPath} alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star" className="w-full rounded border border-slate-200 shadow-sm" />
+                </CardContent>
+              )}
             </Card>
           )}
 

@@ -1,4 +1,4 @@
-import { type Project, type InsertProject, type User, type AuditLog, type Mandat, type InsertMandat, type Offre, type InsertOffre, projects, users, auditLogs, mandats, offres } from "@shared/schema";
+import { type Project, type InsertProject, type User, type AuditLog, type Mandat, type InsertMandat, type Offre, type InsertOffre, type HeatPump, type InsertHeatPump, projects, users, auditLogs, mandats, offres, heatPumps } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -22,8 +22,12 @@ export interface IStorage {
   deleteOffre(id: string): Promise<void>;
 
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
-  createUser(data: { email: string; name: string; passwordHash: string; role?: string }): Promise<User>;
+  createUser(data: { email: string; name: string; username?: string | null; passwordHash: string; role?: string }): Promise<User>;
+  updateUser(id: string, data: Partial<{ role: string; passwordHash: string; username: string; name: string }>): Promise<void>;
+  deleteUser(id: string): Promise<void>;
+  getAllUsers(): Promise<User[]>;
 
   createAuditLog(data: {
     userId?: string;
@@ -35,6 +39,13 @@ export interface IStorage {
     details?: string;
   }): Promise<AuditLog>;
   getAuditLogs(userId?: string): Promise<AuditLog[]>;
+
+  // ── Catalogue thermopompes ────────────────────────────────────────────────
+  getHeatPumps(type?: string): Promise<HeatPump[]>;
+  getHeatPump(id: string): Promise<HeatPump | undefined>;
+  createHeatPump(data: Partial<InsertHeatPump>): Promise<HeatPump>;
+  updateHeatPump(id: string, data: Partial<InsertHeatPump>): Promise<HeatPump | undefined>;
+  deleteHeatPump(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -145,7 +156,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: string, data: Partial<{ role: string; passwordHash: string }>): Promise<void> {
+  async updateUser(id: string, data: Partial<{ role: string; passwordHash: string; username: string; name: string }>): Promise<void> {
     await db.update(users).set(data).where(eq(users.id, id));
   }
 
@@ -176,12 +187,50 @@ export class DatabaseStorage implements IStorage {
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }
+
+  // ── Catalogue thermopompes ────────────────────────────────────────────────
+
+  async getHeatPumps(type?: string): Promise<HeatPump[]> {
+    if (type) {
+      return await db.select().from(heatPumps).where(eq(heatPumps.type, type)).orderBy(heatPumps.createdAt);
+    }
+    return await db.select().from(heatPumps).orderBy(heatPumps.createdAt);
+  }
+
+  async getHeatPump(id: string): Promise<HeatPump | undefined> {
+    const [hp] = await db.select().from(heatPumps).where(eq(heatPumps.id, id));
+    return hp;
+  }
+
+  async createHeatPump(data: Partial<InsertHeatPump>): Promise<HeatPump> {
+    const [created] = await db.insert(heatPumps).values({
+      name: "Nouvelle thermopompe",
+      type: "heatpump",
+      isDefault: false,
+      images: [],
+      specPages: [],
+      ...data,
+    } as InsertHeatPump).returning();
+    return created;
+  }
+
+  async updateHeatPump(id: string, data: Partial<InsertHeatPump>): Promise<HeatPump | undefined> {
+    const [updated] = await db.update(heatPumps).set(data).where(eq(heatPumps.id, id)).returning();
+    return updated;
+  }
+
+  async deleteHeatPump(id: string): Promise<void> {
+    await db.delete(heatPumps).where(eq(heatPumps.id, id));
+  }
 }
 
 export class MemoryStorage implements IStorage {
   private _projects: Project[] = [];
   private _users: User[] = [];
   private _auditLogs: AuditLog[] = [];
+  private _mandats: Mandat[] = [];
+  private _offres: Offre[] = [];
+  private _heatPumps: HeatPump[] = [];
 
   async getProjects(userId?: string, isAdmin?: boolean): Promise<Project[]> {
     const sorted = [...this._projects].sort((a, b) => {
@@ -216,6 +265,8 @@ export class MemoryStorage implements IStorage {
       buildingType: project.buildingType ?? "existing",
       programmeType: (project as any).programmeType ?? "optimisation",
       thermopompeModel: (project as any).thermopompeModel ?? "tcl",
+      selectedHeatPumpId: (project as any).selectedHeatPumpId ?? null,
+      selectedWaterHeaterId: (project as any).selectedWaterHeaterId ?? null,
       customMeasures: (project as any).customMeasures ?? [],
       status: project.status ?? "draft",
       preReportRaw: project.preReportRaw ?? null,
@@ -261,8 +312,6 @@ export class MemoryStorage implements IStorage {
     this._projects = this._projects.filter((project) => project.id !== id);
   }
 
-  private _mandats: Mandat[] = [];
-
   async getMandats(userId?: string): Promise<Mandat[]> {
     const sorted = [...this._mandats].sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
     return userId ? sorted.filter(m => m.userId === userId) : sorted;
@@ -303,8 +352,6 @@ export class MemoryStorage implements IStorage {
     this._mandats = this._mandats.filter(m => m.id !== id);
   }
 
-  private _offres: Offre[] = [];
-
   async getOffres(userId?: string): Promise<Offre[]> {
     const sorted = [...this._offres].sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
     return userId ? sorted.filter(o => o.userId === userId) : sorted;
@@ -344,14 +391,19 @@ export class MemoryStorage implements IStorage {
     return this._users.find((u) => u.email === email.toLowerCase());
   }
 
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return this._users.find((u) => u.username === username);
+  }
+
   async getUserById(id: string): Promise<User | undefined> {
     return this._users.find((u) => u.id === id);
   }
 
-  async createUser(data: { email: string; name: string; passwordHash: string; role?: string }): Promise<User> {
+  async createUser(data: { email: string; name: string; username?: string | null; passwordHash: string; role?: string }): Promise<User> {
     const user: User = {
       id: randomUUID(),
       email: data.email.toLowerCase(),
+      username: data.username ?? null,
       name: data.name,
       passwordHash: data.passwordHash,
       role: data.role ?? "user",
@@ -359,6 +411,19 @@ export class MemoryStorage implements IStorage {
     };
     this._users.push(user);
     return user;
+  }
+
+  async updateUser(id: string, data: Partial<{ role: string; passwordHash: string; username: string; name: string }>): Promise<void> {
+    const idx = this._users.findIndex(u => u.id === id);
+    if (idx !== -1) this._users[idx] = { ...this._users[idx], ...data };
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    this._users = this._users.filter(u => u.id !== id);
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return [...this._users];
   }
 
   async createAuditLog(data: {
@@ -388,6 +453,46 @@ export class MemoryStorage implements IStorage {
   async getAuditLogs(userId?: string): Promise<AuditLog[]> {
     if (userId) return this._auditLogs.filter((l) => l.userId === userId);
     return [...this._auditLogs];
+  }
+
+  // ── Catalogue thermopompes (stub en mémoire) ──────────────────────────────
+
+  async getHeatPumps(type?: string): Promise<HeatPump[]> {
+    return type ? this._heatPumps.filter(hp => hp.type === type) : [...this._heatPumps];
+  }
+
+  async getHeatPump(id: string): Promise<HeatPump | undefined> {
+    return this._heatPumps.find(hp => hp.id === id);
+  }
+
+  async createHeatPump(data: Partial<InsertHeatPump>): Promise<HeatPump> {
+    const hp: HeatPump = {
+      id: randomUUID(),
+      name: data.name ?? "Nouvelle thermopompe",
+      brand: data.brand ?? null,
+      model: data.model ?? null,
+      capacity: data.capacity ?? null,
+      hspf2: data.hspf2 ?? null,
+      seer2: data.seer2 ?? null,
+      type: data.type ?? "heatpump",
+      isDefault: data.isDefault ?? false,
+      images: data.images ?? [],
+      specPages: data.specPages ?? [],
+      createdAt: new Date(),
+    };
+    this._heatPumps.push(hp);
+    return hp;
+  }
+
+  async updateHeatPump(id: string, data: Partial<InsertHeatPump>): Promise<HeatPump | undefined> {
+    const idx = this._heatPumps.findIndex(hp => hp.id === id);
+    if (idx === -1) return undefined;
+    this._heatPumps[idx] = { ...this._heatPumps[idx], ...data };
+    return this._heatPumps[idx];
+  }
+
+  async deleteHeatPump(id: string): Promise<void> {
+    this._heatPumps = this._heatPumps.filter(hp => hp.id !== id);
   }
 }
 
