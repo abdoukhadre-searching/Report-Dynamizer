@@ -44,83 +44,142 @@ function HeatPumpModal({
   defaultType,
   onClose,
 }: {
-  hp: HeatPump | null;       // null = création
+  hp: HeatPump | null;
   defaultType: "heatpump" | "waterheater";
   onClose: () => void;
 }) {
-  // currentHp suit l'état du serveur après création/modification
-  const [currentHp, setCurrentHp] = useState<HeatPump | null>(hpProp);
-  const isEdit = !!currentHp;
-  const type = currentHp?.type ?? defaultType; // fixé, pas modifiable
+  const isEdit = !!hpProp;
+  const type = hpProp?.type ?? defaultType;
   const isHP = type === "heatpump";
 
-  const [name, setName] = useState(currentHp?.name ?? "");
-  const [brand, setBrand] = useState(currentHp?.brand ?? "");
-  const [model, setModel] = useState(currentHp?.model ?? "");
-  const [capacity, setCapacity] = useState(currentHp?.capacity ?? "");
-  const [hspf2, setHspf2] = useState(currentHp?.hspf2 ?? "");
-  const [seer2, setSeer2] = useState(currentHp?.seer2 ?? "");
-  const [isDefault, setIsDefault] = useState(currentHp?.isDefault ?? false);
-  const [images, setImages] = useState<string[]>((currentHp?.images as string[]) ?? []);
-  const [specPages, setSpecPages] = useState<string[]>((currentHp?.specPages as string[]) ?? []);
+  const [name, setName] = useState(hpProp?.name ?? "");
+  const [brand, setBrand] = useState(hpProp?.brand ?? "");
+  const [model, setModel] = useState(hpProp?.model ?? "");
+  const [capacity, setCapacity] = useState(hpProp?.capacity ?? "");
+  const [hspf2, setHspf2] = useState(hpProp?.hspf2 ?? "");
+  const [seer2, setSeer2] = useState(hpProp?.seer2 ?? "");
+  const [isDefault, setIsDefault] = useState(hpProp?.isDefault ?? false);
+
+  // Fichiers déjà sur le serveur (édition) ou uploadés après création
+  const [images, setImages] = useState<string[]>((hpProp?.images as string[]) ?? []);
+  const [specPages, setSpecPages] = useState<string[]>((hpProp?.specPages as string[]) ?? []);
+
+  // Fichiers en attente d'upload (création uniquement) — prévisualisés localement
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [pendingSpecs, setPendingSpecs] = useState<File[]>([]);
+
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingSpec, setUploadingSpec] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  async function uploadFile(file: File, field: "image" | "spec", hpId: string) {
-    const fd = new FormData();
-    fd.append("file", file);
-    const url = `/api/heat-pumps/${hpId}/upload-image${field === "spec" ? "?field=spec" : ""}`;
-    const res = await fetch(url, { method: "POST", body: fd, credentials: "include" });
-    if (!res.ok) throw new Error("Upload échoué");
-    return (await res.json()) as HeatPump;
+  // ID de l'équipement actif (connu seulement après création réussie en mode création)
+  const [savedId, setSavedId] = useState<string | null>(hpProp?.id ?? null);
+
+  async function uploadFilesToServer(files: File[], field: "image" | "spec", hpId: string): Promise<HeatPump> {
+    let updated: HeatPump | null = null;
+    for (const f of files) {
+      const fd = new FormData();
+      fd.append("file", f);
+      const url = `/api/heat-pumps/${hpId}/upload-image${field === "spec" ? "?field=spec" : ""}`;
+      const res = await fetch(url, { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message ?? `Erreur ${res.status}`);
+      }
+      updated = await res.json() as HeatPump;
+    }
+    return updated!;
   }
 
-  async function handleUpload(files: FileList | null, field: "image" | "spec") {
-    if (!files || files.length === 0 || !currentHp) return;
+  async function handleUploadNow(files: FileList | null, field: "image" | "spec") {
+    // Upload immédiat (mode édition ou après création)
+    if (!files || files.length === 0 || !savedId) return;
     field === "image" ? setUploadingImage(true) : setUploadingSpec(true);
+    setError("");
     try {
-      let updated: HeatPump = currentHp;
-      for (const f of Array.from(files)) updated = await uploadFile(f, field, currentHp.id);
+      const updated = await uploadFilesToServer(Array.from(files), field, savedId);
       setImages((updated.images as string[]) ?? []);
       setSpecPages((updated.specPages as string[]) ?? []);
       qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
-    } catch { setError("Échec de l'upload"); }
+    } catch (e: any) { setError(e.message ?? "Échec de l'upload"); }
     finally { field === "image" ? setUploadingImage(false) : setUploadingSpec(false); }
   }
 
-  async function handleDeleteImage(url: string, field: "images" | "specPages") {
-    if (!currentHp) return;
+  function handleAddPending(files: FileList | null, field: "image" | "spec") {
+    // En mode création, on stocke localement jusqu'à la sauvegarde
+    if (!files || files.length === 0) return;
+    if (field === "image") setPendingImages(prev => [...prev, ...Array.from(files)]);
+    else setPendingSpecs(prev => [...prev, ...Array.from(files)]);
+  }
+
+  function removePending(idx: number, field: "image" | "spec") {
+    if (field === "image") setPendingImages(prev => prev.filter((_, i) => i !== idx));
+    else setPendingSpecs(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  async function handleDeleteSaved(url: string, field: "images" | "specPages") {
+    if (!savedId) return;
     try {
-      const res = await apiRequest("DELETE", `/api/heat-pumps/${currentHp.id}/image`, { url, field });
+      const res = await apiRequest("DELETE", `/api/heat-pumps/${savedId}/image`, { url, field });
       const updated = await res.json() as HeatPump;
       setImages((updated.images as string[]) ?? []);
       setSpecPages((updated.specPages as string[]) ?? []);
       qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
-    } catch { setError("Échec suppression image"); }
+    } catch { setError("Échec de la suppression"); }
   }
 
   async function handleSave() {
     if (!name.trim()) { setError("Le nom est requis."); return; }
     setSaving(true); setError("");
     try {
+      let hpId = savedId;
+
       if (isEdit) {
-        await apiRequest("PATCH", `/api/heat-pumps/${currentHp!.id}`, { name, brand, model, capacity, hspf2, seer2, isDefault });
-        qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
-        onClose();
+        await apiRequest("PATCH", `/api/heat-pumps/${hpId}`, { name, brand, model, capacity, hspf2, seer2, isDefault });
       } else {
-        // Création : rester ouvert pour permettre l'upload de photos
         const res = await apiRequest("POST", "/api/heat-pumps", { name, brand, model, capacity, hspf2, seer2, type, isDefault });
         const created = await res.json() as HeatPump;
-        setCurrentHp(created);
-        setImages((created.images as string[]) ?? []);
-        setSpecPages((created.specPages as string[]) ?? []);
-        qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
-        // Ne pas fermer — l'utilisateur peut maintenant ajouter photos/fiches
+        hpId = created.id;
+        setSavedId(hpId);
       }
+
+      // Uploader les fichiers en attente (création)
+      if (pendingImages.length > 0) {
+        const updated = await uploadFilesToServer(pendingImages, "image", hpId!);
+        setImages((updated.images as string[]) ?? []);
+        setPendingImages([]);
+      }
+      if (pendingSpecs.length > 0) {
+        const updated = await uploadFilesToServer(pendingSpecs, "spec", hpId!);
+        setSpecPages((updated.specPages as string[]) ?? []);
+        setPendingSpecs([]);
+      }
+
+      qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
+      onClose();
     } catch (e: any) { setError(e.message ?? "Erreur"); }
     finally { setSaving(false); }
+  }
+
+  // Prévisualisations locales pour fichiers en attente
+  function PendingPreview({ file, onRemove }: { file: File; onRemove: () => void }) {
+    const isPdf = file.name.toLowerCase().endsWith(".pdf");
+    return (
+      <div className="relative group rounded-lg overflow-hidden border border-dashed border-blue-300 aspect-video bg-blue-50 flex items-center justify-center">
+        {isPdf ? (
+          <div className="text-center">
+            <div className="text-2xl">📄</div>
+            <p className="text-xs text-blue-600 font-medium mt-1 truncate px-1 max-w-full">{file.name}</p>
+          </div>
+        ) : (
+          <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+        )}
+        <button onClick={onRemove} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -133,7 +192,7 @@ function HeatPumpModal({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Badge type — info seulement */}
+          {/* Badge type */}
           <div className="flex items-center gap-2">
             <span
               className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full"
@@ -183,90 +242,92 @@ function HeatPumpModal({
             </span>
           </label>
 
-          {/* Upload — toujours visible, activé après enregistrement */}
-          <div className="border-t pt-3 space-y-4">
-            {!currentHp && (
-              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                💡 Enregistrez d'abord l'équipement pour pouvoir ajouter des photos et des fiches techniques.
-              </p>
-            )}
-            {currentHp && (
-              <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                ✓ Équipement enregistré — ajoutez vos photos et fiches ci-dessous, puis fermez quand vous avez terminé.
-              </p>
-            )}
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Photos</Label>
-                {currentHp ? (
-                  <label className="cursor-pointer">
-                    <input type="file" accept="image/*,.pdf,application/pdf" multiple className="hidden" onChange={e => handleUpload(e.target.files, "image")} />
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
-                      {uploadingImage ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
-                    </span>
-                  </label>
-                ) : (
-                  <span className="text-xs text-slate-300 border border-slate-100 px-2.5 py-1.5 rounded-lg">Ajouter</span>
-                )}
-              </div>
-              {images.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">Aucune photo.</p>
-              ) : (
-                <div className="grid grid-cols-3 gap-2">
-                  {images.map((url, i) => (
-                    <div key={i} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
-                      <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                      <button onClick={() => handleDeleteImage(url, "images")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {/* ── Photos ── */}
+          <div className="border-t pt-3">
+            <div className="flex items-center justify-between mb-2">
+              <Label>Photos</Label>
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*,.pdf,application/pdf"
+                  multiple
+                  className="hidden"
+                  onChange={e => savedId ? handleUploadNow(e.target.files, "image") : handleAddPending(e.target.files, "image")}
+                />
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                  {uploadingImage ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
+                </span>
+              </label>
             </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Pages de fiche technique</Label>
-                {currentHp ? (
-                  <label className="cursor-pointer">
-                    <input type="file" accept="image/*,.pdf,application/pdf" multiple className="hidden" onChange={e => handleUpload(e.target.files, "spec")} />
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
-                      {uploadingSpec ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
-                    </span>
-                  </label>
-                ) : (
-                  <span className="text-xs text-slate-300 border border-slate-100 px-2.5 py-1.5 rounded-lg">Ajouter</span>
-                )}
+            {images.length === 0 && pendingImages.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">Aucune photo.</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {images.map((url, i) => (
+                  <div key={`s-${i}`} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
+                    <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                    <button onClick={() => handleDeleteSaved(url, "images")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {pendingImages.map((f, i) => (
+                  <PendingPreview key={`p-${i}`} file={f} onRemove={() => removePending(i, "image")} />
+                ))}
               </div>
-              {specPages.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">Aucune page.</p>
-              ) : (
-                <div className="grid grid-cols-3 gap-2">
-                  {specPages.map((url, i) => (
-                    <div key={i} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
-                      <img src={url} alt={`Fiche ${i + 1}`} className="w-full h-full object-cover" />
-                      <button onClick={() => handleDeleteImage(url, "specPages")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
+
+          {/* ── Pages de fiche technique ── */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label>Pages de fiche technique</Label>
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*,.pdf,application/pdf"
+                  multiple
+                  className="hidden"
+                  onChange={e => savedId ? handleUploadNow(e.target.files, "spec") : handleAddPending(e.target.files, "spec")}
+                />
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                  {uploadingSpec ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
+                </span>
+              </label>
+            </div>
+            {specPages.length === 0 && pendingSpecs.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">Aucune page.</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {specPages.map((url, i) => (
+                  <div key={`s-${i}`} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
+                    <img src={url} alt={`Fiche ${i + 1}`} className="w-full h-full object-cover" />
+                    <button onClick={() => handleDeleteSaved(url, "specPages")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {pendingSpecs.map((f, i) => (
+                  <PendingPreview key={`p-${i}`} file={f} onRemove={() => removePending(i, "spec")} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {!isEdit && (pendingImages.length > 0 || pendingSpecs.length > 0) && (
+            <p className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              📎 {pendingImages.length + pendingSpecs.length} fichier(s) seront uploadés à la sauvegarde.
+            </p>
+          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{currentHp && !hpProp ? "Fermer" : "Annuler"}</Button>
-          {(!currentHp || hpProp) && (
-            <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: "#1e3a5f" }}>
-              {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer l'équipement"}
-            </Button>
-          )}
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: "#1e3a5f" }}>
+            {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
