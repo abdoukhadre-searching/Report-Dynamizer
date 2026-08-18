@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import type {
   Project,
   ReportData,
   ComparisonData,
   MonthlyEnergy,
+  HeatPump,
 } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Printer, Upload, Loader2, ImageIcon, Trash2 } from "lucide-react";
@@ -552,6 +553,16 @@ export default function ReportTab({
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
     },
   });
+  const { data: heatPumpsData } = useQuery<HeatPump[]>({ queryKey: ["/api/heat-pumps"] });
+  const selectedHeatPump: HeatPump | undefined =
+    (heatPumpsData?.find(hp => hp.id === (project as any).selectedHeatPumpId) ??
+    heatPumpsData?.find(hp => hp.type === "heatpump" && hp.isDefault) ??
+    heatPumpsData?.filter(hp => hp.type === "heatpump")[0]);
+  const selectedWaterHeater: HeatPump | undefined =
+    (heatPumpsData?.find(hp => hp.id === (project as any).selectedWaterHeaterId) ??
+    heatPumpsData?.find(hp => hp.type === "waterheater" && hp.isDefault) ??
+    heatPumpsData?.filter(hp => hp.type === "waterheater")[0]);
+
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
   const comparison = project.comparisonData as ComparisonData | null;
@@ -2227,7 +2238,7 @@ export default function ReportTab({
                       chauffage et de climatisation.
                     </p>
                     <p className="mt-1">
-                      Les thermopompes recommandées possèdent une capacité minimale de 12 000 BTU, avec une efficacité d'environ 10.5 HSPF2 et 25 SEER2.
+                      Les thermopompes recommandées possèdent {selectedHeatPump?.capacity ? `une capacité de ${selectedHeatPump.capacity}` : "une capacité minimale de 12 000 BTU"}{selectedHeatPump?.hspf2 ? `, avec une efficacité d'environ ${selectedHeatPump.hspf2} HSPF2` : ", avec une efficacité d'environ 10.5 HSPF2"}{selectedHeatPump?.seer2 ? ` et ${selectedHeatPump.seer2} SEER2` : " et 25 SEER2"}.
                     </p>
                     <p className="mt-1">
                       Ces équipements permettent de produire plus d'énergie
@@ -3487,27 +3498,35 @@ export default function ReportTab({
                               (page 1)
                             </h3>
                             <p className="text-xs text-muted-foreground mb-2">
-                              {`Ajout de ${thermopompeCount} Thermopompes TCL T-Pro-25ES — 12 000 BTU, 10.5 HSPF2 et 25 SEER2.`}
+                              {`Ajout de ${thermopompeCount} ${selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompes TCL T-Pro-25ES"} — ${[selectedHeatPump?.capacity, selectedHeatPump?.hspf2 ? `${selectedHeatPump.hspf2} HSPF2` : null, selectedHeatPump?.seer2 ? `${selectedHeatPump.seer2} SEER2` : null].filter(Boolean).join(", ") || "12 000 BTU, 10.5 HSPF2 et 25 SEER2"}.`}
                             </p>
-                            <AnnexImageUpload
-                              key="annex-thermopompes"
-                              projectId={project.id}
-                              annexType="thermopompes"
-                              label="Thermopompes – photo"
-                              currentImage={annexImages.thermopompes}
-                              defaultImageUrl={tclPhotoPath}
-                            />
+                            {selectedHeatPump && ((selectedHeatPump.images as string[])?.length > 0 || (selectedHeatPump.specPages as string[])?.length > 0) ? (
+                              <>
+                                {(selectedHeatPump.images as string[]).map((url, i) => (
+                                  <div key={`hp-img-${i}`} className="print:break-after-page mb-4">
+                                    <img src={url} alt={`${selectedHeatPump.name} — photo ${i + 1}`} className="w-full rounded-md border" />
+                                  </div>
+                                ))}
+                                {(selectedHeatPump.specPages as string[]).map((url, i) => (
+                                  <div key={`hp-spec-${i}`} className="print:break-after-page mb-4">
+                                    <img src={url} alt={`${selectedHeatPump.name} — fiche technique page ${i + 1}`} className="w-full rounded-md border" />
+                                  </div>
+                                ))}
+                              </>
+                            ) : (
+                              <>
+                                <div className="print:break-after-page">
+                                  <AnnexImageUpload key="annex-thermopompes" projectId={project.id} annexType="thermopompes" label="Thermopompes – photo" currentImage={annexImages.thermopompes} defaultImageUrl={tclPhotoPath} />
+                                </div>
+                                <div className="print:break-after-page mt-4">
+                                  <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded-md border" />
+                                </div>
+                                <div className="print:break-after-page mt-4">
+                                  <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded-md border" />
+                                </div>
+                              </>
+                            )}
                           </div>
-                          <>
-                            <div className="print:break-after-page">
-                              <h3 className="text-sm font-semibold mb-2">(suite) TCL T-Pro-25ES — Spécifications techniques (page 1)</h3>
-                              <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded-md border" data-testid="img-annex-thermopompes-p2" />
-                            </div>
-                            <div className="print:break-after-page">
-                              <h3 className="text-sm font-semibold mb-2">(suite) TCL T-Pro-25ES — Spécifications techniques (page 2)</h3>
-                              <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded-md border" data-testid="img-annex-thermopompes-ashp-p1" />
-                            </div>
-                          </>
                         </>
                       )}
 
@@ -3537,41 +3556,38 @@ export default function ReportTab({
                       )}
 
                       {showHeatPumpWaterHeaterStrategy && (
-                        <div
-                          id="annex-chauffe-eau-thermopompe"
-                          className="print:break-before-page"
-                        >
-                          <div className="print:break-inside-avoid">
-                            <h3 className="text-sm font-semibold mb-2">
-                              {annexNum++}. Chauffe-eaux Thermopompe Rheem PROPH40
-                              T2 RH375-30
-                            </h3>
-                            <p className="text-xs text-muted-foreground mb-4">
-                              Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"}{" "}
-                              Chauffe-eaux Thermopompe Rheem Hybrid electric water
-                              heater PROPH40 T2 RH375-30.
-                            </p>
-                            <img
-                              src={rheemPage1Path}
-                              alt="Chauffe-eau hybride Rheem Professional Prestige ProTerra — page 1"
-                              className="w-full rounded border mb-4"
-                              data-testid="img-annex-rheem-page1"
-                            />
-                          </div>
-                          <div className="space-y-4">
-                            <img
-                              src={rheemPage2Path}
-                              alt="Données techniques Rheem ProTerra — page 2"
-                              className="w-full rounded border"
-                              data-testid="img-annex-rheem-page2"
-                            />
-                            <img
-                              src={rheemSpecPath}
-                              alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star"
-                              className="w-full rounded border"
-                              data-testid="img-annex-rheem-spec"
-                            />
-                          </div>
+                        <div id="annex-chauffe-eau-thermopompe" className="print:break-before-page">
+                          <h3 className="text-sm font-semibold mb-2">
+                            {annexNum++}. {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}` : "Chauffe-eaux Thermopompe Rheem PROPH40 T2 RH375-30"}
+                          </h3>
+                          <p className="text-xs text-muted-foreground mb-4">
+                            Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"}{" "}
+                            {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${selectedWaterHeater.capacity}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.
+                          </p>
+                          {selectedWaterHeater && ((selectedWaterHeater.images as string[])?.length > 0 || (selectedWaterHeater.specPages as string[])?.length > 0) ? (
+                            <>
+                              {(selectedWaterHeater.images as string[]).map((url, i) => (
+                                <div key={`wh-img-${i}`} className="print:break-after-page mb-4">
+                                  <img src={url} alt={`${selectedWaterHeater.name} — photo ${i + 1}`} className="w-full rounded border" />
+                                </div>
+                              ))}
+                              {(selectedWaterHeater.specPages as string[]).map((url, i) => (
+                                <div key={`wh-spec-${i}`} className="print:break-after-page mb-4">
+                                  <img src={url} alt={`${selectedWaterHeater.name} — fiche technique page ${i + 1}`} className="w-full rounded border" />
+                                </div>
+                              ))}
+                            </>
+                          ) : (
+                            <>
+                              <div className="print:break-inside-avoid mb-4">
+                                <img src={rheemPage1Path} alt="Chauffe-eau hybride Rheem ProTerra — page 1" className="w-full rounded border" />
+                              </div>
+                              <div className="space-y-4">
+                                <img src={rheemPage2Path} alt="Données techniques Rheem ProTerra — page 2" className="w-full rounded border" />
+                                <img src={rheemSpecPath} alt="Fiche technique Rheem PROPH40 T2 RH375-30 Energy Star" className="w-full rounded border" />
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
 

@@ -181,7 +181,7 @@ function HeatPumpModal({
                 <div className="flex items-center justify-between mb-2">
                   <Label>Photos</Label>
                   <label className="cursor-pointer">
-                    <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleUpload(e.target.files, "image")} />
+                    <input type="file" accept="image/*,.pdf,application/pdf" multiple className="hidden" onChange={e => handleUpload(e.target.files, "image")} />
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
                       {uploadingImage ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
                     </span>
@@ -207,7 +207,7 @@ function HeatPumpModal({
                 <div className="flex items-center justify-between mb-2">
                   <Label>Pages de fiche technique</Label>
                   <label className="cursor-pointer">
-                    <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleUpload(e.target.files, "spec")} />
+                    <input type="file" accept="image/*,.pdf,application/pdf" multiple className="hidden" onChange={e => handleUpload(e.target.files, "spec")} />
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
                       {uploadingSpec ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
                     </span>

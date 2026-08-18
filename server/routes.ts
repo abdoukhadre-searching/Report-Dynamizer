@@ -1561,7 +1561,7 @@ export async function registerRoutes(
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
-  // Upload d'une image (photo ou page de fiche technique) pour une thermopompe
+  // Upload d'un fichier (image ou PDF) pour une thermopompe — chaque page = une entrée
   app.post("/api/heat-pumps/:id/upload-image", upload.single("file"), async (req, res) => {
     if (!req.session.userId)
       return res.status(401).json({ message: "Non authentifié" });
@@ -1572,18 +1572,50 @@ export async function registerRoutes(
 
       const hpDir = path.join("uploads", "heat-pumps");
       await fs.promises.mkdir(hpDir, { recursive: true });
-      const uid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-      const destName = `${uid}.jpg`;
-      const destPath = path.join(hpDir, destName);
-
-      const normalizedBuf = await normalizeImageBuffer(req.file.buffer, req.file.originalname);
-      const jpegBuf = await sharp(normalizedBuf).jpeg({ quality: 90 }).toBuffer();
-      await fs.promises.writeFile(destPath, jpegBuf);
-
-      const url = `/uploads/heat-pumps/${destName}`;
       const field = req.query.field === "spec" ? "specPages" : "images";
-      const current = (hp[field] as string[]) ?? [];
-      const updated = await storage.updateHeatPump(hp.id, { [field]: [...current, url] });
+      let current = (hp[field] as string[]) ?? [];
+
+      const isPdf = req.file.mimetype === "application/pdf" || req.file.originalname.toLowerCase().endsWith(".pdf");
+
+      if (isPdf) {
+        // Convertir chaque page PDF en JPEG via pdftoppm
+        const os = require("os");
+        const { execFile } = require("child_process");
+        const tmpId = `hp-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+        const tmpPdf = path.join(os.tmpdir(), `${tmpId}.pdf`);
+        const tmpOutPrefix = path.join(os.tmpdir(), tmpId);
+        await fs.promises.writeFile(tmpPdf, req.file.buffer);
+        await new Promise<void>((resolve, reject) => {
+          execFile("pdftoppm", ["-jpeg", "-r", "150", tmpPdf, tmpOutPrefix], (err: Error | null) => {
+            if (err) reject(err); else resolve();
+          });
+        });
+        const allFiles = await fs.promises.readdir(os.tmpdir());
+        const pageFiles = allFiles
+          .filter((f: string) => f.startsWith(path.basename(tmpOutPrefix)) && (f.endsWith(".jpg") || f.endsWith(".jpeg") || f.endsWith(".ppm")))
+          .sort();
+        for (const pageFile of pageFiles) {
+          const pagePath = path.join(os.tmpdir(), pageFile);
+          const pageBuf = await fs.promises.readFile(pagePath);
+          const destUid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+          const destPath = path.join(hpDir, `${destUid}.jpg`);
+          const jpegBuf = await sharp(pageBuf).jpeg({ quality: 90 }).toBuffer();
+          await fs.promises.writeFile(destPath, jpegBuf);
+          await fs.promises.unlink(pagePath).catch(() => {});
+          current = [...current, `/uploads/heat-pumps/${destUid}.jpg`];
+        }
+        await fs.promises.unlink(tmpPdf).catch(() => {});
+      } else {
+        // Image standard
+        const uid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+        const destPath = path.join(hpDir, `${uid}.jpg`);
+        const normalizedBuf = await normalizeImageBuffer(req.file.buffer, req.file.originalname);
+        const jpegBuf = await sharp(normalizedBuf).jpeg({ quality: 90 }).toBuffer();
+        await fs.promises.writeFile(destPath, jpegBuf);
+        current = [...current, `/uploads/heat-pumps/${uid}.jpg`];
+      }
+
+      const updated = await storage.updateHeatPump(hp.id, { [field]: current });
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
