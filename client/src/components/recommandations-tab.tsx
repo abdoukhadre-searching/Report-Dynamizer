@@ -837,7 +837,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("hwt")}</span>
                       Chauffe-eaux Thermopompe
                     </h3>
-                    <p>Installation de <span className="font-semibold">{(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"}</span> {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${selectedWaterHeater.capacity}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.{" "}
+                    <p>Installation de <span className="font-semibold">{(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"}</span> {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${formatCapacity(selectedWaterHeater.capacity)}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.{" "}
                       <a href="#rec-annex-chauffe-eau-thermopompe" className="text-xs font-medium text-primary underline cursor-pointer print:hidden" onClick={(e) => { e.preventDefault(); document.getElementById("rec-annex-chauffe-eau-thermopompe")?.scrollIntoView({ behavior: "smooth" }); }}>[Voir détails]</a>
                     </p>
                   </div>
@@ -1090,7 +1090,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       {showHeatPumpWaterHeaterStrategy && (
                         <div id="rec-annex-chauffe-eau-thermopompe" className="print:break-before-page">
                           <h3 className="text-sm font-semibold mb-2">{annexNum++}. {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}` : "Chauffe-eaux Thermopompe Rheem PROPH40 T2 RH375-30"}</h3>
-                          <p className="text-xs text-muted-foreground mb-4">Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"} {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${selectedWaterHeater.capacity}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.</p>
+                          <p className="text-xs text-muted-foreground mb-4">Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"} {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${formatCapacity(selectedWaterHeater.capacity)}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.</p>
                           {selectedWaterHeater && ((selectedWaterHeater.images as string[])?.length > 0 || (selectedWaterHeater.specPages as string[])?.length > 0) ? (
                             <>
                               {(selectedWaterHeater.images as string[]).map((url, i) => (

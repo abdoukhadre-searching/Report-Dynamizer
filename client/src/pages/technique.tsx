@@ -307,7 +307,7 @@ function HeatPumpCard({
         {hp.brand && <p className="text-xs text-slate-400 mt-0.5">{hp.brand}{hp.model ? ` · ${hp.model}` : ""}</p>}
 
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-xs text-slate-500">
-          {hp.capacity && <span>{hp.capacity}</span>}
+          {hp.capacity && <span>{hp.capacity.includes("BTU/h") ? hp.capacity : hp.capacity.includes("BTU") ? hp.capacity.replace("BTU", "BTU/h") : /^\d/.test(hp.capacity) ? hp.capacity + " BTU/h" : hp.capacity}</span>}
           {hp.hspf2 && <span>HSPF2 {hp.hspf2}</span>}
           {hp.seer2 && <span>SEER2 {hp.seer2}</span>}
         </div>
@@ -494,19 +494,52 @@ export default function TechniquePage() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {whs.map(hp => (
-                    <HeatPumpCard key={hp.id} hp={hp} onEdit={h => setModalHp(h)} onDelete={setDeleteTarget} />
-                  ))}
-                  <button
-                    onClick={() => setModalHp("new")}
-                    className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-10 text-slate-400 hover:text-slate-600 hover:border-slate-400 transition-colors"
-                    style={{ borderColor: "#e2e8f0" }}
-                  >
-                    <Plus className="w-6 h-6" />
-                    <span className="text-xs font-semibold">Ajouter</span>
-                  </button>
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    {whs.map(hp => (
+                      <HeatPumpCard key={hp.id} hp={hp} onEdit={h => setModalHp(h)} onDelete={setDeleteTarget} />
+                    ))}
+                    <button
+                      onClick={() => setModalHp("new")}
+                      className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-10 text-slate-400 hover:text-slate-600 hover:border-slate-400 transition-colors"
+                      style={{ borderColor: "#e2e8f0" }}
+                    >
+                      <Plus className="w-6 h-6" />
+                      <span className="text-xs font-semibold">Ajouter</span>
+                    </button>
+                  </div>
+                  {/* Fiche technique — équipement par défaut */}
+                  {(() => {
+                    const defaultWH = whs.find(h => h.isDefault) ?? whs[0];
+                    if (!defaultWH) return null;
+                    const photos = (defaultWH.images as string[]) ?? [];
+                    const specs = (defaultWH.specPages as string[]) ?? [];
+                    if (photos.length === 0 && specs.length === 0) return null;
+                    return (
+                      <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#e8edf4" }}>
+                        <div className="px-5 py-3.5 border-b flex items-center gap-2" style={{ backgroundColor: "#f8fafc", borderColor: "#e8edf4" }}>
+                          <div className="w-1 h-5 rounded-full" style={{ backgroundColor: "#2563eb" }} />
+                          <h4 className="text-sm font-bold uppercase tracking-widest" style={{ color: "#1e3a5f" }}>
+                            Fiche technique — {defaultWH.name}{defaultWH.model ? ` ${defaultWH.model}` : ""}
+                          </h4>
+                          {defaultWH.isDefault && (
+                            <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: "#fefce8", color: "#a16207" }}>
+                              <Star className="w-2.5 h-2.5" /> Par défaut
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-4 space-y-4 bg-white">
+                          {photos.map((url, i) => (
+                            <img key={i} src={url} alt={`${defaultWH.name} — photo ${i + 1}`} className="w-full rounded border border-slate-200 shadow-sm" />
+                          ))}
+                          {specs.map((url, i) => (
+                            <img key={i} src={url} alt={`${defaultWH.name} — fiche technique page ${i + 1}`} className="w-full rounded border border-slate-200 shadow-sm" />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
               )}
             </section>
           </>

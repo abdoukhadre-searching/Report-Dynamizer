@@ -390,7 +390,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const city = project.city || pre.buildingInfo?.city || "";
   const province = project.province || pre.buildingInfo?.province || "";
   const postalCode = project.postalCode || (pre.buildingInfo as any)?.postalCode || "";
-  const fullAddress = project.name?.trim() || [address, city, postalCode].filter(Boolean).join(", ");
+  const fullAddress = [address, city, postalCode].filter(Boolean).join(", ") || project.name?.trim() || "";
 
   const inputCls = "w-28 text-right text-slate-800 font-medium bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400";
 
@@ -1500,7 +1500,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
             </div>
           </Card>
 
-          {/* Fiche technique chauffe-eau thermopompe — toujours affichée */}
+          {/* Fiche technique chauffe-eau thermopompe — uniquement si stratégie active */}
+          {showHeatPumpWaterHeaterStrategy && (
           <Card className="overflow-hidden border shadow-sm">
               <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1541,6 +1542,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 </CardContent>
               )}
             </Card>
+          )}
 
           {/* Subvention Logisvert — document + montant */}
           <Card id="section-subvention-logisvert" className="overflow-hidden border shadow-sm">
