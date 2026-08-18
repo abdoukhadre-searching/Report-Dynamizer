@@ -63,25 +63,30 @@ function HeatPumpModal({
   // Fichiers déjà sur le serveur (édition) ou uploadés après création
   const [images, setImages] = useState<string[]>((hpProp?.images as string[]) ?? []);
   const [specPages, setSpecPages] = useState<string[]>((hpProp?.specPages as string[]) ?? []);
+  const [logisvertPdf, setLogisvertPdf] = useState<string | null>((hpProp as any)?.logisvertPdf ?? null);
+  const [subventionAmount, setSubventionAmount] = useState<string>((hpProp as any)?.subventionAmount ?? "");
 
   // Fichiers en attente d'upload (création uniquement) — prévisualisés localement
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [pendingSpecs, setPendingSpecs] = useState<File[]>([]);
+  const [pendingLogisvert, setPendingLogisvert] = useState<File | null>(null);
 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingSpec, setUploadingSpec] = useState(false);
+  const [uploadingLogisvert, setUploadingLogisvert] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   // ID de l'équipement actif (connu seulement après création réussie en mode création)
   const [savedId, setSavedId] = useState<string | null>(hpProp?.id ?? null);
 
-  async function uploadFilesToServer(files: File[], field: "image" | "spec", hpId: string): Promise<HeatPump> {
+  async function uploadFilesToServer(files: File[], field: "image" | "spec" | "logisvert", hpId: string): Promise<HeatPump> {
     let updated: HeatPump | null = null;
     for (const f of files) {
       const fd = new FormData();
       fd.append("file", f);
-      const url = `/api/heat-pumps/${hpId}/upload-image${field === "spec" ? "?field=spec" : ""}`;
+      const qp = field === "spec" ? "?field=spec" : field === "logisvert" ? "?field=logisvert" : "";
+      const url = `/api/heat-pumps/${hpId}/upload-image${qp}`;
       const res = await fetch(url, { method: "POST", body: fd, credentials: "include" });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -92,22 +97,27 @@ function HeatPumpModal({
     return updated!;
   }
 
-  async function handleUploadNow(files: FileList | null, field: "image" | "spec") {
-    // Upload immédiat (mode édition ou après création)
+  async function handleUploadNow(files: FileList | null, field: "image" | "spec" | "logisvert") {
     if (!files || files.length === 0 || !savedId) return;
-    field === "image" ? setUploadingImage(true) : setUploadingSpec(true);
+    if (field === "image") setUploadingImage(true);
+    else if (field === "spec") setUploadingSpec(true);
+    else setUploadingLogisvert(true);
     setError("");
     try {
       const updated = await uploadFilesToServer(Array.from(files), field, savedId);
       setImages((updated.images as string[]) ?? []);
       setSpecPages((updated.specPages as string[]) ?? []);
+      setLogisvertPdf((updated as any).logisvertPdf ?? null);
       qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
     } catch (e: any) { setError(e.message ?? "Échec de l'upload"); }
-    finally { field === "image" ? setUploadingImage(false) : setUploadingSpec(false); }
+    finally {
+      if (field === "image") setUploadingImage(false);
+      else if (field === "spec") setUploadingSpec(false);
+      else setUploadingLogisvert(false);
+    }
   }
 
   function handleAddPending(files: FileList | null, field: "image" | "spec") {
-    // En mode création, on stocke localement jusqu'à la sauvegarde
     if (!files || files.length === 0) return;
     if (field === "image") setPendingImages(prev => [...prev, ...Array.from(files)]);
     else setPendingSpecs(prev => [...prev, ...Array.from(files)]);
@@ -118,13 +128,14 @@ function HeatPumpModal({
     else setPendingSpecs(prev => prev.filter((_, i) => i !== idx));
   }
 
-  async function handleDeleteSaved(url: string, field: "images" | "specPages") {
+  async function handleDeleteSaved(url: string, field: "images" | "specPages" | "logisvertPdf") {
     if (!savedId) return;
     try {
       const res = await apiRequest("DELETE", `/api/heat-pumps/${savedId}/image`, { url, field });
       const updated = await res.json() as HeatPump;
       setImages((updated.images as string[]) ?? []);
       setSpecPages((updated.specPages as string[]) ?? []);
+      setLogisvertPdf((updated as any).logisvertPdf ?? null);
       qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
     } catch { setError("Échec de la suppression"); }
   }
@@ -136,9 +147,9 @@ function HeatPumpModal({
       let hpId = savedId;
 
       if (isEdit) {
-        await apiRequest("PATCH", `/api/heat-pumps/${hpId}`, { name, brand, model, capacity, hspf2, seer2, isDefault });
+        await apiRequest("PATCH", `/api/heat-pumps/${hpId}`, { name, brand, model, capacity, hspf2, seer2, isDefault, subventionAmount: subventionAmount || null });
       } else {
-        const res = await apiRequest("POST", "/api/heat-pumps", { name, brand, model, capacity, hspf2, seer2, type, isDefault });
+        const res = await apiRequest("POST", "/api/heat-pumps", { name, brand, model, capacity, hspf2, seer2, type, isDefault, subventionAmount: subventionAmount || null });
         const created = await res.json() as HeatPump;
         hpId = created.id;
         setSavedId(hpId);
@@ -154,6 +165,11 @@ function HeatPumpModal({
         const updated = await uploadFilesToServer(pendingSpecs, "spec", hpId!);
         setSpecPages((updated.specPages as string[]) ?? []);
         setPendingSpecs([]);
+      }
+      if (pendingLogisvert) {
+        const updated = await uploadFilesToServer([pendingLogisvert], "logisvert", hpId!);
+        setLogisvertPdf((updated as any).logisvertPdf ?? null);
+        setPendingLogisvert(null);
       }
 
       qc2.invalidateQueries({ queryKey: ["/api/heat-pumps"] });
@@ -314,9 +330,58 @@ function HeatPumpModal({
             )}
           </div>
 
-          {!isEdit && (pendingImages.length > 0 || pendingSpecs.length > 0) && (
+          {/* ── Subvention LogisVert ── */}
+          <div className="border-t pt-3">
+            <div className="mb-3">
+              <Label>Montant de la subvention par unité (LogisVert)</Label>
+              <Input
+                value={subventionAmount}
+                onChange={e => setSubventionAmount(e.target.value)}
+                placeholder="ex: 2 600 $"
+                className="mt-1"
+              />
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <Label>Programme subvention LogisVert (PDF ou image)</Label>
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*,.pdf,application/pdf"
+                  className="hidden"
+                  onChange={e => {
+                    if (!e.target.files || e.target.files.length === 0) return;
+                    if (savedId) handleUploadNow(e.target.files, "logisvert");
+                    else setPendingLogisvert(e.target.files[0]);
+                  }}
+                />
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                  {uploadingLogisvert ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> {logisvertPdf || pendingLogisvert ? "Remplacer" : "Ajouter"}</>}
+                </span>
+              </label>
+            </div>
+            {logisvertPdf ? (
+              <div className="relative group rounded-lg overflow-hidden border border-green-200 bg-green-50">
+                <img src={logisvertPdf} alt="Programme LogisVert" className="w-full rounded" />
+                <button onClick={() => handleDeleteSaved(logisvertPdf, "logisvertPdf")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : pendingLogisvert ? (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50 border border-dashed border-green-300">
+                <span className="text-lg">📄</span>
+                <span className="text-xs text-green-700 font-medium truncate">{pendingLogisvert.name}</span>
+                <button onClick={() => setPendingLogisvert(null)} className="ml-auto p-0.5 rounded-full hover:bg-green-200">
+                  <X className="w-3 h-3 text-green-700" />
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Aucun document LogisVert.</p>
+            )}
+          </div>
+
+          {!isEdit && (pendingImages.length > 0 || pendingSpecs.length > 0 || pendingLogisvert) && (
             <p className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-              📎 {pendingImages.length + pendingSpecs.length} fichier(s) seront uploadés à la sauvegarde.
+              📎 {pendingImages.length + pendingSpecs.length + (pendingLogisvert ? 1 : 0)} fichier(s) seront uploadés à la sauvegarde.
             </p>
           )}
 

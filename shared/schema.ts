@@ -47,6 +47,8 @@ export const heatPumps = pgTable("heat_pumps", {
   isDefault: boolean("is_default").notNull().default(false),
   images: jsonb("images").default([]),        // string[] — URL paths
   specPages: jsonb("spec_pages").default([]), // string[] — URL paths
+  logisvertPdf: text("logisvert_pdf"),        // URL — programme subvention LogisVert
+  subventionAmount: text("subvention_amount"), // montant de subvention par unité
   createdAt: timestamp("created_at").defaultNow(),
 });
 

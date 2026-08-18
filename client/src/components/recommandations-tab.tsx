@@ -307,6 +307,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
     },
   });
+  const signatureInfo = (project as any).signatureInfo as { date: string; code: string } | undefined;
   const { data: heatPumpsData } = useQuery<HeatPump[]>({ queryKey: ["/api/heat-pumps"] });
   const selectedHeatPump: HeatPump | undefined =
     (heatPumpsData?.find(hp => hp.id === (project as any).selectedHeatPumpId) ??
@@ -974,6 +975,43 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
 
                 <div className="mt-8 pt-6" style={{ borderTop: "1px solid #e2e8f0" }}>
                   <p className="text-sm font-bold mb-4">Document approuvé par :</p>
+                  <p className="text-sm text-slate-700">Marc-André Boucher</p>
+                  <p className="text-xs text-slate-500">Évaluateur en efficacité énergétique agréé</p>
+                  <div
+                    className="relative mt-3 overflow-hidden rounded-md"
+                    style={{ border: "1.5px solid #0f766e", background: "linear-gradient(135deg, #f8fdfc 0%, #eef7f5 100%)", maxWidth: "500px", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                  >
+                    <div className="absolute inset-0 pointer-events-none select-none" style={{ opacity: 0.05 }} aria-hidden>
+                      {[0,1,2,3,4].map(r => (
+                        <p key={r} className="text-[9px] font-bold whitespace-nowrap" style={{ transform: "rotate(-18deg)", color: "#0f766e", marginTop: r === 0 ? "-4px" : "10px", letterSpacing: "2px" }}>
+                          {"DOCUMENT ORIGINAL • MAB CONSEIL IMMOBILIER • ".repeat(4)}
+                        </p>
+                      ))}
+                    </div>
+                    <div className="relative px-4 py-3">
+                      <div className="flex items-end justify-between gap-4">
+                        <div>
+                          <p className="signature-script" style={{ fontFamily: "'GreatVibesLocal', 'Great Vibes', cursive", fontSize: "30px", lineHeight: 1.1, color: "#1e3a5f", whiteSpace: "nowrap" }}>
+                            Marc-André Boucher
+                          </p>
+                          <div className="mt-1 h-px w-full" style={{ backgroundColor: "#0f766e", opacity: 0.4 }} />
+                          <p className="text-[9px] mt-1 text-slate-600">
+                            Signé numériquement le{" "}
+                            {new Date().toLocaleDateString("fr-CA", { timeZone: "America/Toronto" }).replace(/-/g, ".")}{" "}
+                            {new Date().toLocaleTimeString("fr-CA", { hour12: false, timeZone: "America/Toronto" })} (HE)
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold text-white" style={{ backgroundColor: "#0f766e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                              ✓ SIGNATURE VÉRIFIÉE
+                            </span>
+                            <p className="text-[8px] mt-1 font-mono text-slate-500">ID : {signatureInfo?.code || "—"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -1010,6 +1048,12 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                                     <img src={url} alt={`${selectedHeatPump.name} — fiche technique page ${i + 1}`} className="w-full rounded-md border" />
                                   </div>
                                 ))}
+                                {(selectedHeatPump as any).logisvertPdf && (
+                                  <div className="print:break-before-page mt-4">
+                                    <p className="text-xs font-semibold text-green-700 mb-1">Programme subvention LogisVert</p>
+                                    <img src={(selectedHeatPump as any).logisvertPdf} alt="Programme subvention LogisVert" className="w-full rounded-md border" />
+                                  </div>
+                                )}
                               </>
                             ) : (
                               <>
@@ -1052,6 +1096,12 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                                   <img src={url} alt={`${selectedWaterHeater.name} — fiche technique page ${i + 1}`} className="w-full rounded border" />
                                 </div>
                               ))}
+                              {(selectedWaterHeater as any).logisvertPdf && (
+                                <div className="print:break-before-page mt-4">
+                                  <p className="text-xs font-semibold text-green-700 mb-1">Programme subvention LogisVert</p>
+                                  <img src={(selectedWaterHeater as any).logisvertPdf} alt="Programme subvention LogisVert" className="w-full rounded-md border" />
+                                </div>
+                              )}
                             </>
                           ) : (
                             <>

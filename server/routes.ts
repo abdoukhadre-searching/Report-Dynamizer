@@ -825,7 +825,6 @@ export async function registerRoutes(
 
   // ── Preuves : upload d'une image dans l'annexe preuves ────────────────────
   app.post("/api/projects/:id/preuves/upload", upload.single("file"), async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ message: "Non authentifié" });
     try {
       const projectId = getProjectId(req.params.id);
       if (!req.file) return res.status(400).json({ message: "Fichier requis" });
@@ -867,7 +866,6 @@ export async function registerRoutes(
 
   // ── Preuves : supprimer une image ─────────────────────────────────────────
   app.delete("/api/projects/:id/preuves/image", async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ message: "Non authentifié" });
     try {
       const projectId = getProjectId(req.params.id);
       const { url } = req.body as { url: string };
@@ -1629,8 +1627,10 @@ export async function registerRoutes(
 
       const hpDir = path.join("uploads", "heat-pumps");
       await fs.promises.mkdir(hpDir, { recursive: true });
-      const field = req.query.field === "spec" ? "specPages" : "images";
-      let current = (hp[field] as string[]) ?? [];
+      const fieldParam = req.query.field as string;
+      const field = fieldParam === "spec" ? "specPages" : fieldParam === "logisvert" ? "logisvertPdf" : "images";
+      const isSingleField = field === "logisvertPdf";
+      let current = isSingleField ? [] : ((hp[field as keyof typeof hp] as string[]) ?? []);
 
       const isPdf = req.file.mimetype === "application/pdf" || req.file.originalname.toLowerCase().endsWith(".pdf");
 
@@ -1673,7 +1673,10 @@ export async function registerRoutes(
         current = [...current, `/uploads/heat-pumps/${uid}.jpg`];
       }
 
-      const updated = await storage.updateHeatPump(hp.id, { [field]: current });
+      const updatePayload = isSingleField
+        ? { logisvertPdf: current[current.length - 1] ?? null }
+        : { [field]: current };
+      const updated = await storage.updateHeatPump(hp.id, updatePayload as any);
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
@@ -1685,10 +1688,15 @@ export async function registerRoutes(
       const hp = await storage.getHeatPump(req.params.id);
       if (!hp) return res.status(404).json({ message: "Non trouvé" });
       const { url, field = "images" } = req.body as { url: string; field?: string };
-      const key = field === "spec" || field === "specPages" ? "specPages" : "images";
-      const current = (hp[key] as string[]) ?? [];
-      const updated = current.filter(u => u !== url);
-      const result = await storage.updateHeatPump(hp.id, { [key]: updated });
+      const key = field === "spec" || field === "specPages" ? "specPages" : field === "logisvert" || field === "logisvertPdf" ? "logisvertPdf" : "images";
+      let result: any;
+      if (key === "logisvertPdf") {
+        result = await storage.updateHeatPump(hp.id, { logisvertPdf: null } as any);
+      } else {
+        const current = (hp[key as keyof typeof hp] as string[]) ?? [];
+        const updated = current.filter(u => u !== url);
+        result = await storage.updateHeatPump(hp.id, { [key]: updated });
+      }
       // Supprimer le fichier physique
       if (url.startsWith("/uploads/")) {
         const filePath = url.slice(1); // retire le /
