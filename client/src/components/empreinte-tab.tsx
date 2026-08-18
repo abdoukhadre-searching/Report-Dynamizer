@@ -1500,9 +1500,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
             </div>
           </Card>
 
-          {/* Fiche technique chauffe-eau thermopompe — si stratégie active */}
-          {showHeatPumpWaterHeaterStrategy && (
-            <Card className="overflow-hidden border shadow-sm">
+          {/* Fiche technique chauffe-eau thermopompe — toujours affichée */}
+          <Card className="overflow-hidden border shadow-sm">
               <CardHeader className="px-6 py-4 border-b" style={{ backgroundColor: "#f8fafc" }}>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
@@ -1542,7 +1541,6 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                 </CardContent>
               )}
             </Card>
-          )}
 
           {/* Subvention Logisvert — document + montant */}
           <Card id="section-subvention-logisvert" className="overflow-hidden border shadow-sm">

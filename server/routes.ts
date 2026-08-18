@@ -1,6 +1,9 @@
 import type { Express, Request } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { projects as projectsTable } from "@shared/schema";
 import { parseHot2000Report, computeComparison } from "./parser";
 import type { ReportData, ComparisonData } from "@shared/schema";
 import multer from "multer";
@@ -888,7 +891,10 @@ export async function registerRoutes(
       if (!project) return res.status(404).json({ message: "Projet introuvable" });
       const current: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
       const newSection: PreuveSection = { id: crypto.randomBytes(8).toString("hex"), title: "", images: [] };
-      const updated = await storage.updateProject(projectId, { annexPreuvesSections: [...current, newSection] } as any);
+      const newSections = [...current, newSection];
+      // Bypass InsertProject type via direct drizzle update to avoid runtime type mismatch
+      const [updated] = await db.update(projectsTable).set({ annexPreuvesSections: newSections } as any).where(eq(projectsTable.id, projectId)).returning();
+      if (!updated) return res.status(500).json({ message: "Mise à jour échouée" });
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
@@ -925,7 +931,7 @@ export async function registerRoutes(
       const imageUrl = `/uploads/${fileName}`;
       const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
       const updatedSections = sections.map(s => s.id === sectionId ? { ...s, images: [...(s.images || []), imageUrl] } : s);
-      const updated = await storage.updateProject(projectId, { annexPreuvesSections: updatedSections } as any);
+      const [updated] = await db.update(projectsTable).set({ annexPreuvesSections: updatedSections } as any).where(eq(projectsTable.id, projectId)).returning();
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
@@ -939,7 +945,7 @@ export async function registerRoutes(
       if (!project) return res.status(404).json({ message: "Projet introuvable" });
       const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
       const updatedSections = sections.map(s => s.id === sectionId ? { ...s, title } : s);
-      const updated = await storage.updateProject(projectId, { annexPreuvesSections: updatedSections } as any);
+      const [updated] = await db.update(projectsTable).set({ annexPreuvesSections: updatedSections } as any).where(eq(projectsTable.id, projectId)).returning();
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
@@ -953,7 +959,7 @@ export async function registerRoutes(
       if (!project) return res.status(404).json({ message: "Projet introuvable" });
       const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
       const updatedSections = sections.map(s => s.id === sectionId ? { ...s, images: (s.images || []).filter((u: string) => u !== url) } : s);
-      const updated = await storage.updateProject(projectId, { annexPreuvesSections: updatedSections } as any);
+      const [updated] = await db.update(projectsTable).set({ annexPreuvesSections: updatedSections } as any).where(eq(projectsTable.id, projectId)).returning();
       if (url.startsWith("/uploads/")) await fs.promises.unlink(url.slice(1)).catch(() => {});
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
@@ -968,7 +974,7 @@ export async function registerRoutes(
       const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
       const toDelete = sections.find(s => s.id === sectionId);
       const updatedSections = sections.filter(s => s.id !== sectionId);
-      const updated = await storage.updateProject(projectId, { annexPreuvesSections: updatedSections } as any);
+      const [updated] = await db.update(projectsTable).set({ annexPreuvesSections: updatedSections } as any).where(eq(projectsTable.id, projectId)).returning();
       if (toDelete?.images) {
         for (const u of toDelete.images) {
           if (u.startsWith("/uploads/")) await fs.promises.unlink(u.slice(1)).catch(() => {});

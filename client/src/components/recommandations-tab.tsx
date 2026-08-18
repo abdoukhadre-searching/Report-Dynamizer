@@ -446,7 +446,15 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   const city = project.city || pre.buildingInfo?.city || "";
   const province = project.province || pre.buildingInfo?.province || "";
   const postalCode = project.postalCode || (pre.buildingInfo as any)?.postalCode || "";
-  const fullAddress = project.name?.trim() || [address, city, postalCode].filter(Boolean).join(", ") || "N/A";
+  const fullAddress = [address, city, postalCode].filter(Boolean).join(", ") || project.name?.trim() || "N/A";
+  function formatCapacity(cap?: string | null): string | null {
+    if (!cap) return null;
+    const s = cap.trim();
+    if (s.includes("BTU/h")) return s;
+    if (s.includes("BTU")) return s.replace("BTU", "BTU/h");
+    if (/^\d/.test(s)) return s + " BTU/h";
+    return s;
+  }
 
   const totalBeforeGJ = comparison.totalBefore ?? 0;
   const totalAfterGJ = comparison.totalAfter ?? 0;
@@ -780,7 +788,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       Installation de thermopompes haute efficacité
                     </h3>
                     <p>L'installation de <span className="font-semibold">{thermopompeCount}</span> thermopompes murales haute efficacité est proposée afin d'améliorer la performance énergétique du système de chauffage et de climatisation.</p>
-                    <p className="mt-1">Les thermopompes recommandées possèdent {selectedHeatPump?.capacity ? `une capacité de ${selectedHeatPump.capacity}` : "une capacité minimale de 12 000 BTU"}{selectedHeatPump?.hspf2 ? `, avec une efficacité d'environ ${selectedHeatPump.hspf2} HSPF2` : ", avec une efficacité d'environ 10.5 HSPF2"}{selectedHeatPump?.seer2 ? ` et ${selectedHeatPump.seer2} SEER2` : " et 25 SEER2"}.</p>
+                    <p className="mt-1">Les thermopompes recommandées possèdent {selectedHeatPump?.capacity ? `une capacité de ${formatCapacity(selectedHeatPump.capacity)}` : "une capacité minimale de 12 000 BTU/h"}{selectedHeatPump?.hspf2 ? `, avec une efficacité d'environ ${selectedHeatPump.hspf2} HSPF2` : ", avec une efficacité d'environ 10.5 HSPF2"}{selectedHeatPump?.seer2 ? ` et ${selectedHeatPump.seer2} SEER2` : " et 25 SEER2"}. Il s'agit du minimum exigé.</p>
                     <p className="mt-1">Ces équipements permettent de produire plus d'énergie thermique qu'ils n'en consomment, ce qui contribue à réduire la consommation énergétique associée au chauffage des logements.{" "}
                       <a href="#rec-annex-thermopompes" className="text-xs font-medium text-primary underline cursor-pointer print:hidden" onClick={(e) => { e.preventDefault(); document.getElementById("rec-annex-thermopompes")?.scrollIntoView({ behavior: "smooth" }); }}>[Voir détails]</a>
                     </p>
@@ -1032,7 +1040,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                           <div id="rec-annex-thermopompes">
                             <h3 className="text-sm font-semibold mb-2">{annexNum++}. {selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompes TCL T-Pro-25ES"} — Caractéristiques</h3>
                             <p className="text-xs text-muted-foreground mb-2">
-                              {`Ajout de ${thermopompeCount} ${selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompes TCL T-Pro-25ES"} — ${[selectedHeatPump?.capacity, selectedHeatPump?.hspf2 ? `${selectedHeatPump.hspf2} HSPF2` : null, selectedHeatPump?.seer2 ? `${selectedHeatPump.seer2} SEER2` : null].filter(Boolean).join(", ") || "12 000 BTU, 10.5 HSPF2 et 25 SEER2"}.`}
+                              {`Ajout de ${thermopompeCount} ${selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompes TCL T-Pro-25ES"} — ${[formatCapacity(selectedHeatPump?.capacity), selectedHeatPump?.hspf2 ? `${selectedHeatPump.hspf2} HSPF2` : null, selectedHeatPump?.seer2 ? `${selectedHeatPump.seer2} SEER2` : null].filter(Boolean).join(", ") || "12 000 BTU/h, 10.5 HSPF2, 25 SEER2"}.`}
                             </p>
                             {selectedHeatPump && ((selectedHeatPump.images as string[])?.length > 0 || (selectedHeatPump.specPages as string[])?.length > 0) ? (
                               <>

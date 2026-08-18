@@ -829,7 +829,7 @@ export default function ReportTab({
   const city = project.city || pre.buildingInfo?.city || "";
   const province = project.province || pre.buildingInfo?.province || "";
   const postalCode = project.postalCode || (pre.buildingInfo as any)?.postalCode || "";
-  const fullAddress = project.name?.trim() || [address, city, postalCode].filter(Boolean).join(", ") || "N/A";
+  const fullAddress = [address, city, postalCode].filter(Boolean).join(", ") || project.name?.trim() || "N/A";
 
   const totalBeforeGJ = comparison.totalBefore ?? 0;
   const totalAfterGJ = comparison.totalAfter ?? 0;
@@ -3950,14 +3950,16 @@ export default function ReportTab({
                               </div>
                             ))}
 
-                            {/* Bouton ajouter une section */}
-                            <button
-                              type="button"
-                              onClick={addPreuvesSection}
-                              className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-700 border border-dashed border-slate-300 rounded-lg px-4 py-2.5 hover:bg-slate-50 transition-colors w-full justify-center"
-                            >
-                              <Plus className="w-3.5 h-3.5" /> Ajouter une section de preuves
-                            </button>
+                            {/* Bouton ajouter une section — seulement si la première section a du contenu */}
+                            {(preuvesImages.length > 0 || preuvesTitle.trim()) && (
+                              <button
+                                type="button"
+                                onClick={addPreuvesSection}
+                                className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-700 border border-dashed border-slate-300 rounded-lg px-4 py-2.5 hover:bg-slate-50 transition-colors w-full justify-center"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Ajouter une section de preuves
+                              </button>
+                            )}
                           </>
                         )}
                       </div>

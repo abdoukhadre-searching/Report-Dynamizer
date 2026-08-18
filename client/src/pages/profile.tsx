@@ -447,7 +447,7 @@ function HeatPumpCard({
         <p className="font-semibold text-slate-900 text-sm leading-tight">{hp.name}</p>
         {hp.brand && <p className="text-xs text-slate-400 mt-0.5">{hp.brand}{hp.model ? ` · ${hp.model}` : ""}</p>}
         <div className="flex flex-wrap gap-x-2 mt-1 text-xs text-slate-400">
-          {hp.capacity && <span>{hp.capacity}</span>}
+          {hp.capacity && <span>{hp.capacity.includes("BTU/h") ? hp.capacity : hp.capacity.includes("BTU") ? hp.capacity.replace("BTU", "BTU/h") : /^\d/.test(hp.capacity) ? hp.capacity + " BTU/h" : hp.capacity}</span>}
           {hp.hspf2 && <span>HSPF2 {hp.hspf2}</span>}
           {hp.seer2 && <span>SEER2 {hp.seer2}</span>}
         </div>
