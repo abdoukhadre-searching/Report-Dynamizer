@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import type { Project, ReportData, ComparisonData, HeatPump } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Printer, Upload, Loader2, ImageIcon, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FileText, Printer, Upload, Loader2, ImageIcon, Trash2, Plus, X } from "lucide-react";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 import buildingCoverPath from "@assets/multi-racial-builders-standing-outdoors-back-view-wearing-unif_1774203867359.jpg";
 import tclPhotoPath from "@assets/182568194_3810005075735040_7297035271127510089_n_1775165080896.jpg";
@@ -315,6 +316,57 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
     (heatPumpsData?.find(hp => hp.id === (project as any).selectedWaterHeaterId) ??
     heatPumpsData?.find(hp => hp.type === "waterheater" && hp.isDefault) ??
     heatPumpsData?.filter(hp => hp.type === "waterheater")[0]);
+
+  // ── Section Preuves ─────────────────────────────────────────────────────────
+  const [preuvesTitle, setPreuvesTitle] = useState<string>((project as any).annexPreuvesTitle ?? "");
+  const [preuvesImages, setPreuvesImages] = useState<string[]>(((project as any).annexPreuvesImages as string[]) ?? []);
+  const [uploadingPreuve, setUploadingPreuve] = useState(false);
+  const preuvesInputRef = useRef<HTMLInputElement>(null);
+
+  async function handlePreuvesTitleBlur() {
+    try {
+      await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ annexPreuvesTitle: preuvesTitle }),
+        credentials: "include",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch {}
+  }
+
+  async function handlePreuvesUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploadingPreuve(true);
+    try {
+      let lastProject: any = null;
+      for (const f of Array.from(files)) {
+        const fd = new FormData();
+        fd.append("file", f);
+        const res = await fetch(`/api/projects/${project.id}/preuves/upload`, { method: "POST", body: fd, credentials: "include" });
+        if (!res.ok) throw new Error("Échec upload");
+        lastProject = await res.json();
+      }
+      if (lastProject) setPreuvesImages((lastProject.annexPreuvesImages as string[]) ?? []);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch (e: any) { toast({ title: "Échec de l'upload", variant: "destructive" }); }
+    finally { setUploadingPreuve(false); if (preuvesInputRef.current) preuvesInputRef.current.value = ""; }
+  }
+
+  async function handleDeletePreuve(url: string) {
+    try {
+      const res = await fetch(`/api/projects/${project.id}/preuves/image`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setPreuvesImages((updated.annexPreuvesImages as string[]) ?? []);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+    } catch { toast({ title: "Échec de la suppression", variant: "destructive" }); }
+  }
 
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
@@ -1015,6 +1067,70 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                           )}
                         </div>
                       )}
+
+
+                       {/* ── Section Preuves ─────────────────────────────── */}
+                       <div className="print:break-before-page mt-6">
+                         {exportMode ? (
+                           <>
+                             {(preuvesTitle || preuvesImages.length > 0) && (
+                               <>
+                                 <h3 className="text-sm font-semibold mb-2">{annexNum++}. {preuvesTitle || "Preuves"}</h3>
+                                 <div className="space-y-4">
+                                   {preuvesImages.map((url, i) => (
+                                     <div key={i} className="print:break-after-page">
+                                       <img src={url} alt={`Preuve ${i + 1}`} className="w-full rounded border" />
+                                     </div>
+                                   ))}
+                                 </div>
+                               </>
+                             )}
+                           </>
+                         ) : (
+                           <>
+                             <div className="flex items-center gap-2 mb-3">
+                               <span className="text-sm font-semibold shrink-0">{annexNum++}.</span>
+                               <Input
+                                 value={preuvesTitle}
+                                 onChange={e => setPreuvesTitle(e.target.value)}
+                                 onBlur={handlePreuvesTitleBlur}
+                                 placeholder="Nom de la section (ex: Preuves, Photos chantier…)"
+                                 className="h-8 text-sm font-semibold border-dashed"
+                               />
+                               <label className="cursor-pointer shrink-0">
+                                 <input
+                                   ref={preuvesInputRef}
+                                   type="file"
+                                   accept="image/*,.pdf,application/pdf"
+                                   multiple
+                                   className="hidden"
+                                   onChange={e => handlePreuvesUpload(e.target.files)}
+                                 />
+                                 <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap">
+                                   {uploadingPreuve ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Plus className="w-3.5 h-3.5" /> Ajouter</>}
+                                 </span>
+                               </label>
+                             </div>
+                             {preuvesImages.length === 0 ? (
+                               <p className="text-xs text-slate-400 italic">Aucune image. Nommez la section et ajoutez vos preuves ou photos.</p>
+                             ) : (
+                               <div className="grid grid-cols-2 gap-3">
+                                 {preuvesImages.map((url, i) => (
+                                   <div key={i} className="relative group rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                                     <img src={url} alt={`Preuve ${i + 1}`} className="w-full object-cover" />
+                                     <button
+                                       onClick={() => handleDeletePreuve(url)}
+                                       className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                     >
+                                       <X className="w-3 h-3" />
+                                     </button>
+                                   </div>
+                                 ))}
+                               </div>
+                             )}
+                           </>
+                         )}
+                       </div>
 
                     </>
                   );

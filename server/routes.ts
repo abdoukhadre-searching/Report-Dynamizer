@@ -823,6 +823,63 @@ export async function registerRoutes(
     }
   });
 
+  // ── Preuves : upload d'une image dans l'annexe preuves ────────────────────
+  app.post("/api/projects/:id/preuves/upload", upload.single("file"), async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "Non authentifié" });
+    try {
+      const projectId = getProjectId(req.params.id);
+      if (!req.file) return res.status(400).json({ message: "Fichier requis" });
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Projet introuvable" });
+
+      let imageBuffer: Buffer = req.file.buffer;
+      const isPdf = req.file.mimetype === "application/pdf" || req.file.originalname?.toLowerCase().endsWith(".pdf");
+      if (isPdf) {
+        const tmpSuffix = crypto.randomBytes(8).toString("hex");
+        const tmpPdf = path.join(os.tmpdir(), `preuves-${tmpSuffix}.pdf`);
+        const tmpPrefix = path.join(os.tmpdir(), `preuves-${tmpSuffix}-out`);
+        await fs.promises.writeFile(tmpPdf, req.file.buffer);
+        try {
+          await execFileAsync("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
+          imageBuffer = await fs.promises.readFile(`${tmpPrefix}-1.jpg`);
+          await fs.promises.unlink(`${tmpPrefix}-1.jpg`).catch(() => {});
+        } finally {
+          await fs.promises.unlink(tmpPdf).catch(() => {});
+        }
+      }
+
+      const fileName = `${projectId}_preuves_${Date.now()}.jpg`;
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      const normalized = await normalizeImageBuffer(imageBuffer, req.file.originalname);
+      const compressed = await sharp(normalized)
+        .rotate()
+        .resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 90, mozjpeg: true })
+        .toBuffer();
+      await fs.promises.writeFile(filePath, compressed);
+
+      const imageUrl = `/uploads/${fileName}`;
+      const current: string[] = (project.annexPreuvesImages as string[]) ?? [];
+      const updated = await storage.updateProject(projectId, { annexPreuvesImages: [...current, imageUrl] });
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  // ── Preuves : supprimer une image ─────────────────────────────────────────
+  app.delete("/api/projects/:id/preuves/image", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "Non authentifié" });
+    try {
+      const projectId = getProjectId(req.params.id);
+      const { url } = req.body as { url: string };
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Projet introuvable" });
+      const current: string[] = (project.annexPreuvesImages as string[]) ?? [];
+      const updated = await storage.updateProject(projectId, { annexPreuvesImages: current.filter(u => u !== url) });
+      if (url.startsWith("/uploads/")) await fs.promises.unlink(url.slice(1)).catch(() => {});
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
   app.delete("/api/projects/:id/annex-image/:annexType", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);

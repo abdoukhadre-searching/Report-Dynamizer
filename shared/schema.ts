@@ -87,6 +87,8 @@ export const projects = pgTable("projects", {
   annexLedLightingImage: text("annex_led_lighting_image"),
   annexVrcImage: text("annex_vrc_image"),
   annexChauffeEauThermopompeImage: text("annex_chauffe_eau_thermopompe_image"),
+  annexPreuvesTitle: text("annex_preuves_title"),
+  annexPreuvesImages: jsonb("annex_preuves_images").$type<string[]>().default([]),
   signatoryName: text("signatory_name"),
   signatoryTitle: text("signatory_title"),
   signatoryCoordonnes: text("signatory_coordonnees"),

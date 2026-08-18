@@ -144,11 +144,19 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   async function saveSelectedHeatPumpId(id: string) {
     setSelectedHeatPumpId(id);
-    try { await apiRequest("PATCH", `/api/projects/${project.id}`, { selectedHeatPumpId: id }); } catch {}
+    try {
+      await apiRequest("PATCH", `/api/projects/${project.id}`, { selectedHeatPumpId: id });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+    } catch {}
   }
   async function saveSelectedWaterHeaterId(id: string) {
     setSelectedWaterHeaterId(id);
-    try { await apiRequest("PATCH", `/api/projects/${project.id}`, { selectedWaterHeaterId: id }); } catch {}
+    try {
+      await apiRequest("PATCH", `/api/projects/${project.id}`, { selectedWaterHeaterId: id });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+    } catch {}
   }
   const [coutElecThermo, setCoutElecThermo] = useState(initialValues?.coutElecThermo ?? 500);
   const [coutBasementInsul, setCoutBasementInsul] = useState(initialValues?.coutBasementInsul ?? 0);
