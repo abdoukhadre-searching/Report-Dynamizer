@@ -1036,16 +1036,23 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                             </p>
                             {selectedHeatPump && ((selectedHeatPump.images as string[])?.length > 0 || (selectedHeatPump.specPages as string[])?.length > 0) ? (
                               <>
-                                {(selectedHeatPump.images as string[]).map((url, i) => (
-                                  <div key={`hp-img-${i}`} className="print:break-after-page mb-4">
-                                    <img src={url} alt={`${selectedHeatPump.name} — photo ${i + 1}`} className="w-full rounded-md border" />
-                                  </div>
-                                ))}
-                                {(selectedHeatPump.specPages as string[]).map((url, i) => (
-                                  <div key={`hp-spec-${i}`} className="print:break-after-page mb-4">
-                                    <img src={url} alt={`${selectedHeatPump.name} — fiche technique page ${i + 1}`} className="w-full rounded-md border" />
-                                  </div>
-                                ))}
+                                {(selectedHeatPump.images as string[]).map((url, i, imgArr) => {
+                                  const specPages = selectedHeatPump.specPages as string[];
+                                  const isLast = i === imgArr.length - 1 && specPages.length === 0;
+                                  return (
+                                    <div key={`hp-img-${i}`} className={`mb-4${isLast ? "" : " print:break-after-page"}`}>
+                                      <img src={url} alt={`${selectedHeatPump.name} — photo ${i + 1}`} className="w-full rounded-md border" />
+                                    </div>
+                                  );
+                                })}
+                                {(selectedHeatPump.specPages as string[]).map((url, i, specArr) => {
+                                  const isLast = i === specArr.length - 1;
+                                  return (
+                                    <div key={`hp-spec-${i}`} className={`mb-4${isLast ? "" : " print:break-after-page"}`}>
+                                      <img src={url} alt={`${selectedHeatPump.name} — fiche technique page ${i + 1}`} className="w-full rounded-md border" />
+                                    </div>
+                                  );
+                                })}
                               </>
                             ) : (
                               <>
@@ -1055,7 +1062,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                                 <div className="print:break-after-page mt-4">
                                   <img src={tclSpecPage1Path} alt="TCL T-Pro-25ES — Spécifications techniques page 1" className="w-full rounded-md border" />
                                 </div>
-                                <div className="print:break-after-page mt-4">
+                                <div className="mt-4">
                                   <img src={tclSpecPage2Path} alt="TCL T-Pro-25ES — Spécifications techniques page 2" className="w-full rounded-md border" />
                                 </div>
                               </>

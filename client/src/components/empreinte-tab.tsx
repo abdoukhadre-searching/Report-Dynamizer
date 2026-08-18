@@ -1578,13 +1578,20 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
               </div>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
-              {/* Not admissible — show standard calculation info */}
+              {/* Not admissible — show standard calculation info + image */}
               {logisvertAdmissible === false && !exportMode && (
-                <div className="flex items-start gap-3 rounded-lg p-3" style={{ backgroundColor: "#f1f5f9" }}>
-                  <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-400" />
-                  <p className="text-sm text-slate-600">
-                    La zone de ce projet n'est pas admissible à la bonification Logisvert. Le calcul de subvention standard est utilisé.
-                  </p>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 rounded-lg p-3" style={{ backgroundColor: "#f1f5f9" }}>
+                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-400" />
+                    <p className="text-sm text-slate-600">
+                      La zone de ce projet n'est pas admissible à la bonification Logisvert. Le calcul de subvention standard est utilisé.
+                    </p>
+                  </div>
+                  <img
+                    src={(selectedHeatPump as any)?.logisvertPdf ?? tclSubventionImg}
+                    alt="Tableau des subventions Hydro-Québec"
+                    className="w-full rounded-md border border-slate-200 shadow-sm"
+                  />
                 </div>
               )}
 
