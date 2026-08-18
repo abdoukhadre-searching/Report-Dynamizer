@@ -398,7 +398,6 @@ export default function TechniquePage() {
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-3 py-2.5">
                     <p className="text-xs font-semibold truncate">{user.name}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="gap-2 cursor-pointer text-sm" onClick={() => navigate("/profile")}>

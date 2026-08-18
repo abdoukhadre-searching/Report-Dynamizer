@@ -293,6 +293,9 @@ export class MemoryStorage implements IStorage {
       subventionThermoManual: (project as any).subventionThermoManual ?? null,
       logisvertAdmissible: (project as any).logisvertAdmissible ?? null,
       mandatData: (project as any).mandatData ?? null,
+      annexPreuvesTitle: (project as any).annexPreuvesTitle ?? null,
+      annexPreuvesImages: (project as any).annexPreuvesImages ?? [],
+      annexPreuvesSections: (project as any).annexPreuvesSections ?? [],
       createdAt: new Date(),
     };
     this._projects.unshift(created);

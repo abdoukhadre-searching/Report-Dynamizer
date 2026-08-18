@@ -173,6 +173,14 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const post = project.postReportData as ReportData | null;
 
   const isNewBuilding = project.buildingType === "new";
+  function formatCapacity(cap?: string | null): string | null {
+    if (!cap) return null;
+    const s = cap.trim();
+    if (s.includes("BTU/h")) return s;
+    if (s.includes("BTU")) return s.replace("BTU", "BTU/h");
+    if (/^\d/.test(s)) return s + " BTU/h";
+    return s;
+  }
   const hpSubventionAmount = (selectedHeatPump as any)?.subventionAmount;
   const subventionThermo = (hpSubventionAmount && Number(hpSubventionAmount) > 0)
     ? Number(hpSubventionAmount)
@@ -735,10 +743,10 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">
                           {[
-                            selectedHeatPump?.capacity,
+                            formatCapacity(selectedHeatPump?.capacity),
                             selectedHeatPump?.hspf2 ? `HSPF2 ${selectedHeatPump.hspf2}` : null,
                             selectedHeatPump?.seer2 ? `SEER2 ${selectedHeatPump.seer2}` : null,
-                          ].filter(Boolean).join(" | ") || "12 000 BTU | HSPF2 10.5 | SEER2 25"}
+                          ].filter(Boolean).join(" | ") || "12 000 BTU/h | HSPF2 10.5 | SEER2 25"}
                         </p>
                       </div>
                     </div>
@@ -820,7 +828,10 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         <p className="font-semibold text-slate-800">Chauffe-eau thermopompe</p>
                         <p className="text-xs text-slate-400 mt-0.5">
                           {selectedWaterHeater
-                            ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}`
+                            ? [
+                                `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}`,
+                                formatCapacity(selectedWaterHeater.capacity),
+                              ].filter(Boolean).join(" | ")
                             : "Installation de chauffe-eau thermopompe Rheem"}
                         </p>
                       </div>

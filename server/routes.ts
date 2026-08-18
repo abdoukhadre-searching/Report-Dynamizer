@@ -878,6 +878,106 @@ export async function registerRoutes(
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
+  // ── Sections Preuves multiples ────────────────────────────────────────────
+  type PreuveSection = { id: string; title: string; images: string[] };
+
+  app.post("/api/projects/:id/preuves-section/add", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Projet introuvable" });
+      const current: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
+      const newSection: PreuveSection = { id: crypto.randomBytes(8).toString("hex"), title: "", images: [] };
+      const updated = await storage.updateProject(projectId, { annexPreuvesSections: [...current, newSection] } as any);
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/projects/:id/preuves-section/:sectionId/upload", upload.single("file"), async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const { sectionId } = req.params;
+      if (!req.file) return res.status(400).json({ message: "Fichier requis" });
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Projet introuvable" });
+
+      let imageBuffer: Buffer = req.file.buffer;
+      const isPdf = req.file.mimetype === "application/pdf" || req.file.originalname?.toLowerCase().endsWith(".pdf");
+      if (isPdf) {
+        const tmpSuffix = crypto.randomBytes(8).toString("hex");
+        const tmpPdf = path.join(os.tmpdir(), `sec-${tmpSuffix}.pdf`);
+        const tmpPrefix = path.join(os.tmpdir(), `sec-${tmpSuffix}-out`);
+        await fs.promises.writeFile(tmpPdf, req.file.buffer);
+        try {
+          await execFileAsync("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
+          imageBuffer = await fs.promises.readFile(`${tmpPrefix}-1.jpg`);
+          await fs.promises.unlink(`${tmpPrefix}-1.jpg`).catch(() => {});
+        } finally {
+          await fs.promises.unlink(tmpPdf).catch(() => {});
+        }
+      }
+      const fileName = `${projectId}_sec_${sectionId}_${Date.now()}.jpg`;
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      const normalized = await normalizeImageBuffer(imageBuffer, req.file.originalname);
+      const compressed = await sharp(normalized).rotate().resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 90, mozjpeg: true }).toBuffer();
+      await fs.promises.writeFile(filePath, compressed);
+
+      const imageUrl = `/uploads/${fileName}`;
+      const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
+      const updatedSections = sections.map(s => s.id === sectionId ? { ...s, images: [...(s.images || []), imageUrl] } : s);
+      const updated = await storage.updateProject(projectId, { annexPreuvesSections: updatedSections } as any);
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.patch("/api/projects/:id/preuves-section/:sectionId/title", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const { sectionId } = req.params;
+      const { title } = req.body as { title: string };
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Projet introuvable" });
+      const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
+      const updatedSections = sections.map(s => s.id === sectionId ? { ...s, title } : s);
+      const updated = await storage.updateProject(projectId, { annexPreuvesSections: updatedSections } as any);
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.delete("/api/projects/:id/preuves-section/:sectionId/image", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const { sectionId } = req.params;
+      const { url } = req.body as { url: string };
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Projet introuvable" });
+      const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
+      const updatedSections = sections.map(s => s.id === sectionId ? { ...s, images: (s.images || []).filter((u: string) => u !== url) } : s);
+      const updated = await storage.updateProject(projectId, { annexPreuvesSections: updatedSections } as any);
+      if (url.startsWith("/uploads/")) await fs.promises.unlink(url.slice(1)).catch(() => {});
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.delete("/api/projects/:id/preuves-section/:sectionId", async (req, res) => {
+    try {
+      const projectId = getProjectId(req.params.id);
+      const { sectionId } = req.params;
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Projet introuvable" });
+      const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
+      const toDelete = sections.find(s => s.id === sectionId);
+      const updatedSections = sections.filter(s => s.id !== sectionId);
+      const updated = await storage.updateProject(projectId, { annexPreuvesSections: updatedSections } as any);
+      if (toDelete?.images) {
+        for (const u of toDelete.images) {
+          if (u.startsWith("/uploads/")) await fs.promises.unlink(u.slice(1)).catch(() => {});
+        }
+      }
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
   app.delete("/api/projects/:id/annex-image/:annexType", async (req, res) => {
     try {
       const projectId = getProjectId(req.params.id);

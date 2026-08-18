@@ -147,10 +147,9 @@ function HeatPumpModal({
     if (!capacity.trim()) { setError("La capacité est requise."); return; }
     if (isHP && !hspf2.trim()) { setError("Le HSPF2 est requis."); return; }
     if (isHP && !seer2.trim()) { setError("Le SEER2 est requis."); return; }
-    if (!subventionAmount.trim()) { setError("Le montant de subvention est requis."); return; }
-    if (pendingImages.length === 0 && images.length === 0) { setError("Au moins une photo est requise."); return; }
+    if (isHP && !subventionAmount.trim()) { setError("Le montant de subvention est requis."); return; }
     if (pendingSpecs.length === 0 && specPages.length === 0) { setError("Au moins une page de fiche technique est requise."); return; }
-    if (!pendingLogisvert && !logisvertPdf) { setError("Le document LogisVert est requis."); return; }
+    if (isHP && !pendingLogisvert && !logisvertPdf) { setError("Le document LogisVert est requis."); return; }
     setSaving(true); setError("");
     try {
       let hpId = savedId;
@@ -339,54 +338,56 @@ function HeatPumpModal({
             )}
           </div>
 
-          {/* ── Subvention LogisVert ── */}
-          <div className="border-t pt-3">
-            <div className="mb-3">
-              <Label>Montant de la subvention par unité (LogisVert) en $ CAD *</Label>
-              <Input
-                value={subventionAmount}
-                onChange={e => setSubventionAmount(e.target.value)}
-                placeholder="ex: 2600"
-                className="mt-1"
-              />
-            </div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Programme subvention LogisVert (PDF ou image)</Label>
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*,.pdf,application/pdf"
-                  className="hidden"
-                  onChange={e => {
-                    if (!e.target.files || e.target.files.length === 0) return;
-                    if (savedId) handleUploadNow(e.target.files, "logisvert");
-                    else setPendingLogisvert(e.target.files[0]);
-                  }}
+          {/* ── Subvention LogisVert (thermopompes uniquement) ── */}
+          {isHP && (
+            <div className="border-t pt-3">
+              <div className="mb-3">
+                <Label>Montant de la subvention par unité (LogisVert) en $ CAD *</Label>
+                <Input
+                  value={subventionAmount}
+                  onChange={e => setSubventionAmount(e.target.value)}
+                  placeholder="ex: 2600"
+                  className="mt-1"
                 />
-                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
-                  {uploadingLogisvert ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> {logisvertPdf || pendingLogisvert ? "Remplacer" : "Ajouter"}</>}
-                </span>
-              </label>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Programme subvention LogisVert (PDF ou image)</Label>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf,application/pdf"
+                    className="hidden"
+                    onChange={e => {
+                      if (!e.target.files || e.target.files.length === 0) return;
+                      if (savedId) handleUploadNow(e.target.files, "logisvert");
+                      else setPendingLogisvert(e.target.files[0]);
+                    }}
+                  />
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                    {uploadingLogisvert ? "Envoi…" : <><Plus className="w-3.5 h-3.5" /> {logisvertPdf || pendingLogisvert ? "Remplacer" : "Ajouter"}</>}
+                  </span>
+                </label>
+              </div>
+              {logisvertPdf ? (
+                <div className="relative group rounded-lg overflow-hidden border border-green-200 bg-green-50">
+                  <img src={logisvertPdf} alt="Programme LogisVert" className="w-full rounded" />
+                  <button onClick={() => handleDeleteSaved(logisvertPdf, "logisvertPdf")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : pendingLogisvert ? (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50 border border-dashed border-green-300">
+                  <span className="text-lg">📄</span>
+                  <span className="text-xs text-green-700 font-medium truncate">{pendingLogisvert.name}</span>
+                  <button onClick={() => setPendingLogisvert(null)} className="ml-auto p-0.5 rounded-full hover:bg-green-200">
+                    <X className="w-3 h-3 text-green-700" />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic">Aucun document LogisVert.</p>
+              )}
             </div>
-            {logisvertPdf ? (
-              <div className="relative group rounded-lg overflow-hidden border border-green-200 bg-green-50">
-                <img src={logisvertPdf} alt="Programme LogisVert" className="w-full rounded" />
-                <button onClick={() => handleDeleteSaved(logisvertPdf, "logisvertPdf")} className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ) : pendingLogisvert ? (
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50 border border-dashed border-green-300">
-                <span className="text-lg">📄</span>
-                <span className="text-xs text-green-700 font-medium truncate">{pendingLogisvert.name}</span>
-                <button onClick={() => setPendingLogisvert(null)} className="ml-auto p-0.5 rounded-full hover:bg-green-200">
-                  <X className="w-3 h-3 text-green-700" />
-                </button>
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 italic">Aucun document LogisVert.</p>
-            )}
-          </div>
+          )}
 
           {!isEdit && (pendingImages.length > 0 || pendingSpecs.length > 0 || pendingLogisvert) && (
             <p className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
@@ -561,9 +562,10 @@ export default function ProfilePage() {
   const hps = heatPumps.filter(h => h.type === "heatpump");
   const whs = heatPumps.filter(h => h.type === "waterheater");
 
+  const { refresh } = useAuth();
   const profileMutation = useMutation({
     mutationFn: (body: Record<string, any>) => apiRequest("PATCH", "/api/auth/profile", body),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/auth/me"] }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/auth/me"] }); refresh(); },
   });
 
   const deleteMutation = useMutation({
