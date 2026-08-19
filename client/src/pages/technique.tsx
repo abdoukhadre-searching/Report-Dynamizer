@@ -150,8 +150,8 @@ function HeatPumpModal({
               <Input value={model} onChange={e => setModel(e.target.value)} placeholder="ex: T-Pro-25ES" className="mt-1" />
             </div>
             <div>
-              <Label>Capacité</Label>
-              <Input value={capacity} onChange={e => setCapacity(e.target.value)} placeholder="ex: 12 000 BTU" className="mt-1" />
+              <Label>{isHP ? "Capacité" : "Capacité (gallons)"}</Label>
+              <Input value={capacity} onChange={e => setCapacity(e.target.value)} placeholder={isHP ? "ex: 12 000 BTU/h" : "ex: 65 gallons"} className="mt-1" />
             </div>
             {isHP && (
               <>

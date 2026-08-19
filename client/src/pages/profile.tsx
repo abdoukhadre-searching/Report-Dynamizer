@@ -638,17 +638,10 @@ export default function ProfilePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-semibold truncate">{user.name}</h1>
-                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                {currentUsername && <p className="text-xs text-muted-foreground font-mono mt-0.5">@{currentUsername}</p>}
                 <div className="mt-1.5 flex items-center gap-2">
                   <Badge variant={user.role === "admin" ? "default" : "secondary"} className="text-xs capitalize">
                     {user.role === "admin" ? "Administrateur" : "Utilisateur"}
                   </Badge>
-                  {user.createdAt && (
-                    <span className="text-xs text-muted-foreground">
-                      Membre depuis {new Date(user.createdAt).toLocaleDateString("fr-CA", { year: "numeric", month: "long" })}
-                    </span>
-                  )}
                 </div>
               </div>
             </div>

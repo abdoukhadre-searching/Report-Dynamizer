@@ -571,25 +571,6 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                   )}
                 </div>
               )}
-              {showHeatingStrategy && !isNewBuilding && (
-                <div className="flex items-center gap-2 mt-2">
-                  {!exportMode && heatPumpsData && heatPumpsData.filter(hp => hp.type === "heatpump").length > 1 ? (
-                    <select
-                      value={selectedHeatPumpId ?? (defaultHeatPump?.id ?? "")}
-                      onChange={e => saveSelectedHeatPumpId(e.target.value)}
-                      style={{ fontSize: "12px", fontWeight: 600, padding: "3px 24px 3px 10px", borderRadius: "6px", border: "1px solid #dc262640", color: "#dc2626", backgroundColor: "#fff5f5", cursor: "pointer", outline: "none", appearance: "auto" }}
-                    >
-                      {heatPumpsData.filter(hp => hp.type === "heatpump").map(hp => (
-                        <option key={hp.id} value={hp.id}>{hp.name}{hp.model ? ` ${hp.model}` : ""}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "#dc262615", color: "#dc2626" }}>
-                      {selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompe TCL T-Pro-25ES"}
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
             <div className="flex flex-col items-end gap-3">
               {!exportMode && (
