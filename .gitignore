@@ -3,14 +3,16 @@ dist
 .DS_Store
 server/public
 vite.config.ts.*
-<<<<<<< HEAD
-*.tar.gz
-=======
 *.tar.gz
 uploads/
 .vscode/
 .env
 .env.*
 *.log
->>>>>>> 383adb8 (Report: PDF export + image upload fixes)
 data/
+
+# Tauri (artefacts de build desktop)
+src-tauri/target/
+src-tauri/resources/
+src-tauri/binaries/
+src-tauri/gen/schemas/

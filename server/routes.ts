@@ -1,7 +1,7 @@
 import type { Express, Request } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
-import { db } from "./db";
+import { db, DATA_DIR } from "./db";
 import { eq } from "drizzle-orm";
 import { projects as projectsTable } from "@shared/schema";
 import { parseHot2000Report, computeComparison } from "./parser";
@@ -351,7 +351,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
 
-      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const internalOrigin = `http://127.0.0.1:${process.env.PORT || 5000}`;
       const reportUrl = `${internalOrigin}/project/${projectId}/print`;
       const pdfBuffer = await renderProjectPdf(reportUrl);
 
@@ -373,7 +373,7 @@ export async function registerRoutes(
       if (!project.preReportData || !project.postReportData) {
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
-      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const internalOrigin = `http://127.0.0.1:${process.env.PORT || 5000}`;
       const reportUrl = `${internalOrigin}/project/${projectId}/print-recommandations`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#recommandations-content");
       const baseName = sanitizeFileName((project.preReportData as any)?.buildingInfo?.address || project.name || `project-${projectId}`) || `project-${projectId}`;
@@ -394,7 +394,7 @@ export async function registerRoutes(
       if (!project.preReportData || !project.postReportData) {
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
-      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const internalOrigin = `http://127.0.0.1:${process.env.PORT || 5000}`;
       const reportUrl = `${internalOrigin}/project/${projectId}/print-strategie`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#strategy-content");
       const baseName = sanitizeFileName((project.preReportData as any)?.buildingInfo?.address || project.name || `project-${projectId}`) || `project-${projectId}`;
@@ -415,7 +415,7 @@ export async function registerRoutes(
       if (!project.preReportData || !project.postReportData) {
         return res.status(400).json({ message: "Project report is not ready for export" });
       }
-      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const internalOrigin = `http://127.0.0.1:${process.env.PORT || 5000}`;
       const queryString = new URLSearchParams(req.query as Record<string, string>).toString();
       const reportUrl = `${internalOrigin}/project/${projectId}/print-empreinte${queryString ? `?${queryString}` : ""}`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#empreinte-content");
@@ -652,14 +652,30 @@ export async function registerRoutes(
     }
   });
 
-  const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+  // Les uploads vivent dans le répertoire de données (AppData en mode desktop)
+  const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
   if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
   }
+  // Convertit une URL d'upload en chemin absolu, en refusant strictement toute
+  // sortie du répertoire uploads (ex.: /uploads/../mab-projets.db).
+  const uploadFsPath = (url: string): string | undefined => {
+    if (!url.startsWith("/uploads/")) return undefined;
+    let relative: string;
+    try {
+      relative = decodeURIComponent(url.slice("/uploads/".length));
+    } catch {
+      return undefined;
+    }
+    if (!relative || path.isAbsolute(relative)) return undefined;
+    const root = path.resolve(UPLOADS_DIR);
+    const candidate = path.resolve(root, relative);
+    return candidate.startsWith(`${root}${path.sep}`) ? candidate : undefined;
+  };
 
   app.use("/uploads", (req, res, next) => {
-    const filePath = path.join(UPLOADS_DIR, req.path);
-    if (fs.existsSync(filePath)) {
+    const filePath = uploadFsPath(`/uploads${req.path}`);
+    if (filePath && fs.existsSync(filePath)) {
       res.sendFile(filePath);
     } else {
       res.status(404).json({ message: "File not found" });
@@ -875,8 +891,10 @@ export async function registerRoutes(
       const project = await storage.getProject(projectId);
       if (!project) return res.status(404).json({ message: "Projet introuvable" });
       const current: string[] = (project.annexPreuvesImages as string[]) ?? [];
+      const wasAttached = current.includes(url);
       const updated = await storage.updateProject(projectId, { annexPreuvesImages: current.filter(u => u !== url) });
-      if (url.startsWith("/uploads/")) await fs.promises.unlink(url.slice(1)).catch(() => {});
+      const filePath = wasAttached ? uploadFsPath(url) : undefined;
+      if (filePath) await fs.promises.unlink(filePath).catch(() => {});
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
@@ -958,9 +976,11 @@ export async function registerRoutes(
       const project = await storage.getProject(projectId);
       if (!project) return res.status(404).json({ message: "Projet introuvable" });
       const sections: PreuveSection[] = ((project as any).annexPreuvesSections as PreuveSection[]) ?? [];
+      const wasAttached = sections.some(s => s.id === sectionId && (s.images || []).includes(url));
       const updatedSections = sections.map(s => s.id === sectionId ? { ...s, images: (s.images || []).filter((u: string) => u !== url) } : s);
       const [updated] = await db.update(projectsTable).set({ annexPreuvesSections: updatedSections } as any).where(eq(projectsTable.id, projectId)).returning();
-      if (url.startsWith("/uploads/")) await fs.promises.unlink(url.slice(1)).catch(() => {});
+      const filePath = wasAttached ? uploadFsPath(url) : undefined;
+      if (filePath) await fs.promises.unlink(filePath).catch(() => {});
       res.json(updated);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
@@ -977,7 +997,8 @@ export async function registerRoutes(
       const [updated] = await db.update(projectsTable).set({ annexPreuvesSections: updatedSections } as any).where(eq(projectsTable.id, projectId)).returning();
       if (toDelete?.images) {
         for (const u of toDelete.images) {
-          if (u.startsWith("/uploads/")) await fs.promises.unlink(u.slice(1)).catch(() => {});
+          const filePath = uploadFsPath(u);
+          if (filePath) await fs.promises.unlink(filePath).catch(() => {});
         }
       }
       res.json(updated);
@@ -1009,7 +1030,9 @@ export async function registerRoutes(
   });
 
   async function buildCollectivePdf(cmp: ComparisonData, projectId?: string): Promise<Buffer> {
-    const templatePath = path.join(process.cwd(), "server/templates/immeubles-collectifs-template.pdf");
+    // En développement, __dirname est server/. Dans le bundle desktop, il
+    // correspond à resources/, où desktop:prepare copie les modèles PDF.
+    const templatePath = path.join(__dirname, "templates", "immeubles-collectifs-template.pdf");
     const templateBytes = fs.readFileSync(templatePath);
     const pdfDoc = await PDFDocument.load(templateBytes);
     const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -1210,7 +1233,9 @@ export async function registerRoutes(
     const reportDate = `${etYear}-${etMonth}-${etDay}`;
 
     // Load the pre-filled template (contains evaluator credentials as real text)
-    const templatePath = path.join(process.cwd(), "server/templates/attestation-filled-template.pdf");
+    // Voir buildCollectivePdf : ce chemin doit rester relatif au bundle et
+    // jamais au dossier de travail de l'application installée.
+    const templatePath = path.join(__dirname, "templates", "attestation-filled-template.pdf");
     const templateBytes = fs.readFileSync(templatePath);
     const pdfDoc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
     const form = pdfDoc.getForm();
@@ -1496,7 +1521,7 @@ export async function registerRoutes(
       const m = await storage.getMandat(id);
       if (!m) return res.status(404).json({ message: "Non trouvé" });
       if (!isAdmin && m.userId !== userId) return res.status(403).json({ message: "Interdit" });
-      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const internalOrigin = `http://127.0.0.1:${process.env.PORT || 5000}`;
       const reportUrl = `${internalOrigin}/mandats/${id}/print`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#mandat-print-content");
       const baseName = sanitizeFileName(`Feuille de mandat ${m.name || id}`) || `mandat-${id}`;
@@ -1582,7 +1607,7 @@ export async function registerRoutes(
       const o = await storage.getOffre(id);
       if (!o) return res.status(404).json({ message: "Non trouvé" });
       if (!isAdmin && o.userId !== userId) return res.status(403).json({ message: "Interdit" });
-      const internalOrigin = `http://localhost:${process.env.PORT || 5000}`;
+      const internalOrigin = `http://127.0.0.1:${process.env.PORT || 5000}`;
       const reportUrl = `${internalOrigin}/offres/${id}/print`;
       const pdfBuffer = await renderProjectPdf(reportUrl, "#offre-print-content");
       const baseName = sanitizeFileName(`Offre de service ${o.numero || o.name || id}`) || `offre-${id}`;
@@ -1731,7 +1756,7 @@ export async function registerRoutes(
       if (!hp) return res.status(404).json({ message: "Non trouvé" });
       if (!req.file) return res.status(400).json({ message: "Aucun fichier" });
 
-      const hpDir = path.join("uploads", "heat-pumps");
+      const hpDir = path.join(UPLOADS_DIR, "heat-pumps");
       await fs.promises.mkdir(hpDir, { recursive: true });
       const fieldParam = req.query.field as string;
       const field = fieldParam === "spec" ? "specPages" : fieldParam === "logisvert" ? "logisvertPdf" : "images";
@@ -1796,18 +1821,19 @@ export async function registerRoutes(
       const { url, field = "images" } = req.body as { url: string; field?: string };
       const key = field === "spec" || field === "specPages" ? "specPages" : field === "logisvert" || field === "logisvertPdf" ? "logisvertPdf" : "images";
       let result: any;
+      let wasAttached = false;
       if (key === "logisvertPdf") {
+        wasAttached = hp.logisvertPdf === url;
         result = await storage.updateHeatPump(hp.id, { logisvertPdf: null } as any);
       } else {
         const current = (hp[key as keyof typeof hp] as string[]) ?? [];
+        wasAttached = current.includes(url);
         const updated = current.filter(u => u !== url);
         result = await storage.updateHeatPump(hp.id, { [key]: updated });
       }
       // Supprimer le fichier physique
-      if (url.startsWith("/uploads/")) {
-        const filePath = url.slice(1); // retire le /
-        await fs.promises.unlink(filePath).catch(() => {});
-      }
+      const filePath = wasAttached ? uploadFsPath(url) : undefined;
+      if (filePath) await fs.promises.unlink(filePath).catch(() => {});
       res.json(result);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });

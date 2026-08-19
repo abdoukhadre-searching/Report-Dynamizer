@@ -8,6 +8,10 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "desktop:prepare": "tsx script/build-desktop.ts",
+    "tauri": "tauri",
+    "tauri:build": "tsx script/tauri-build.ts",
+    "tauri:build:windows": "tauri build --config src-tauri/tauri.windows.conf.json",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
@@ -43,6 +47,8 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@rollup/rollup-linux-x64-gnu": "^4.59.0",
     "@tanstack/react-query": "^5.60.5",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/cli": "^2.11.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^9.6.0",
     "@types/multer": "^2.0.0",

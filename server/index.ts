@@ -4,7 +4,32 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import session from "express-session";
 import sqliteStoreFactory from "better-sqlite3-session-store";
-import { sqlite } from "./db";
+import { sqlite, DATA_DIR } from "./db";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+
+// Mode desktop (Tauri) : servi en http://127.0.0.1, cookies non "secure",
+// secret de session généré et persisté localement.
+const IS_DESKTOP = process.env.MAB_DESKTOP === "1";
+
+function getSessionSecret(): string {
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  if (IS_DESKTOP) {
+    const secretFile = path.join(DATA_DIR, ".session-secret");
+    try {
+      return fs.readFileSync(secretFile, "utf-8").trim();
+    } catch {
+      const secret = crypto.randomBytes(32).toString("hex");
+      fs.writeFileSync(secretFile, secret, { mode: 0o600 });
+      return secret;
+    }
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET est requis en production");
+  }
+  return "energiqualif-dev-secret-change-in-prod";
+}
 
 const app = express();
 const httpServer = createServer(app);
@@ -38,19 +63,13 @@ app.set("trust proxy", 1);
 app.use(
   session({
     store: sessionStore,
-    secret: (() => {
-      if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
-      if (process.env.NODE_ENV === "production") {
-        throw new Error("SESSION_SECRET est requis en production");
-      }
-      return "energiqualif-dev-secret-change-in-prod";
-    })(),
+    secret: getSessionSecret(),
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: !IS_DESKTOP && process.env.NODE_ENV === "production",
+      sameSite: !IS_DESKTOP && process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),
@@ -94,6 +113,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Sonde de disponibilité (utilisée par le shell desktop Tauri au démarrage)
+  app.get("/api/health", (_req, res) => res.json({ ok: true }));
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -120,11 +142,17 @@ app.use((req, res, next) => {
   httpServer.listen(
     {
       port,
-      host: "0.0.0.0",
+      // Desktop : n'écouter que localement, jamais exposé sur le réseau
+      host: IS_DESKTOP ? "127.0.0.1" : "0.0.0.0",
       ...(process.platform === "win32" ? {} : { reusePort: true }),
     },
     () => {
-      log(`serving on port ${port}`);
+      // PORT=0 → port attribué par l'OS ; toujours logguer le port réel
+      // (le shell desktop Tauri parse cette ligne pour connaître le port)
+      const addr = httpServer.address();
+      const actualPort = typeof addr === "object" && addr ? addr.port : port;
+      if (actualPort !== port) process.env.PORT = String(actualPort);
+      log(`serving on port ${actualPort}`);
     },
   );
 })();

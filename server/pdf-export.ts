@@ -3,6 +3,20 @@ import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
 
+const WINDOWS_BROWSER_CANDIDATES = [
+  // Edge est préinstallé sur Windows 10/11 — permet le PDF offline sans bundler Chromium
+  "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+];
+
+const MACOS_BROWSER_CANDIDATES = [
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+];
+
 const SYSTEM_CHROMIUM_CANDIDATES = [
   "/nix/store/0n9rl5l9syy808xi9bk4f6dhnfrvhkww-playwright-browsers-chromium/chromium-1080/chrome-linux/chrome",
   "/usr/bin/chromium-browser",
@@ -38,6 +52,18 @@ function findChromiumExecutable(): string | undefined {
       fs.accessSync(process.env.PUPPETEER_EXECUTABLE_PATH, fs.constants.X_OK);
       return process.env.PUPPETEER_EXECUTABLE_PATH;
     } catch {}
+  }
+
+  // Desktop Windows/macOS : utiliser le navigateur système (Edge/Chrome) — offline, rien à bundler
+  if (process.platform === "win32") {
+    for (const p of WINDOWS_BROWSER_CANDIDATES) {
+      try { fs.accessSync(p); return p; } catch {}
+    }
+  }
+  if (process.platform === "darwin") {
+    for (const p of MACOS_BROWSER_CANDIDATES) {
+      try { fs.accessSync(p, fs.constants.X_OK); return p; } catch {}
+    }
   }
 
   try {
