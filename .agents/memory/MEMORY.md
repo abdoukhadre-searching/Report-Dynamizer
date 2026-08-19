@@ -1,1 +1,2 @@
 - [Logisvert PDF text extraction](logisvert-pdf-ocr.md) — LogisVert subsidy PDFs have custom font encoding that breaks pdftotext; OCR (tesseract) is required as fallback.
+- [SQLite migration decisions](sqlite-migration.md) — app is SQLite-only (epoch-second timestamps, JSON-as-TEXT, DDL kept in sync with Drizzle schema, better-sqlite3 external in bundle).

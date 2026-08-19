@@ -1,16 +1,18 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, jsonb, timestamp, real, integer, boolean } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+// SQLite : uuid générés côté application (crypto.randomUUID est dispo en Node 19+ et navigateurs)
+const uuid = () => crypto.randomUUID();
+
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey().$defaultFn(uuid),
   email: text("email").notNull().unique(),
   username: text("username").unique(),
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("user"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, passwordHash: true }).extend({
@@ -19,37 +21,37 @@ export const insertUserSchema = createInsertSchema(users).omit({ id: true, creat
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-export const auditLogs = pgTable("audit_logs", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id"),
+export const auditLogs = sqliteTable("audit_logs", {
+  id: text("id").primaryKey().$defaultFn(uuid),
+  userId: text("user_id"),
   userEmail: text("user_email"),
   userName: text("user_name"),
   action: text("action").notNull(),
-  projectId: varchar("project_id"),
+  projectId: text("project_id"),
   projectName: text("project_name"),
   details: text("details"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 
 // ── Catalogue thermopompes ───────────────────────────────────────────────────
 
-export const heatPumps = pgTable("heat_pumps", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const heatPumps = sqliteTable("heat_pumps", {
+  id: text("id").primaryKey().$defaultFn(uuid),
   name: text("name").notNull(),
   brand: text("brand"),
   model: text("model"),
-  capacity: text("capacity"),   // ex: "12 000 BTU"
+  capacity: text("capacity"),   // ex: "12 000 BTU/h"
   hspf2: text("hspf2"),         // ex: "10.5"
   seer2: text("seer2"),         // ex: "25"
   type: text("type").notNull().default("heatpump"), // 'heatpump' | 'waterheater'
-  isDefault: boolean("is_default").notNull().default(false),
-  images: jsonb("images").default([]),        // string[] — URL paths
-  specPages: jsonb("spec_pages").default([]), // string[] — URL paths
+  isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+  images: text("images", { mode: "json" }).$type<string[]>().$defaultFn(() => []),
+  specPages: text("spec_pages", { mode: "json" }).$type<string[]>().$defaultFn(() => []),
   logisvertPdf: text("logisvert_pdf"),        // URL — programme subvention LogisVert
   subventionAmount: text("subvention_amount"), // montant de subvention par unité
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 export type HeatPump = typeof heatPumps.$inferSelect;
@@ -57,9 +59,9 @@ export type InsertHeatPump = typeof heatPumps.$inferInsert;
 
 // ── Projects ─────────────────────────────────────────────────────────────────
 
-export const projects = pgTable("projects", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id"),
+export const projects = sqliteTable("projects", {
+  id: text("id").primaryKey().$defaultFn(uuid),
+  userId: text("user_id"),
   name: text("name").notNull(),
   address: text("address"),
   city: text("city"),
@@ -74,15 +76,15 @@ export const projects = pgTable("projects", {
   buildingType: text("building_type").notNull().default("existing"),
   programmeType: text("programme_type").notNull().default("optimisation"),
   thermopompeModel: text("thermopompe_model").notNull().default("tcl"),
-  selectedHeatPumpId: varchar("selected_heat_pump_id"),
-  selectedWaterHeaterId: varchar("selected_water_heater_id"),
-  customMeasures: jsonb("custom_measures").default([]),
+  selectedHeatPumpId: text("selected_heat_pump_id"),
+  selectedWaterHeaterId: text("selected_water_heater_id"),
+  customMeasures: text("custom_measures", { mode: "json" }).$defaultFn(() => []),
   status: text("status").notNull().default("draft"),
   preReportRaw: text("pre_report_raw"),
   postReportRaw: text("post_report_raw"),
-  preReportData: jsonb("pre_report_data"),
-  postReportData: jsonb("post_report_data"),
-  comparisonData: jsonb("comparison_data"),
+  preReportData: text("pre_report_data", { mode: "json" }),
+  postReportData: text("post_report_data", { mode: "json" }),
+  comparisonData: text("comparison_data", { mode: "json" }),
   annexClimateZoneImage: text("annex_climate_zone_image"),
   annexThermopompesImage: text("annex_thermopompes_image"),
   annexRobineterieImage: text("annex_robineterie_image"),
@@ -90,12 +92,12 @@ export const projects = pgTable("projects", {
   annexVrcImage: text("annex_vrc_image"),
   annexChauffeEauThermopompeImage: text("annex_chauffe_eau_thermopompe_image"),
   annexPreuvesTitle: text("annex_preuves_title"),
-  annexPreuvesImages: jsonb("annex_preuves_images").$type<string[]>().default([]),
-  annexPreuvesSections: jsonb("annex_preuves_sections").$type<Array<{id: string; title: string; images: string[]}>>().default([]),
+  annexPreuvesImages: text("annex_preuves_images", { mode: "json" }).$type<string[]>().$defaultFn(() => []),
+  annexPreuvesSections: text("annex_preuves_sections", { mode: "json" }).$type<Array<{id: string; title: string; images: string[]}>>().$defaultFn(() => []),
   signatoryName: text("signatory_name"),
   signatoryTitle: text("signatory_title"),
   signatoryCoordonnes: text("signatory_coordonnees"),
-  hasCommercialUnits: boolean("has_commercial_units"),
+  hasCommercialUnits: integer("has_commercial_units", { mode: "boolean" }),
   commercialUnits: integer("commercial_units").default(0),
   basementInsulationType: text("basement_insulation_type"),
   basementInsulationInches: text("basement_insulation_inches"),
@@ -103,14 +105,14 @@ export const projects = pgTable("projects", {
   nbChauffeEauThermo: integer("nb_chauffe_eau_thermo"),
   logisvertSubventionPdf: text("logisvert_subvention_pdf"),
   subventionThermoManual: text("subvention_thermo_manual"),
-  logisvertAdmissible: boolean("logisvert_admissible"),
-  mandatData: jsonb("mandat_data"),
-  createdAt: timestamp("created_at").defaultNow(),
+  logisvertAdmissible: integer("logisvert_admissible", { mode: "boolean" }),
+  mandatData: text("mandat_data", { mode: "json" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const mandats = pgTable("mandats", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id"),
+export const mandats = sqliteTable("mandats", {
+  id: text("id").primaryKey().$defaultFn(uuid),
+  userId: text("user_id"),
   name: text("name").notNull().default(""),
   clientName: text("client_name"),
   address: text("address"),
@@ -120,23 +122,23 @@ export const mandats = pgTable("mandats", {
   numUnits: text("num_units"),
   evaluator: text("evaluator"),
   mandataire: text("mandataire"),
-  mandatData: jsonb("mandat_data"),
-  createdAt: timestamp("created_at").defaultNow(),
+  mandatData: text("mandat_data", { mode: "json" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 export const insertMandatSchema = createInsertSchema(mandats).omit({ id: true, createdAt: true });
 export type InsertMandat = z.infer<typeof insertMandatSchema>;
 export type Mandat = typeof mandats.$inferSelect;
 
-export const offres = pgTable("offres", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id"),
+export const offres = sqliteTable("offres", {
+  id: text("id").primaryKey().$defaultFn(uuid),
+  userId: text("user_id"),
   name: text("name").notNull().default("Nouvelle offre"),
   numero: text("numero"),
   clientName: text("client_name"),
   address: text("address"),
-  offreData: jsonb("offre_data"),
-  createdAt: timestamp("created_at").defaultNow(),
+  offreData: text("offre_data", { mode: "json" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 export const insertOffreSchema = createInsertSchema(offres).omit({ id: true, createdAt: true });
@@ -146,6 +148,14 @@ export type Offre = typeof offres.$inferSelect;
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   createdAt: true,
+}).extend({
+  customMeasures: z.any().optional(),
+  preReportData: z.any().optional(),
+  postReportData: z.any().optional(),
+  comparisonData: z.any().optional(),
+  mandatData: z.any().optional(),
+  annexPreuvesImages: z.array(z.string()).nullable().optional(),
+  annexPreuvesSections: z.array(z.object({ id: z.string(), title: z.string(), images: z.array(z.string()) })).nullable().optional(),
 });
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;

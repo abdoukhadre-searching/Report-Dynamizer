@@ -13,3 +13,4 @@ uploads/
 .env.*
 *.log
 >>>>>>> 383adb8 (Report: PDF export + image upload fixes)
+data/

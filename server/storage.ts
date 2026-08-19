@@ -481,6 +481,8 @@ export class MemoryStorage implements IStorage {
       isDefault: data.isDefault ?? false,
       images: data.images ?? [],
       specPages: data.specPages ?? [],
+      logisvertPdf: data.logisvertPdf ?? null,
+      subventionAmount: data.subventionAmount ?? null,
       createdAt: new Date(),
     };
     this._heatPumps.push(hp);
@@ -499,6 +501,4 @@ export class MemoryStorage implements IStorage {
   }
 }
 
-export const storage = process.env.DATABASE_URL
-  ? new DatabaseStorage()
-  : new MemoryStorage();
+export const storage = new DatabaseStorage();

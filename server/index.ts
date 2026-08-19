@@ -3,8 +3,8 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
-import pg from "pg";
+import sqliteStoreFactory from "better-sqlite3-session-store";
+import { sqlite } from "./db";
 
 const app = express();
 const httpServer = createServer(app);
@@ -26,34 +26,25 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-const PgSession = connectPgSimple(session);
+const SqliteStore = sqliteStoreFactory(session);
 
-const sessionPool = process.env.DATABASE_URL
-  ? new pg.Pool({ connectionString: process.env.DATABASE_URL })
-  : undefined;
-
-if (sessionPool) {
-  sessionPool.query(`
-    CREATE TABLE IF NOT EXISTS "session" (
-      "sid" varchar NOT NULL COLLATE "default",
-      "sess" json NOT NULL,
-      "expire" timestamp(6) NOT NULL,
-      CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE
-    );
-    CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
-  `).catch((err) => console.error("[session] Failed to ensure session table:", err));
-}
-
-const sessionStore = sessionPool
-  ? new PgSession({ pool: sessionPool })
-  : undefined;
+const sessionStore = new SqliteStore({
+  client: sqlite,
+  expired: { clear: true, intervalMs: 15 * 60 * 1000 },
+});
 
 app.set("trust proxy", 1);
 
 app.use(
   session({
     store: sessionStore,
-    secret: process.env.SESSION_SECRET || "energiqualif-dev-secret-change-in-prod",
+    secret: (() => {
+      if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("SESSION_SECRET est requis en production");
+      }
+      return "energiqualif-dev-secret-change-in-prod";
+    })(),
     resave: false,
     saveUninitialized: false,
     cookie: {
