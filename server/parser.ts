@@ -167,7 +167,7 @@ function parseWindowTypes(lines: string[]): NonNullable<ReportData["windows"]> {
   return result;
 }
 
-function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingInfo"] {
+function parseBuildingInfo(text: string, lines: string[]): NonNullable<ReportData["buildingInfo"]> {
   const info: NonNullable<ReportData["buildingInfo"]> = {};
 
   const addressMatch = text.match(/Adresse:\s*([^\n\r]+)/i);
@@ -436,7 +436,7 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   const zone1Parsed = parseZone1(lines);
 
   const plafondRow = zone1Parsed.find(z => /^plafond$/i.test(z.element));
-  if (plafondRow && plafondRow.rsi > 0.05 && plafondRow.rsi <= 15) {
+  if (plafondRow && typeof plafondRow.rsi === "number" && plafondRow.rsi > 0.05 && plafondRow.rsi <= 15) {
     info.roofMaxRsi = plafondRow.rsi;
   } else if (elPlafondIdx >= 0 && elMurIdx > elPlafondIdx) {
     // Fallback: ÉLÉMENTS DU PLAFOND section
@@ -445,7 +445,7 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
   }
 
   const mursPrincipauxRow = zone1Parsed.find(z => /murs principaux/i.test(z.element));
-  if (mursPrincipauxRow && mursPrincipauxRow.rsi > 0.05 && mursPrincipauxRow.rsi <= 15) {
+  if (mursPrincipauxRow && typeof mursPrincipauxRow.rsi === "number" && mursPrincipauxRow.rsi > 0.05 && mursPrincipauxRow.rsi <= 15) {
     info.wallMaxRsi = mursPrincipauxRow.rsi;
   } else if (elMurIdx >= 0) {
     // Fallback: ÉLÉMENTS DU MUR section, capped at RSI 10
@@ -511,7 +511,7 @@ function parseBuildingInfo(text: string, lines: string[]): ReportData["buildingI
       if (fondRsiValue !== undefined) break;
 
       // Strategy C: first non-zero Valeur-R in the basement section
-      const allRsi = [...section.matchAll(/Valeur-R:\s*\n?\s*([\d,.]+)\s*RSI/gi)];
+      const allRsi = Array.from(section.matchAll(/Valeur-R:\s*\n?\s*([\d,.]+)\s*RSI/gi));
       for (const m of allRsi) {
         const v = parseFloat(m[1].replace(",", "."));
         if (!isNaN(v) && v > 0) { fondRsiValue = v; break; }

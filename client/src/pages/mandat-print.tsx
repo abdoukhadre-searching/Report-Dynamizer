@@ -36,9 +36,8 @@ export default function MandatPrintPage() {
   const data: MandatDocumentData = {
     name: mandat.name ?? "",
     mandataire: mandat.mandataire ?? "",
+    codePostal: mandat.postalCode ?? "",
     cityLine: [mandat.address, mandat.city, mandat.province].filter(Boolean).join(", "),
-    numUnits: mandat.numUnits ?? "",
-    evaluator: mandat.evaluator ?? "",
     mandatType,
     mandatTypeLabel,
     schlObjectif: md.schlObjectif ?? "",

@@ -417,8 +417,8 @@ export default function AdminPage() {
     );
   });
 
-  const uniqueUsers = [...new Set((logs || []).map((l) => l.userId).filter(Boolean))].length;
-  const uniqueProjects = [...new Set((logs || []).map((l) => l.projectId).filter(Boolean))].length;
+  const uniqueUsers = new Set((logs || []).map((l) => l.userId).filter(Boolean)).size;
+  const uniqueProjects = new Set((logs || []).map((l) => l.projectId).filter(Boolean)).size;
 
   const roleLabel = (r: string) => r === "admin" ? "Admin" : "Utilisateur";
   const roleColor = (r: string) => r === "admin" ? "bg-red-50 text-red-700 border-red-200" : "bg-blue-50 text-blue-700 border-blue-200";
@@ -577,7 +577,7 @@ export default function AdminPage() {
                     <span className="text-xs text-muted-foreground">({heatPumpsList.length})</span>
                   </div>
                   <Button size="sm" className="gap-1.5" style={{ backgroundColor: "#1e3a5f" }}
-                    onClick={() => setEditingHp({ id: "__new__", name: "", brand: null, model: null, capacity: null, hspf2: null, seer2: null, type: "heatpump", isDefault: false, images: [], specPages: [], createdAt: new Date() })}>
+                    onClick={() => setEditingHp({ id: "__new__", name: "", brand: null, model: null, capacity: null, hspf2: null, seer2: null, type: "heatpump", isDefault: false, images: [], specPages: [], logisvertPdf: null, subventionAmount: null, createdAt: new Date() })}>
                     <Plus className="w-3.5 h-3.5" /> Ajouter
                   </Button>
                 </div>
@@ -608,7 +608,7 @@ export default function AdminPage() {
                     <span className="text-xs text-muted-foreground">({waterHeatersList.length})</span>
                   </div>
                   <Button size="sm" className="gap-1.5" style={{ backgroundColor: "#1e3a5f" }}
-                    onClick={() => setEditingHp({ id: "__new__", name: "", brand: null, model: null, capacity: null, hspf2: null, seer2: null, type: "waterheater", isDefault: false, images: [], specPages: [], createdAt: new Date() })}>
+                    onClick={() => setEditingHp({ id: "__new__", name: "", brand: null, model: null, capacity: null, hspf2: null, seer2: null, type: "waterheater", isDefault: false, images: [], specPages: [], logisvertPdf: null, subventionAmount: null, createdAt: new Date() })}>
                     <Plus className="w-3.5 h-3.5" /> Ajouter
                   </Button>
                 </div>

@@ -1788,7 +1788,7 @@ export async function registerRoutes(
     if (!req.session.userId)
       return res.status(401).json({ message: "Non authentifié" });
     try {
-      const hp = await storage.getHeatPump(req.params.id);
+      const hp = await storage.getHeatPump(req.params.id as string);
       if (!hp) return res.status(404).json({ message: "Non trouvé" });
       if (!req.file) return res.status(400).json({ message: "Aucun fichier" });
 
