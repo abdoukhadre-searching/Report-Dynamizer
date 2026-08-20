@@ -26,10 +26,9 @@ fn parse_port(line: &str) -> Option<u16> {
 /// GET /api/health en HTTP brut — valide que c'est bien NOTRE serveur qui répond.
 fn health_ok(port: u16) -> bool {
     let addr = format!("127.0.0.1:{port}");
-    let Ok(mut stream) = TcpStream::connect_timeout(
-        &addr.parse().unwrap(),
-        Duration::from_millis(1000),
-    ) else {
+    let Ok(mut stream) =
+        TcpStream::connect_timeout(&addr.parse().unwrap(), Duration::from_millis(1000))
+    else {
         return false;
     };
     let _ = stream.set_read_timeout(Some(Duration::from_millis(2000)));
@@ -80,7 +79,14 @@ fn main() {
                 .env("MAB_DESKTOP", "1")
                 .env("MAB_DATA_DIR", data_dir.to_string_lossy().to_string())
                 .env("PORT", "0") // port attribué par l'OS — aucune course possible
-                .env("PATH", path_env);
+                .env("PATH", path_env)
+                // Les données de langue sont bundlées dans resources/bin/tessdata.
+                // Sans cette variable, une installation Tesseract système peut être
+                // choisie à la place et la langue française manquer.
+                .env(
+                    "TESSDATA_PREFIX",
+                    bin_dir.join("tessdata").to_string_lossy().to_string(),
+                );
 
             let (mut rx, child) = sidecar.spawn()?;
             *app.state::<ServerChild>().0.lock().unwrap() = Some(child);

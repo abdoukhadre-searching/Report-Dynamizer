@@ -28,6 +28,36 @@ function torontoDateStr(d = new Date()): string {
 const execFileAsync = promisify(execFile);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
+const TOOL_HELP: Record<string, string> = {
+  pdftotext: "L’outil PDF « pdftotext » est introuvable. Réinstallez l’application desktop ou contactez le support.",
+  pdftoppm: "L’outil PDF « pdftoppm » est introuvable. Réinstallez l’application desktop ou contactez le support.",
+  tesseract: "L’outil OCR « tesseract » est introuvable. Réinstallez l’application desktop ou contactez le support.",
+  magick: "L’outil de conversion « ImageMagick » est introuvable. Réinstallez l’application desktop ou contactez le support.",
+};
+
+function isMissingDesktopToolError(error: unknown): boolean {
+  return Boolean((error as NodeJS.ErrnoException | undefined)?.code === "ENOENT");
+}
+
+async function execDesktopTool(
+  command: keyof typeof TOOL_HELP,
+  args: string[],
+  options?: { timeout?: number },
+) {
+  try {
+    return await execFileAsync(command, args, options);
+  } catch (error: any) {
+    if (isMissingDesktopToolError(error)) {
+      throw new Error(TOOL_HELP[command], { cause: error });
+    }
+    const details = `${error?.stderr ?? ""}\n${error?.message ?? ""}`;
+    if (command === "tesseract" && /fra|traineddata|tessdata/i.test(details)) {
+      throw new Error("La langue française de l’OCR (« fra.traineddata ») est introuvable. Réinstallez l’application desktop ou contactez le support.", { cause: error });
+    }
+    throw error;
+  }
+}
+
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   const tmpDir = os.tmpdir();
   const uid = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
@@ -35,7 +65,7 @@ async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   const tmpOutput = path.join(tmpDir, `upload-${uid}.txt`);
   try {
     await fs.promises.writeFile(tmpInput, buffer);
-    await execFileAsync("pdftotext", ["-layout", tmpInput, tmpOutput], { timeout: 30000 });
+    await execDesktopTool("pdftotext", ["-layout", tmpInput, tmpOutput], { timeout: 30000 });
     const text = (await fs.promises.readFile(tmpOutput, "utf-8")).trim();
     if (!text) {
       throw new Error("Impossible d'extraire le texte du PDF. Vérifiez que le fichier n'est pas une image scannée uniquement.");
@@ -64,7 +94,7 @@ async function normalizeImageBuffer(buffer: Buffer, originalName?: string): Prom
     const tmpOut = path.join(tmpDir, `imgconv-${uid}.jpg`);
     try {
       await fs.promises.writeFile(tmpIn, buffer);
-      await execFileAsync("magick", [`${tmpIn}[0]`, "-auto-orient", tmpOut], { timeout: 45000 });
+      await execDesktopTool("magick", [`${tmpIn}[0]`, "-auto-orient", tmpOut], { timeout: 45000 });
       return await fs.promises.readFile(tmpOut);
     } finally {
       await fs.promises.unlink(tmpIn).catch(() => {});
@@ -140,9 +170,9 @@ async function extractTextViaOcr(buffer: Buffer): Promise<string> {
   const tmpTxtPrefix = path.join(tmpDir, `ocr-${uid}-txt`);
   try {
     await fs.promises.writeFile(tmpPdf, buffer);
-    await execFileAsync("pdftoppm", ["-png", "-r", "150", "-f", "1", "-l", "1", tmpPdf, tmpImgPrefix], { timeout: 45000 });
+    await execDesktopTool("pdftoppm", ["-png", "-r", "150", "-f", "1", "-l", "1", tmpPdf, tmpImgPrefix], { timeout: 45000 });
     const imgPath = `${tmpImgPrefix}-1.png`;
-    await execFileAsync("tesseract", [imgPath, tmpTxtPrefix, "-l", "fra", "--psm", "6"], { timeout: 60000 });
+    await execDesktopTool("tesseract", [imgPath, tmpTxtPrefix, "-l", "fra", "--psm", "6"], { timeout: 60000 });
     const text = (await fs.promises.readFile(`${tmpTxtPrefix}.txt`, "utf-8")).trim();
     await fs.promises.unlink(imgPath).catch(() => {});
     return text;
@@ -726,7 +756,7 @@ export async function registerRoutes(
         const tmpPrefix = path.join(os.tmpdir(), `annex-${tmpSuffix}-out`);
         fs.writeFileSync(tmpPdf, req.file.buffer);
         try {
-          await execFileAsync("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
+          await execDesktopTool("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
           const outputFile = `${tmpPrefix}-1.jpg`;
           imageBuffer = fs.readFileSync(outputFile);
           fs.unlinkSync(outputFile);
@@ -788,6 +818,12 @@ export async function registerRoutes(
             detectedAmount = extractLogisvertAmount(ocrText);
           } catch (err) {
             console.error("Error OCR-extracting Logisvert PDF:", err);
+            // Un PDF LogisVert n'est généralement pas lisible par pdftotext à
+            // cause de son encodage de polices. Si le fallback OCR manque, ne
+            // pas prétendre que l'import a été analysé correctement.
+            if (isMissingDesktopToolError(err) || /fra\.traineddata|outil OCR/i.test(String((err as Error)?.message))) {
+              throw err;
+            }
           }
         }
         // Render page 1 as an image so it displays inline like the other fiche technique sections.
@@ -799,7 +835,7 @@ export async function registerRoutes(
         const tmpImgPrefix = path.join(tmpDir, `logisvert-${uid}-img`);
         try {
           await fs.promises.writeFile(tmpPdf, req.file.buffer);
-          await execFileAsync("pdftoppm", ["-png", "-r", "150", "-f", "1", "-l", "1", tmpPdf, tmpImgPrefix], { timeout: 45000 });
+          await execDesktopTool("pdftoppm", ["-png", "-r", "150", "-f", "1", "-l", "1", tmpPdf, tmpImgPrefix], { timeout: 45000 });
           await fs.promises.copyFile(`${tmpImgPrefix}-1.png`, imagePath);
           fileUrl = `/uploads/${imageFileName}`;
         } finally {
@@ -858,7 +894,7 @@ export async function registerRoutes(
         const tmpPrefix = path.join(os.tmpdir(), `preuves-${tmpSuffix}-out`);
         await fs.promises.writeFile(tmpPdf, req.file.buffer);
         try {
-          await execFileAsync("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
+          await execDesktopTool("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
           imageBuffer = await fs.promises.readFile(`${tmpPrefix}-1.jpg`);
           await fs.promises.unlink(`${tmpPrefix}-1.jpg`).catch(() => {});
         } finally {
@@ -933,7 +969,7 @@ export async function registerRoutes(
         const tmpPrefix = path.join(os.tmpdir(), `sec-${tmpSuffix}-out`);
         await fs.promises.writeFile(tmpPdf, req.file.buffer);
         try {
-          await execFileAsync("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
+          await execDesktopTool("pdftoppm", ["-f", "1", "-l", "1", "-jpeg", "-r", "200", tmpPdf, tmpPrefix]);
           imageBuffer = await fs.promises.readFile(`${tmpPrefix}-1.jpg`);
           await fs.promises.unlink(`${tmpPrefix}-1.jpg`).catch(() => {});
         } finally {
@@ -1394,7 +1430,7 @@ export async function registerRoutes(
 
       fs.writeFileSync(tmpPdf, pdfBuffer);
       try {
-        await execFileAsync("pdftoppm", [
+        await execDesktopTool("pdftoppm", [
           "-png", "-r", "150",
           "-f", String(pageNum), "-l", String(pageNum),
           tmpPdf, tmpImgPrefix,
@@ -1444,7 +1480,7 @@ export async function registerRoutes(
 
       fs.writeFileSync(tmpPdf, pdfBuffer);
       try {
-        await execFileAsync("pdftoppm", [
+        await execDesktopTool("pdftoppm", [
           "-png", "-r", "150",
           "-f", String(pageNum), "-l", String(pageNum),
           tmpPdf, tmpImgPrefix,
@@ -1766,15 +1802,14 @@ export async function registerRoutes(
       const isPdf = req.file.mimetype === "application/pdf" || req.file.originalname.toLowerCase().endsWith(".pdf");
 
       if (isPdf) {
-        // Convertir chaque page PDF en JPEG via pdftoppm (utilise les imports en haut du fichier)
-        const execFileAsync = promisify(execFile);
+        // Convertir chaque page PDF en JPEG via pdftoppm.
         const tmpId = `hp-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
         const tmpDir = os.tmpdir();
         const tmpPdf = path.join(tmpDir, `${tmpId}.pdf`);
         const tmpOutPrefix = path.join(tmpDir, tmpId);
         await fs.promises.writeFile(tmpPdf, req.file.buffer);
         try {
-          await execFileAsync("pdftoppm", ["-jpeg", "-r", "150", tmpPdf, tmpOutPrefix]);
+          await execDesktopTool("pdftoppm", ["-jpeg", "-r", "150", tmpPdf, tmpOutPrefix]);
         } catch (convErr) {
           await fs.promises.unlink(tmpPdf).catch(() => {});
           throw convErr;

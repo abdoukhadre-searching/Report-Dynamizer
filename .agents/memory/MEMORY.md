@@ -1,3 +1,4 @@
 - [Logisvert PDF text extraction](logisvert-pdf-ocr.md) — LogisVert subsidy PDFs have custom font encoding that breaks pdftotext; OCR (tesseract) is required as fallback.
 - [Tauri desktop packaging](tauri-desktop.md) — Windows NSIS is the supported target; use an OS-assigned loopback port with a health check; keep files in app data.
+- [Desktop tool supply chain](desktop-tool-supply-chain.md) — Windows binaries fetched for installers must use immutable sources, SHA-256 checks, and build-time smoke tests.
 - [SQLite migration decisions](sqlite-migration.md) — app is SQLite-only (epoch-second timestamps, JSON-as-TEXT, DDL kept in sync with Drizzle schema, better-sqlite3 external in bundle).

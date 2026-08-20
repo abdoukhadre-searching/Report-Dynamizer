@@ -50,7 +50,10 @@ npm run tauri:build
    `src-tauri/resources/templates`
 5. installe les modules natifs (better-sqlite3, sharp, puppeteer sans Chromium)
    dans `src-tauri/resources/node_modules`
-6. copie le binaire Node local comme sidecar (`src-tauri/binaries/node-<triple>`)
+6. télécharge et bundle Poppler (`pdftotext`, `pdftoppm`), Tesseract avec la
+   langue française (`tessdata/fra.traineddata`) et ImageMagick dans
+   `src-tauri/resources/bin`
+7. copie le binaire Node local comme sidecar (`src-tauri/binaries/node-<triple>`)
 
 Résultat :
 - **Windows** : `src-tauri/target/release/bundle/nsis/MAB Projets_1.0.0_x64-setup.exe`
@@ -69,7 +72,7 @@ Pour transférer les données du Replit vers le desktop, copier le contenu du
 dossier `data/` du Replit (fichier `mab-projets.db` + dossier `uploads/`) dans
 le dossier de données de l'app desktop (`%APPDATA%\com.conseilsmab.mabprojets\`).
 
-## Limitation connue : outils externes (poppler, tesseract, ImageMagick)
+## Outils de traitement de fichiers
 
 Certaines fonctions appellent des outils en ligne de commande absents d'un
 poste Windows standard :
@@ -79,12 +82,24 @@ poste Windows standard :
 - `magick` (ImageMagick) — conversion HEIC/TIFF de secours (sharp couvre déjà
   la plupart des formats)
 
-Le shell Tauri ajoute automatiquement `resources/bin` au `PATH` du serveur :
-pour activer ces fonctions dans l'app desktop, déposer les exécutables Windows
-correspondants (poppler-utils, tesseract + `tessdata/fra.traineddata`,
-ImageMagick portable) dans `src-tauri/resources/bin/` avant `npm run tauri:build`.
-Sans eux, l'app fonctionne mais l'upload de rapports HOT2000 PDF, la conversion
-PDF→image et l'OCR LogisVert échoueront avec un message d'erreur.
+`npm run tauri:build` les télécharge et les place automatiquement dans
+`src-tauri/resources/bin/`. Le shell Tauri ajoute ce dossier au `PATH` du
+serveur et définit `TESSDATA_PREFIX` pour que Tesseract trouve `fra.traineddata`
+hors connexion. Aucune installation supplémentaire n'est requise sur le poste
+client.
+
+Les versions, l’empreinte SHA-256 de chaque téléchargement et le commit exact
+des données `fra` sont figés dans `script/build-desktop.ts`. Le build vérifie
+l’empreinte avant toute extraction ou exécution, puis contrôle que les quatre
+outils démarrent et que Tesseract liste bien `fra`.
+
+Pour utiliser un miroir interne ou une version validée différente, définir sur
+la machine de build une paire d’options, par exemple `MAB_POPPLER_URL` et
+`MAB_POPPLER_SHA256`. Les paires équivalentes existent pour `TESSERACT`,
+`TESSDATA_FRA` et `IMAGEMAGICK`; une URL personnalisée sans son empreinte
+SHA-256 fait échouer le build. Si un outil ou la langue française manque malgré
+tout dans une installation, l'application indique clairement lequel doit être
+réinstallé.
 
 ## Dépannage
 

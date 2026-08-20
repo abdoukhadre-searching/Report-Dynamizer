@@ -129,4 +129,47 @@ CREATE TABLE IF NOT EXISTS offres (
 );
 `);
 
+// `CREATE TABLE IF NOT EXISTS` ne complète pas une table créée par une version
+// antérieure. Ces migrations additives gardent les fichiers SQLite existants
+// utilisables après une mise à jour, sans recréer de table ni toucher aux lignes.
+const additiveColumns: Record<string, Record<string, string>> = {
+  users: {
+    username: "TEXT",
+  },
+  heat_pumps: {
+    logisvert_pdf: "TEXT",
+    subvention_amount: "TEXT",
+  },
+  projects: {
+    selected_heat_pump_id: "TEXT",
+    selected_water_heater_id: "TEXT",
+    annex_preuves_title: "TEXT",
+    annex_preuves_images: "TEXT DEFAULT '[]'",
+    annex_preuves_sections: "TEXT DEFAULT '[]'",
+  },
+};
+
+const applyAdditiveMigrations = sqlite.transaction(() => {
+  for (const [table, columns] of Object.entries(additiveColumns)) {
+    const existing = new Set(
+      (sqlite.prepare(`PRAGMA table_info("${table}")`).all() as Array<{ name: string }>)
+        .map((column) => column.name),
+    );
+    for (const [column, definition] of Object.entries(columns)) {
+      if (!existing.has(column)) {
+        sqlite.exec(`ALTER TABLE "${table}" ADD COLUMN "${column}" ${definition}`);
+      }
+    }
+  }
+
+  // Les contraintes UNIQUE des tables nouvelles sont créées en ligne dans le
+  // DDL. Les index nommés garantissent la même protection pour les anciennes.
+  sqlite.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users(email);
+    CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique
+      ON users(username) WHERE username IS NOT NULL;
+  `);
+});
+applyAdditiveMigrations();
+
 export const db = drizzle(sqlite, { schema });
