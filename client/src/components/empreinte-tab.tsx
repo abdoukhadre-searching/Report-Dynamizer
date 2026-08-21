@@ -1607,8 +1607,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     </div>
                   )}
 
-                  {/* Image du document LogisVert uploadée lors de la création de la thermopompe (catalogue) */}
-                  {(selectedHeatPump as any)?.logisvertPdf && (
+                  {/* Image du document LogisVert uploadée lors de la création de la thermopompe (catalogue) — masquée si le bâtiment est admissible (le document projet prend le relais) */}
+                  {(selectedHeatPump as any)?.logisvertPdf && logisvertAdmissible !== true && (
                     <div className="rounded-lg overflow-hidden border border-slate-200 shadow-sm">
                       <img
                         src={(selectedHeatPump as any).logisvertPdf}
