@@ -1666,8 +1666,8 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                     )
                   )}
 
-                  {/* Export mode sans document projet ni image catalogue — image de secours */}
-                  {exportMode && !logisvertPdfUrl && !(selectedHeatPump as any)?.logisvertPdf && (
+                  {/* Export mode sans document projet ni image catalogue — image de secours (uniquement si non admissible ou statut inconnu) */}
+                  {exportMode && logisvertAdmissible !== true && !logisvertPdfUrl && !(selectedHeatPump as any)?.logisvertPdf && (
                     <img
                       src={tclSubventionImg}
                       alt="Tableau des subventions Hydro-Québec pour thermopompes TCL T-Pro-25ES"
