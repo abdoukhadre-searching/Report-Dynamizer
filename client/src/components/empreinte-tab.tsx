@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Project, ReportData, HeatPump } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -196,9 +197,6 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   );
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMeasureName, setNewMeasureName] = useState("");
-  const [newMeasureComment, setNewMeasureComment] = useState("");
-  const [newMeasureUnit, setNewMeasureUnit] = useState("");
-  const [newMeasureQuantity, setNewMeasureQuantity] = useState<number | "">(1);
   const [newMeasureCost, setNewMeasureCost] = useState<number | "">("");
   const [editingMeasure, setEditingMeasure] = useState<CustomMeasure | null>(null);
   const pre = project.preReportData as ReportData | null;
@@ -232,26 +230,26 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   function addCustomMeasure() {
     const name = newMeasureName.trim();
-    const comment = newMeasureComment.trim();
-    const unit = newMeasureUnit.trim();
-    const quantity = Math.max(0.01, Number(newMeasureQuantity) || 1);
     const cost = Number(newMeasureCost) || 0;
     if (!name) return;
     const updated = [...customMeasures, {
       id: crypto.randomUUID(),
       name,
-      comment,
-      unit,
-      quantity,
+      comment: "",
+      unit: "",
+      quantity: 1,
       cost,
     }];
     saveCustomMeasuresList(updated);
     setNewMeasureName("");
-    setNewMeasureComment("");
-    setNewMeasureUnit("");
-    setNewMeasureQuantity(1);
     setNewMeasureCost("");
     setShowAddForm(false);
+  }
+
+  function cancelAddCustomMeasure() {
+    setShowAddForm(false);
+    setNewMeasureName("");
+    setNewMeasureCost("");
   }
 
   function removeCustomMeasure(id: string) {
@@ -275,19 +273,6 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
     );
     saveCustomMeasuresList(updated);
     setEditingMeasure(null);
-  }
-
-  function updateCustomMeasureValue(
-    id: string,
-    updates: Partial<Pick<CustomMeasure, "quantity" | "cost">>,
-  ) {
-    setCustomMeasures((current) =>
-      current.map((measure) => measure.id === id ? { ...measure, ...updates } : measure),
-    );
-  }
-
-  function persistCurrentCustomMeasures() {
-    void saveCustomMeasuresList(customMeasures);
   }
 
   const [coutEtancheite, setCoutEtancheite] = useState(initialValues?.coutEtancheite ?? 5000);
@@ -1224,46 +1209,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       </div>
                     </td>
                     <td className="px-5 py-4 text-center text-slate-600 text-xs">
-                      {exportMode ? (
-                        <>
-                          <span className="font-semibold">{measure.quantity}</span>
-                          {measure.unit && <span className="ml-1 text-slate-400">{measure.unit}</span>}
-                        </>
-                      ) : (
-                        <div className="flex items-center justify-center gap-1">
-                          <input
-                            type="number"
-                            min="0.01"
-                            step="any"
-                            value={measure.quantity}
-                            onChange={(event) => updateCustomMeasureValue(measure.id, { quantity: Number(event.target.value) || 1 })}
-                            onBlur={persistCurrentCustomMeasures}
-                            aria-label={`Quantité pour ${measure.name}`}
-                            style={{ width: "58px", textAlign: "center", fontSize: "12px", padding: "4px 5px", borderRadius: "5px", border: "1px solid #cbd5e1", backgroundColor: "#fff" }}
-                          />
-                          {measure.unit && <span className="text-slate-400 whitespace-nowrap">{measure.unit}</span>}
-                        </div>
-                      )}
+                      <span className="font-semibold">{measure.quantity}</span>
+                      {measure.unit && <span className="ml-1 text-slate-400">{measure.unit}</span>}
                     </td>
                     <td className="px-5 py-4 text-right text-xs text-slate-500">
-                      {exportMode ? (
-                        `${measure.cost.toLocaleString("fr-CA")} $`
-                      ) : (
-                        <div className="flex items-center justify-end gap-1">
-                          <input
-                            type="number"
-                            min="0"
-                            step="any"
-                            value={measure.cost}
-                            onChange={(event) => updateCustomMeasureValue(measure.id, { cost: Math.max(0, Number(event.target.value) || 0) })}
-                            onBlur={persistCurrentCustomMeasures}
-                            aria-label={`Coût par unité pour ${measure.name}`}
-                            className={inputCls}
-                            style={{ width: "92px" }}
-                          />
-                          <span className="text-slate-400 text-xs">$</span>
-                        </div>
-                      )}
+                      {measure.cost.toLocaleString("fr-CA")} $
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -1309,123 +1259,29 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                   </tr>
               ))}
 
-              {!exportMode && editingMeasure && (
-                <tr style={{ backgroundColor: "#f0f7ff" }}>
-                  <td className="px-5 py-3">
-                    <div className="space-y-2">
-                      <input type="text" value={editingMeasure.name} onChange={(event) => setEditingMeasure({ ...editingMeasure, name: event.target.value })} placeholder="Nom de la mesure" aria-label="Nom de la mesure" style={{ width: "100%", fontSize: "13px", padding: "6px 8px", borderRadius: "6px", border: "1px solid #93c5fd", backgroundColor: "#fff" }} />
-                      <input type="text" value={editingMeasure.comment} onChange={(event) => setEditingMeasure({ ...editingMeasure, comment: event.target.value })} placeholder="Commentaire (facultatif)" aria-label="Commentaire de la mesure" style={{ width: "100%", fontSize: "12px", padding: "5px 7px", borderRadius: "6px", border: "1px solid #bfdbfe", backgroundColor: "#fff" }} />
-                    </div>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="space-y-2">
-                      <input type="number" min="0.01" step="any" value={editingMeasure.quantity} onChange={(event) => setEditingMeasure({ ...editingMeasure, quantity: Number(event.target.value) || 1 })} aria-label="Quantité de la mesure" style={{ width: "100%", textAlign: "center", fontSize: "12px", padding: "5px 7px", borderRadius: "6px", border: "1px solid #bfdbfe", backgroundColor: "#fff" }} />
-                      <input type="text" value={editingMeasure.unit} onChange={(event) => setEditingMeasure({ ...editingMeasure, unit: event.target.value })} placeholder="Unité (facultatif)" aria-label="Unité de la mesure" style={{ width: "100%", textAlign: "center", fontSize: "12px", padding: "5px 7px", borderRadius: "6px", border: "1px solid #bfdbfe", backgroundColor: "#fff" }} />
-                    </div>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <input type="number" min="0" step="any" value={editingMeasure.cost} onChange={(event) => setEditingMeasure({ ...editingMeasure, cost: Math.max(0, Number(event.target.value) || 0) })} aria-label="Coût par unité de la mesure" style={{ width: "92px", textAlign: "right", fontSize: "13px", padding: "6px 8px", borderRadius: "6px", border: "1px solid #93c5fd", backgroundColor: "#fff" }} />
-                      <span className="text-slate-400 text-xs">$</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={saveEditedCustomMeasure} disabled={!editingMeasure.name.trim()} style={{ padding: "5px 10px", borderRadius: "6px", border: "none", backgroundColor: "#1e3a5f", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
-                      <button onClick={() => setEditingMeasure(null)} style={{ padding: "5px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", backgroundColor: "#fff", color: "#64748b", fontSize: "12px", cursor: "pointer" }}>Annuler</button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-
               {/* Formulaire d'ajout de mesure */}
               {!exportMode && (
                  showAddForm ? (
                    <tr style={{ backgroundColor: "#f0f7ff" }}>
-                     <td className="px-5 py-3">
-                       <div className="flex items-center gap-3">
-                         <IconBox>
-                           <span style={{ fontSize: "14px", color: "#1e3a5f" }}>+</span>
-                         </IconBox>
-                         <div className="min-w-0 flex-1 space-y-1">
-                           <input
-                             data-testid="input-new-measure-name"
-                             type="text"
-                             value={newMeasureName}
-                             onChange={(e) => setNewMeasureName(e.target.value)}
-                             onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") { setShowAddForm(false); setNewMeasureName(""); setNewMeasureComment(""); setNewMeasureUnit(""); setNewMeasureQuantity(1); setNewMeasureCost(""); } }}
-                             placeholder="Nom de la mesure…"
-                             autoFocus
-                             style={{
-                               width: "100%",
-                               fontSize: "13px",
-                               padding: "6px 10px",
-                               borderRadius: "6px",
-                               border: "1px solid #93c5fd",
-                               outline: "none",
-                               backgroundColor: "#fff",
-                             }}
-                           />
-                           <input
-                             data-testid="input-new-measure-comment"
-                             type="text"
-                             value={newMeasureComment}
-                             onChange={(e) => setNewMeasureComment(e.target.value)}
-                             placeholder="Commentaire sous le nom (facultatif)…"
-                             style={{
-                               width: "100%",
-                               fontSize: "12px",
-                               padding: "4px 10px",
-                               borderRadius: "6px",
-                               border: "1px solid #bfdbfe",
-                               outline: "none",
-                               backgroundColor: "#fff",
-                             }}
-                           />
-                         </div>
-                       </div>
-                     </td>
-                     <td className="px-5 py-3 text-center">
-                       <div className="flex flex-col items-center gap-1">
-                         <input
-                           data-testid="input-new-measure-quantity"
-                           type="number"
-                           min="0.01"
-                           step="any"
-                           value={newMeasureQuantity}
-                           onChange={(e) => setNewMeasureQuantity(e.target.value === "" ? "" : Number(e.target.value))}
-                           placeholder="Qté"
-                           title="Quantité"
-                           style={{
-                             width: "72px",
-                             textAlign: "center",
-                             fontSize: "13px",
-                             padding: "6px 8px",
-                             borderRadius: "6px",
-                             border: "1px solid #93c5fd",
-                             outline: "none",
-                             backgroundColor: "#fff",
-                           }}
-                         />
-                         <input
-                           data-testid="input-new-measure-unit"
-                           type="text"
-                           value={newMeasureUnit}
-                           onChange={(e) => setNewMeasureUnit(e.target.value)}
-                           placeholder="m² (facultatif)"
-                           title="Unité de mesure facultative"
-                           style={{
-                             width: "100%",
-                             maxWidth: "120px",
-                             fontSize: "11px",
-                             padding: "4px 6px",
-                             borderRadius: "6px",
-                             border: "1px solid #bfdbfe",
-                             outline: "none",
-                             backgroundColor: "#fff",
-                           }}
-                         />
-                       </div>
+                      <td className="px-5 py-3" colSpan={2}>
+                        <input
+                          data-testid="input-new-measure-name"
+                          type="text"
+                          value={newMeasureName}
+                          onChange={(e) => setNewMeasureName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") cancelAddCustomMeasure(); }}
+                          placeholder="Nom de la mesure…"
+                          autoFocus
+                          style={{
+                            width: "100%",
+                            fontSize: "13px",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            border: "1px solid #93c5fd",
+                            outline: "none",
+                            backgroundColor: "#fff",
+                          }}
+                        />
                      </td>
                      <td className="px-5 py-3 text-right">
                        <div className="flex items-center justify-end gap-1">
@@ -1474,7 +1330,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                          </button>
                          <button
                            data-testid="btn-cancel-add-measure"
-                           onClick={() => { setShowAddForm(false); setNewMeasureName(""); setNewMeasureComment(""); setNewMeasureUnit(""); setNewMeasureQuantity(1); setNewMeasureCost(""); }}
+                            onClick={cancelAddCustomMeasure}
                            style={{ padding: "4px 10px", fontSize: "12px", borderRadius: "6px", border: "1px solid #e2e8f0", cursor: "pointer", backgroundColor: "#fff", color: "#64748b" }}
                          >
                            Annuler
@@ -1606,6 +1462,89 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
               )}
             </tfoot>
           </table>
+          {!exportMode && (
+            <Dialog
+              open={Boolean(editingMeasure)}
+              onOpenChange={(open) => { if (!open) setEditingMeasure(null); }}
+            >
+              <DialogContent className="sm:max-w-[520px]">
+                <DialogHeader>
+                  <DialogTitle>Modifier la mesure</DialogTitle>
+                  <DialogDescription>
+                    Modifiez les informations de cette mesure, puis enregistrez.
+                  </DialogDescription>
+                </DialogHeader>
+                {editingMeasure && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700">Nom</label>
+                      <input
+                        type="text"
+                        value={editingMeasure.name}
+                        onChange={(event) => setEditingMeasure({ ...editingMeasure, name: event.target.value })}
+                        placeholder="Nom de la mesure"
+                        autoFocus
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700">Commentaire <span className="font-normal text-slate-400">(facultatif)</span></label>
+                      <input
+                        type="text"
+                        value={editingMeasure.comment}
+                        onChange={(event) => setEditingMeasure({ ...editingMeasure, comment: event.target.value })}
+                        placeholder="Description ou précision"
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Unités</label>
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="any"
+                          value={editingMeasure.quantity}
+                          onChange={(event) => setEditingMeasure({ ...editingMeasure, quantity: Number(event.target.value) || 1 })}
+                          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Unité <span className="font-normal text-slate-400">(facultatif)</span></label>
+                        <input
+                          type="text"
+                          value={editingMeasure.unit}
+                          onChange={(event) => setEditingMeasure({ ...editingMeasure, unit: event.target.value })}
+                          placeholder="m²"
+                          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Coût / unité</label>
+                        <div className="mt-1 flex items-center gap-1">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={editingMeasure.cost}
+                            onChange={(event) => setEditingMeasure({ ...editingMeasure, cost: Math.max(0, Number(event.target.value) || 0) })}
+                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300"
+                          />
+                          <span className="text-sm text-slate-400">$</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button variant="outline" onClick={() => setEditingMeasure(null)}>Annuler</Button>
+                      <Button onClick={saveEditedCustomMeasure} disabled={!editingMeasure.name.trim()} style={{ backgroundColor: "#1e3a5f" }}>
+                        Enregistrer
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          )}
         </CardContent>
       </Card>
 

@@ -101,9 +101,9 @@ function buildPrendreNote(
     return `Du montant total de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Hydro-Québec de 50 %, soit ${formatMontant(hydro)} : ${formatMontant(hydro * 0.4)} (40 %) au début des travaux et ${formatMontant(hydro * 0.6)} (60 %) à la fin des travaux. Le coût résiduel pour vos évaluations énergétiques serait de ${formatMontant(total - hydro)}.`;
   }
 
-  const energir = total * 0.5;
-  const hydro = total - energir;
-  return `Du montant total de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Énergir de 50 %, soit ${formatMontant(energir)}. Sur le montant restant de ${formatMontant(hydro)}, vous pourriez obtenir une subvention d'Hydro-Québec de 50 % : ${formatMontant(hydro * 0.4)} (40 %) au début des travaux et ${formatMontant(hydro * 0.6)} (60 %) à la fin des travaux. Le coût résiduel pour vos évaluations énergétiques serait de 0 $.`;
+  // Conserver le paragraphe historique utilisé dans les offres lorsque les
+  // deux programmes sont admissibles : le coût résiduel annoncé est 0 $.
+  return "Du montant total, vous pourriez obtenir une subvention d'Énergir de 50%. Sur le montant restant, vous pourriez obtenir une subvention de 40% d'Hydro-Québec au début des travaux et une autre de 60% à la fin des travaux. Donc le coût pour vos évaluations énergétiques pourrait vous revenir à 0 $.";
 }
 
 function toIsoDate(value: string): string {
