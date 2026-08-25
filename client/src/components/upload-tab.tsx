@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useOfflineDraft } from "@/hooks/use-offline-draft";
+import { useAuth } from "@/contexts/auth-context";
+import { assertOnlineForMutation } from "@/lib/queryClient";
 import {
   Upload,
   FileText,
@@ -30,6 +33,8 @@ interface UploadTabProps {
 
 export default function UploadTab({ project }: UploadTabProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const draftPrefix = `upload:${user?.id ?? project.userId ?? "offline"}:${project.id}`;
 
   const hasPreReport = !!project.preReportData;
   const hasPostReport = !!project.postReportData;
@@ -42,21 +47,22 @@ export default function UploadTab({ project }: UploadTabProps) {
     if (bothLoaded && project.hasCommercialUnits === null) return 4;
     return 3;
   });
-  const [preText, setPreText] = useState("");
-  const [postText, setPostText] = useState("");
+  const [preText, setPreText, clearPreTextDraft] = useOfflineDraft(`${draftPrefix}:pre-text`, "");
+  const [postText, setPostText, clearPostTextDraft] = useOfflineDraft(`${draftPrefix}:post-text`, "");
   const [buildingType, setBuildingType] = useState<"existing" | "new">(
     (project.buildingType as "existing" | "new") || "existing"
   );
-  const [address, setAddress] = useState(project.address || "");
-  const [city, setCity] = useState(project.city || "");
-  const [province, setProvince] = useState(project.province || "Québec");
-  const [postalCode, setPostalCode] = useState(project.postalCode || "");
+  const [address, setAddress, clearAddressDraft] = useOfflineDraft(`${draftPrefix}:address`, project.address || "");
+  const [city, setCity, clearCityDraft] = useOfflineDraft(`${draftPrefix}:city`, project.city || "");
+  const [province, setProvince, clearProvinceDraft] = useOfflineDraft(`${draftPrefix}:province`, project.province || "Québec");
+  const [postalCode, setPostalCode, clearPostalCodeDraft] = useOfflineDraft(`${draftPrefix}:postal-code`, project.postalCode || "");
   const [prePdfFile, setPrePdfFile] = useState<File | null>(null);
   const [postPdfFile, setPostPdfFile] = useState<File | null>(null);
   const [hasCommercialUnits, setHasCommercialUnits] = useState<boolean | null>(
     project.hasCommercialUnits === true ? true : project.hasCommercialUnits === false && (project.address || project.city) ? false : null
   );
-  const [commercialUnits, setCommercialUnits] = useState<string>(
+  const [commercialUnits, setCommercialUnits, clearCommercialUnitsDraft] = useOfflineDraft<string>(
+    `${draftPrefix}:commercial-units`,
     project.commercialUnits ? String(project.commercialUnits) : ""
   );
 
@@ -90,6 +96,10 @@ export default function UploadTab({ project }: UploadTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      clearAddressDraft();
+      clearCityDraft();
+      clearProvinceDraft();
+      clearPostalCodeDraft();
       setStep(3);
     },
     onError: () => {
@@ -110,6 +120,7 @@ export default function UploadTab({ project }: UploadTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
       setPreText("");
+      clearPreTextDraft();
       setPrePdfFile(null);
       setShowPreUpload(false);
       toast({ title: "Rapport PRE analysé avec succès" });
@@ -127,6 +138,7 @@ export default function UploadTab({ project }: UploadTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
       setPostText("");
+      clearPostTextDraft();
       setPostPdfFile(null);
       setShowPostUpload(false);
       toast({ title: "Rapport POST analysé avec succès" });
@@ -138,6 +150,7 @@ export default function UploadTab({ project }: UploadTabProps) {
 
   const uploadPrePdfMutation = useMutation({
     mutationFn: async (file: File) => {
+      assertOnlineForMutation();
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch(`/api/projects/${project.id}/upload-pre-pdf`, { method: "POST", body: formData });
@@ -157,6 +170,7 @@ export default function UploadTab({ project }: UploadTabProps) {
 
   const uploadPostPdfMutation = useMutation({
     mutationFn: async (file: File) => {
+      assertOnlineForMutation();
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch(`/api/projects/${project.id}/upload-post-pdf`, { method: "POST", body: formData });
@@ -197,6 +211,7 @@ export default function UploadTab({ project }: UploadTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      clearCommercialUnitsDraft();
       setStep(3);
       toast({ title: "✓ Configuration enregistrée", description: "Le tableau de bord et les rapports sont maintenant accessibles." });
     },

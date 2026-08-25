@@ -1,9 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { User } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { clearPwaData, loadOfflineUser, saveOfflineUser, type OfflineUser } from "@/lib/pwa-storage";
+
+type AuthenticatedUser = Pick<User, "id" | "name" | "role">;
 
 interface AuthContextValue {
-  user: Omit<User, "passwordHash"> | null;
+  user: AuthenticatedUser | null;
   isLoading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
@@ -13,20 +16,22 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<Omit<User, "passwordHash"> | null>(null);
+  const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/me", { credentials: "include" });
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as AuthenticatedUser;
         setUser(data);
+        await saveOfflineUser(data as OfflineUser);
       } else {
         setUser(null);
+        await clearPwaData();
       }
     } catch {
-      setUser(null);
+      setUser(await loadOfflineUser());
     } finally {
       setIsLoading(false);
     }
@@ -44,11 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const data = await res.json();
     setUser(data.user);
+    await saveOfflineUser(data.user as OfflineUser);
   };
 
   const logout = async () => {
-    await apiRequest("POST", "/api/auth/logout", {});
-    setUser(null);
+    try {
+      await apiRequest("POST", "/api/auth/logout", {});
+    } finally {
+      queryClient.clear();
+      await clearPwaData();
+      setUser(null);
+    }
   };
 
   return (

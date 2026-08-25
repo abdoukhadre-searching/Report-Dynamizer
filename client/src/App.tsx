@@ -25,7 +25,9 @@ import RegisterPage from "@/pages/register";
 import ProfilePage from "@/pages/profile";
 import AdminPage from "@/pages/admin";
 import VerifierPage from "@/pages/verifier";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { hydratePwaQueryCache, startPwaQueryPersistence } from "./lib/pwa-query-cache";
+import OfflineBanner from "./components/offline-banner";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -113,8 +115,42 @@ function Router() {
 }
 
 function AppInner() {
+  const { user, isLoading } = useAuth();
+  const [readyForUser, setReadyForUser] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    let active = true;
+    let stopPersistence: (() => void) | undefined;
+    const ownerId = user?.id ?? null;
+
+    void (async () => {
+      queryClient.clear();
+      if (ownerId) {
+        await hydratePwaQueryCache(queryClient, ownerId);
+        stopPersistence = startPwaQueryPersistence(queryClient, ownerId);
+      }
+      if (active) setReadyForUser(ownerId);
+    })();
+
+    return () => {
+      active = false;
+      stopPersistence?.();
+    };
+  }, [isLoading, user?.id]);
+
+  if (isLoading || readyForUser !== (user?.id ?? null)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <TooltipProvider>
+      <OfflineBanner />
       <Toaster />
       <Router />
     </TooltipProvider>

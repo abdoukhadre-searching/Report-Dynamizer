@@ -1,4 +1,19 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { announceOfflineActionBlocked } from "@/components/offline-banner";
+
+export class OfflineActionError extends Error {
+  constructor() {
+    super("Cette action nécessite une connexion Internet.");
+    this.name = "OfflineActionError";
+  }
+}
+
+export function assertOnlineForMutation() {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    announceOfflineActionBlocked();
+    throw new OfflineActionError();
+  }
+}
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,6 +27,10 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  if (method.toUpperCase() !== "GET") {
+    assertOnlineForMutation();
+  }
+
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},

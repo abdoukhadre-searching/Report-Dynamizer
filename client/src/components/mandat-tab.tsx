@@ -13,6 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Save, Printer, ClipboardList, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useOfflineDraft } from "@/hooks/use-offline-draft";
+import { useAuth } from "@/contexts/auth-context";
 import mabLogoPath from "@assets/Logo-3_1772954007262.jpg";
 
 interface MandatData {
@@ -84,14 +86,19 @@ interface MandatTabProps {
 
 export default function MandatTab({ project }: MandatTabProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
 
-  const [mandat, setMandat] = useState<MandatData>(() => {
+  const initialMandat = (() => {
     if (project.mandatData && typeof project.mandatData === "object") {
       return { ...defaultMandatData, ...(project.mandatData as MandatData) };
     }
     return defaultMandatData;
-  });
+  })();
+  const [mandat, setMandat, clearMandatDraft] = useOfflineDraft<MandatData>(
+    `mandat:${user?.id ?? project.userId ?? "offline"}:${project.id}`,
+    initialMandat,
+  );
 
   const [saved, setSaved] = useState(false);
 
@@ -101,6 +108,7 @@ export default function MandatTab({ project }: MandatTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id] });
+      clearMandatDraft();
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
       toast({ title: "Feuille de mandat sauvegardée" });
