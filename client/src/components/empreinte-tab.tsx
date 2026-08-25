@@ -1203,7 +1203,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                      {measure.unit && <span className="ml-1 text-slate-400">{measure.unit}</span>}
                    </td>
                    <td className="px-5 py-4 text-right text-xs text-slate-500">
-                     {measure.cost.toLocaleString("fr-CA")} $ / unité
+                     {measure.cost.toLocaleString("fr-CA")} $
                    </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -1241,38 +1241,67 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
               {/* Formulaire d'ajout de mesure */}
               {!exportMode && (
-                showAddForm ? (
-                  <tr style={{ backgroundColor: "#f0f7ff" }}>
-                     <td className="px-5 py-3" colSpan={4}>
-                       <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.25fr_1.25fr_0.65fr_0.55fr_0.8fr_auto] md:items-center">
-                        <input
-                           data-testid="input-new-measure-name"
-                           type="text"
-                           value={newMeasureName}
-                           onChange={(e) => setNewMeasureName(e.target.value)}
-                           onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") { setShowAddForm(false); setNewMeasureName(""); setNewMeasureComment(""); setNewMeasureUnit(""); setNewMeasureQuantity(1); setNewMeasureCost(""); } }}
-                           placeholder="Nom de la mesure…"
-                           autoFocus
-                          style={{
-                             width: "100%",
-                            fontSize: "13px",
-                             padding: "6px 10px",
-                            borderRadius: "6px",
-                            border: "1px solid #93c5fd",
-                            outline: "none",
-                            backgroundColor: "#fff",
-                          }}
-                        />
+                 showAddForm ? (
+                   <tr style={{ backgroundColor: "#f0f7ff" }}>
+                     <td className="px-5 py-3">
+                       <div className="flex items-center gap-3">
+                         <IconBox>
+                           <span style={{ fontSize: "14px", color: "#1e3a5f" }}>+</span>
+                         </IconBox>
+                         <div className="min-w-0 flex-1 space-y-1">
+                           <input
+                             data-testid="input-new-measure-name"
+                             type="text"
+                             value={newMeasureName}
+                             onChange={(e) => setNewMeasureName(e.target.value)}
+                             onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") { setShowAddForm(false); setNewMeasureName(""); setNewMeasureComment(""); setNewMeasureUnit(""); setNewMeasureQuantity(1); setNewMeasureCost(""); } }}
+                             placeholder="Nom de la mesure…"
+                             autoFocus
+                             style={{
+                               width: "100%",
+                               fontSize: "13px",
+                               padding: "6px 10px",
+                               borderRadius: "6px",
+                               border: "1px solid #93c5fd",
+                               outline: "none",
+                               backgroundColor: "#fff",
+                             }}
+                           />
+                           <input
+                             data-testid="input-new-measure-comment"
+                             type="text"
+                             value={newMeasureComment}
+                             onChange={(e) => setNewMeasureComment(e.target.value)}
+                             placeholder="Commentaire sous le nom (facultatif)…"
+                             style={{
+                               width: "100%",
+                               fontSize: "12px",
+                               padding: "4px 10px",
+                               borderRadius: "6px",
+                               border: "1px solid #bfdbfe",
+                               outline: "none",
+                               backgroundColor: "#fff",
+                             }}
+                           />
+                         </div>
+                       </div>
+                     </td>
+                     <td className="px-5 py-3 text-center">
+                       <div className="flex flex-col items-center gap-1">
                          <input
-                           data-testid="input-new-measure-comment"
-                           type="text"
-                           value={newMeasureComment}
-                           onChange={(e) => setNewMeasureComment(e.target.value)}
-                           placeholder="Commentaire (facultatif)…"
+                           data-testid="input-new-measure-quantity"
+                           type="number"
+                           min="0.01"
+                           step="any"
+                           value={newMeasureQuantity}
+                           onChange={(e) => setNewMeasureQuantity(e.target.value === "" ? "" : Number(e.target.value))}
+                           placeholder="Qté"
+                           title="Quantité"
                            style={{
-                             width: "100%",
+                             width: "72px",
+                             textAlign: "center",
                              fontSize: "13px",
-                             padding: "6px 10px",
+                             padding: "6px 8px",
                              borderRadius: "6px",
                              border: "1px solid #93c5fd",
                              outline: "none",
@@ -1284,28 +1313,35 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                            type="text"
                            value={newMeasureUnit}
                            onChange={(e) => setNewMeasureUnit(e.target.value)}
-                           placeholder="Unité (m², pièce…)"
+                           placeholder="m² (facultatif)"
+                           title="Unité de mesure facultative"
                            style={{
                              width: "100%",
-                             fontSize: "13px",
-                             padding: "6px 8px",
+                             maxWidth: "120px",
+                             fontSize: "11px",
+                             padding: "4px 6px",
                              borderRadius: "6px",
-                             border: "1px solid #93c5fd",
+                             border: "1px solid #bfdbfe",
                              outline: "none",
                              backgroundColor: "#fff",
                            }}
                          />
+                       </div>
+                     </td>
+                     <td className="px-5 py-3 text-right">
+                       <div className="flex items-center justify-end gap-1">
                          <input
-                           data-testid="input-new-measure-quantity"
+                           data-testid="input-new-measure-cost"
                            type="number"
-                           min="0.01"
+                           min="0"
                            step="any"
-                           value={newMeasureQuantity}
-                           onChange={(e) => setNewMeasureQuantity(e.target.value === "" ? "" : Number(e.target.value))}
-                           placeholder="Qté"
-                           title="Quantité"
+                           value={newMeasureCost}
+                           onChange={(e) => setNewMeasureCost(e.target.value === "" ? "" : Number(e.target.value))}
+                           onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); }}
+                           placeholder="0"
+                           title="Coût par unité"
                            style={{
-                             width: "100%",
+                             width: "100px",
                              textAlign: "right",
                              fontSize: "13px",
                              padding: "6px 8px",
@@ -1315,57 +1351,38 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                              backgroundColor: "#fff",
                            }}
                          />
-                         <div className="flex items-center gap-1">
-                           <input
-                             data-testid="input-new-measure-cost"
-                             type="number"
-                             min="0"
-                             step="any"
-                             value={newMeasureCost}
-                             onChange={(e) => setNewMeasureCost(e.target.value === "" ? "" : Number(e.target.value))}
-                             onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); }}
-                             placeholder="Coût / unité"
-                             title="Coût par unité"
-                             style={{
-                               width: "100%",
-                               textAlign: "right",
-                               fontSize: "13px",
-                               padding: "6px 8px",
-                               borderRadius: "6px",
-                               border: "1px solid #93c5fd",
-                               outline: "none",
-                               backgroundColor: "#fff",
-                             }}
-                           />
-                           <span className="text-slate-400 text-xs">$</span>
-                         </div>
-                        <button
-                          data-testid="btn-confirm-add-measure"
-                          onClick={addCustomMeasure}
-                          disabled={!newMeasureName.trim()}
-                          style={{
-                            padding: "4px 14px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            borderRadius: "6px",
-                            border: "none",
-                            cursor: newMeasureName.trim() ? "pointer" : "not-allowed",
-                            backgroundColor: newMeasureName.trim() ? "#1e3a5f" : "#94a3b8",
-                            color: "#fff",
-                          }}
-                        >
-                          Ajouter
-                        </button>
-                        <button
-                          data-testid="btn-cancel-add-measure"
-                          onClick={() => { setShowAddForm(false); setNewMeasureName(""); setNewMeasureCost(""); }}
-                          style={{ padding: "4px 10px", fontSize: "12px", borderRadius: "6px", border: "1px solid #e2e8f0", cursor: "pointer", backgroundColor: "#fff", color: "#64748b" }}
-                        >
-                          Annuler
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                         <span className="text-slate-400 text-xs">$</span>
+                       </div>
+                     </td>
+                     <td className="px-5 py-3 text-right">
+                       <div className="flex flex-wrap items-center justify-end gap-2">
+                         <button
+                           data-testid="btn-confirm-add-measure"
+                           onClick={addCustomMeasure}
+                           disabled={!newMeasureName.trim()}
+                           style={{
+                             padding: "4px 14px",
+                             fontSize: "12px",
+                             fontWeight: 600,
+                             borderRadius: "6px",
+                             border: "none",
+                             cursor: newMeasureName.trim() ? "pointer" : "not-allowed",
+                             backgroundColor: newMeasureName.trim() ? "#1e3a5f" : "#94a3b8",
+                             color: "#fff",
+                           }}
+                         >
+                           Ajouter
+                         </button>
+                         <button
+                           data-testid="btn-cancel-add-measure"
+                           onClick={() => { setShowAddForm(false); setNewMeasureName(""); setNewMeasureComment(""); setNewMeasureUnit(""); setNewMeasureQuantity(1); setNewMeasureCost(""); }}
+                           style={{ padding: "4px 10px", fontSize: "12px", borderRadius: "6px", border: "1px solid #e2e8f0", cursor: "pointer", backgroundColor: "#fff", color: "#64748b" }}
+                         >
+                           Annuler
+                         </button>
+                       </div>
+                     </td>
+                   </tr>
                 ) : (
                   <tr>
                     <td colSpan={4} className="px-5 py-2">
