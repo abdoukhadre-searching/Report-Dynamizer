@@ -47,3 +47,10 @@ uri = "file://attached_assets/Subvention_TCL_1775167218708.png"
 type = "image"
 title = "Subvention TCL — tableau"
 description = "Tableau des montants de subvention associés à la thermopompe TCL."
+
+[[outputs]]
+id = "_Uu6Dn5nZayv4kM3FbE2u"
+uri = "file://exports/visuels-tcl-complets.zip"
+type = "unspecified"
+title = "Télécharger tous les visuels TCL"
+description = "Archive contenant l’image de la thermopompe TCL, les deux pages de la fiche technique et le tableau de subvention."
