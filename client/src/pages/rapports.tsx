@@ -5,10 +5,11 @@ import { useLocation } from "wouter";
 import type { Project } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import {
   Building2, HardHat, Zap, Plus, ChevronRight, User, LogOut,
   Shield, ChevronDown, CheckCircle2, FileText, Clock, MapPin,
-  ArrowRight, ArrowLeft,
+  ArrowRight, ArrowLeft, Trash2,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuTrigger,
@@ -93,6 +94,7 @@ export default function RapportsPage() {
   const { user, logout } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const { data: projects } = useQuery<Project[]>({ queryKey: ["/api/projects"] });
 
@@ -105,6 +107,14 @@ export default function RapportsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       setShowNewDialog(false);
       navigate(`/project/${data.id}`);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/projects/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      setDeleteTarget(null);
     },
   });
 
@@ -272,11 +282,19 @@ export default function RapportsPage() {
                 const status = getProjectStatus(p);
                 const isNew = p.buildingType === "new";
                 return (
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     key={p.id}
                     className="group w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border bg-white text-left transition-all hover:shadow-sm hover:border-slate-300"
                     style={{ borderColor: "#e8edf4" }}
                     onClick={() => navigate(`/project/${p.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/project/${p.id}`);
+                      }
+                    }}
                     data-testid={`recent-project-${p.id}`}
                   >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isNew ? "#f0fdf4" : "#eef2f8" }}>
@@ -293,8 +311,17 @@ export default function RapportsPage() {
                     <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 border" style={{ color: status.color, backgroundColor: status.bg, borderColor: status.border }}>
                       {status.label}
                     </span>
+                    <button
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0"
+                      onClick={(event) => { event.stopPropagation(); setDeleteTarget(p); }}
+                      data-testid={`recent-delete-project-${p.id}`}
+                      title="Supprimer le projet"
+                      aria-label={`Supprimer le projet ${p.name}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0" />
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -316,6 +343,17 @@ export default function RapportsPage() {
       </main>
 
       <NewProjectDialog open={showNewDialog} onClose={() => setShowNewDialog(false)} onCreate={type => createMutation.mutate(type)} isPending={createMutation.isPending} />
+
+      {deleteTarget && (
+        <DeleteConfirmDialog
+          key={deleteTarget.id}
+          open={!!deleteTarget}
+          projectName={deleteTarget.name}
+          onConfirm={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); }}
+          onCancel={() => setDeleteTarget(null)}
+          isPending={deleteMutation.isPending}
+        />
+      )}
 
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
         <AlertDialogContent>
