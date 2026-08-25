@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { AuditLog, HeatPump } from "@shared/schema";
 import { apiRequest, queryClient as qc2 } from "@/lib/queryClient";
+import { formatEquipmentCapacity } from "@/lib/capacity";
 import { useToast } from "@/hooks/use-toast";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -241,8 +242,8 @@ function HeatPumpModal({
               <Input value={model} onChange={e => setModel(e.target.value)} placeholder="ex: T-Pro-25ES" className="mt-1" />
             </div>
             <div className={isHP ? "" : "col-span-2"}>
-              <Label>Capacité</Label>
-              <Input value={capacity} onChange={e => setCapacity(e.target.value)} placeholder="ex: 12 000 BTU" className="mt-1" />
+              <Label>{isHP ? "Capacité (BTU/h)" : "Capacité (gallons)"}</Label>
+              <Input value={capacity} onChange={e => setCapacity(e.target.value)} placeholder={isHP ? "ex: 12 000 BTU/h" : "ex: 65 gallons"} className="mt-1" />
             </div>
             {isHP && (
               <>
@@ -447,7 +448,7 @@ function HeatPumpCard({
         <p className="font-semibold text-slate-900 text-sm leading-tight">{hp.name}</p>
         {hp.brand && <p className="text-xs text-slate-400 mt-0.5">{hp.brand}{hp.model ? ` · ${hp.model}` : ""}</p>}
         <div className="flex flex-wrap gap-x-2 mt-1 text-xs text-slate-400">
-          {hp.capacity && <span>{hp.capacity.includes("BTU/h") ? hp.capacity : hp.capacity.includes("BTU") ? hp.capacity.replace("BTU", "BTU/h") : /^\d/.test(hp.capacity) ? hp.capacity + " BTU/h" : hp.capacity}</span>}
+          {hp.capacity && <span>{formatEquipmentCapacity(hp.capacity, isHP ? "heatpump" : "waterheater")}</span>}
           {hp.hspf2 && <span>HSPF2 {hp.hspf2}</span>}
           {hp.seer2 && <span>SEER2 {hp.seer2}</span>}
         </div>

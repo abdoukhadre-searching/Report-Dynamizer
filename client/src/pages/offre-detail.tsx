@@ -26,6 +26,8 @@ interface OffreFormData {
   mandatIntro: string;
   services: string;
   montant: string;
+  admissibleEnergir: boolean;
+  admissibleHydroQuebec: boolean;
   remunerationDetails: string;
   prendreNote: string;
   debutContrat: string;
@@ -47,6 +49,8 @@ const defaultForm: OffreFormData = {
   services:
     "Rapport APH Sélect\nDimensionner les équipements nécessaires\nUn schéma d'implantation\nUne soumission pour les équipements implantés\nUne projection pour les dépenses futures\nUn rapport de comparaison entre les différentes améliorations et les impacts de ceux-ci sur la consommation énergétique de votre bâtiment.",
   montant: "",
+  admissibleEnergir: true,
+  admissibleHydroQuebec: true,
   remunerationDetails:
     "1- Dépôt de 50% du montant total de l'offre de service à verser à la réception de la facture\n2- Paiement du 2e versement 30 jours après la signature de l'offre de service. Une 2e facture vous sera envoyée à cette date.\n3- Vous recevrez ensuite votre rapport final dans les 24/72h suivant le paiement final.",
   prendreNote:
@@ -70,12 +74,36 @@ function formatMontant(n: number): string {
   return n.toLocaleString("fr-CA", { maximumFractionDigits: 0 }).replace(/,/g, " ") + "$";
 }
 
-function buildPrendreNote(montant: string): string {
+function buildPrendreNote(
+  montant: string,
+  admissibleEnergir: boolean,
+  admissibleHydroQuebec: boolean,
+): string {
   const total = parseMontant(montant);
-  if (!total) return defaultForm.prendreNote;
+  if (!total) {
+    if (!admissibleEnergir && !admissibleHydroQuebec) {
+      return "Aucune subvention n'est applicable à cette offre de service.";
+    }
+    return "Les montants des subventions et le coût résiduel seront calculés à partir du montant total de l'offre.";
+  }
+
+  if (!admissibleEnergir && !admissibleHydroQuebec) {
+    return `Le montant total de l'offre est de ${formatMontant(total)}. Aucune subvention n'est applicable; le coût résiduel est donc de ${formatMontant(total)}.`;
+  }
+
+  if (admissibleEnergir && !admissibleHydroQuebec) {
+    const energir = total * 0.5;
+    return `Du montant total de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Énergir de 50 %, soit ${formatMontant(energir)}. Le coût résiduel pour vos évaluations énergétiques serait de ${formatMontant(total - energir)}.`;
+  }
+
+  if (!admissibleEnergir && admissibleHydroQuebec) {
+    const hydro = total * 0.5;
+    return `Du montant total de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Hydro-Québec de 50 %, soit ${formatMontant(hydro)} : ${formatMontant(hydro * 0.4)} (40 %) au début des travaux et ${formatMontant(hydro * 0.6)} (60 %) à la fin des travaux. Le coût résiduel pour vos évaluations énergétiques serait de ${formatMontant(total - hydro)}.`;
+  }
+
   const energir = total * 0.5;
-  const restant = total - energir;
-  return `Du montant de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Énergir de 50% soit un montant de ${formatMontant(energir)}. Sur le montant de ${formatMontant(restant)} restant, vous pourriez obtenir une subvention de 40% d'Hydro-Québec (${formatMontant(restant * 0.4)}) au début des travaux et une autre de 60% (${formatMontant(restant * 0.6)}) à la fin des travaux. Donc le coût pour vos évaluations énergétiques pourrait vous revenir à 0$.`;
+  const hydro = total - energir;
+  return `Du montant total de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Énergir de 50 %, soit ${formatMontant(energir)}. Sur le montant restant de ${formatMontant(hydro)}, vous pourriez obtenir une subvention d'Hydro-Québec de 50 % : ${formatMontant(hydro * 0.4)} (40 %) au début des travaux et ${formatMontant(hydro * 0.6)} (60 %) à la fin des travaux. Le coût résiduel pour vos évaluations énergétiques serait de 0 $.`;
 }
 
 function toIsoDate(value: string): string {
@@ -383,12 +411,50 @@ export default function OffreDetailPage() {
                     value={form.montant}
                     onChange={e => {
                       const montant = e.target.value;
-                      setForm(prev => ({ ...prev, montant, prendreNote: buildPrendreNote(montant) }));
+                      setForm(prev => ({
+                        ...prev,
+                        montant,
+                        prendreNote: buildPrendreNote(montant, prev.admissibleEnergir, prev.admissibleHydroQuebec),
+                      }));
                     }}
                     placeholder="0$ + taxes"
                     data-testid="input-montant"
                   />
-                  <p className="text-[11px] text-muted-foreground mt-1">
+                  <div className="mt-3 flex items-center gap-5 whitespace-nowrap">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.admissibleEnergir}
+                        onChange={event => {
+                          const admissibleEnergir = event.target.checked;
+                          setForm(prev => ({
+                            ...prev,
+                            admissibleEnergir,
+                            prendreNote: buildPrendreNote(prev.montant, admissibleEnergir, prev.admissibleHydroQuebec),
+                          }));
+                        }}
+                        data-testid="checkbox-admissible-energir"
+                      />
+                      Admissible Énergir
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.admissibleHydroQuebec}
+                        onChange={event => {
+                          const admissibleHydroQuebec = event.target.checked;
+                          setForm(prev => ({
+                            ...prev,
+                            admissibleHydroQuebec,
+                            prendreNote: buildPrendreNote(prev.montant, prev.admissibleEnergir, admissibleHydroQuebec),
+                          }));
+                        }}
+                        data-testid="checkbox-admissible-hydro-quebec"
+                      />
+                      Admissible Hydro-Québec
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-2">
                     Les montants des subventions dans « Prendre note » sont calculés automatiquement.
                   </p>
                 </div>

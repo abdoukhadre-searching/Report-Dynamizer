@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { formatEquipmentCapacity } from "@/lib/capacity";
 import type { AuditLog, User, HeatPump } from "@shared/schema";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
@@ -74,7 +75,7 @@ function HeatPumpCard({ hp, onEdit, onDelete }: { hp: HeatPump; onEdit: (hp: Hea
 
         {/* Specs */}
         <div className="flex gap-2 flex-wrap mb-2">
-          {hp.capacity && <span className="text-xs bg-slate-100 px-2 py-0.5 rounded">{hp.capacity}</span>}
+          {hp.capacity && <span className="text-xs bg-slate-100 px-2 py-0.5 rounded">{formatEquipmentCapacity(hp.capacity, hp.type === "waterheater" ? "waterheater" : "heatpump")}</span>}
           {hp.hspf2 && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">HSPF2 {hp.hspf2}</span>}
           {hp.seer2 && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded">SEER2 {hp.seer2}</span>}
         </div>
@@ -212,8 +213,8 @@ function HeatPumpEditModal({ hp, onClose }: { hp: HeatPump | null; onClose: () =
               <Input value={model} onChange={e => setModel(e.target.value)} placeholder="ex : T-Pro-25ES" />
             </div>
             <div>
-              <Label className="text-xs mb-1 block">Capacité</Label>
-              <Input value={capacity} onChange={e => setCapacity(e.target.value)} placeholder="ex : 12 000 BTU" />
+              <Label className="text-xs mb-1 block">{type === "waterheater" ? "Capacité (gallons)" : "Capacité (BTU/h)"}</Label>
+              <Input value={capacity} onChange={e => setCapacity(e.target.value)} placeholder={type === "waterheater" ? "ex : 65 gallons" : "ex : 12 000 BTU/h"} />
             </div>
             {type !== "waterheater" && (
               <>

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { formatEquipmentCapacity } from "@/lib/capacity";
 import type { Project, ReportData, ComparisonData, HeatPump } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -447,14 +448,6 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
   const province = project.province || pre.buildingInfo?.province || "";
   const postalCode = project.postalCode || (pre.buildingInfo as any)?.postalCode || "";
   const fullAddress = [address, city, postalCode].filter(Boolean).join(", ") || project.name?.trim() || "N/A";
-  function formatCapacity(cap?: string | null): string | null {
-    if (!cap) return null;
-    const s = cap.trim();
-    if (s.includes("BTU/h")) return s;
-    if (s.includes("BTU")) return s.replace("BTU", "BTU/h");
-    if (/^\d/.test(s)) return s + " BTU/h";
-    return s;
-  }
 
   const totalBeforeGJ = comparison.totalBefore ?? 0;
   const totalAfterGJ = comparison.totalAfter ?? 0;
@@ -788,7 +781,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       Installation de thermopompes haute efficacité
                     </h3>
                     <p>L'installation de <span className="font-semibold">{thermopompeCount}</span> thermopompes murales haute efficacité est proposée afin d'améliorer la performance énergétique du système de chauffage et de climatisation.</p>
-                    <p className="mt-1">Les thermopompes recommandées possèdent {selectedHeatPump?.capacity ? `une capacité de ${formatCapacity(selectedHeatPump.capacity)}` : "une capacité minimale de 12 000 BTU/h"}{selectedHeatPump?.hspf2 ? `, avec une efficacité d'environ ${selectedHeatPump.hspf2} HSPF2` : ", avec une efficacité d'environ 10.5 HSPF2"}{selectedHeatPump?.seer2 ? ` et ${selectedHeatPump.seer2} SEER2` : " et 25 SEER2"}. Il s'agit du minimum exigé.</p>
+                    <p className="mt-1">Les thermopompes recommandées possèdent {selectedHeatPump?.capacity ? `une capacité de ${formatEquipmentCapacity(selectedHeatPump.capacity, "heatpump")}` : "une capacité minimale de 12 000 BTU/h"}{selectedHeatPump?.hspf2 ? `, avec une efficacité d'environ ${selectedHeatPump.hspf2} HSPF2` : ", avec une efficacité d'environ 10.5 HSPF2"}{selectedHeatPump?.seer2 ? ` et ${selectedHeatPump.seer2} SEER2` : " et 25 SEER2"}. Il s'agit du minimum exigé.</p>
                     <p className="mt-1">Ces équipements permettent de produire plus d'énergie thermique qu'ils n'en consomment, ce qui contribue à réduire la consommation énergétique associée au chauffage des logements.{" "}
                       <a href="#rec-annex-thermopompes" className="text-xs font-medium text-primary underline cursor-pointer print:hidden" onClick={(e) => { e.preventDefault(); document.getElementById("rec-annex-thermopompes")?.scrollIntoView({ behavior: "smooth" }); }}>[Voir détails]</a>
                     </p>
@@ -837,7 +830,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#1e3a5f" }}>2.{stratNum("hwt")}</span>
                       Chauffe-eaux Thermopompe
                     </h3>
-                    <p>Installation de <span className="font-semibold">{(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"}</span> {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${formatCapacity(selectedWaterHeater.capacity)}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.{" "}
+                    <p>Installation de <span className="font-semibold">{(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"}</span> {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${formatEquipmentCapacity(selectedWaterHeater.capacity, "waterheater")}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.{" "}
                       <a href="#rec-annex-chauffe-eau-thermopompe" className="text-xs font-medium text-primary underline cursor-pointer print:hidden" onClick={(e) => { e.preventDefault(); document.getElementById("rec-annex-chauffe-eau-thermopompe")?.scrollIntoView({ behavior: "smooth" }); }}>[Voir détails]</a>
                     </p>
                   </div>
@@ -1012,7 +1005,9 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold text-white" style={{ backgroundColor: "#0f766e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                               ✓ SIGNATURE VÉRIFIÉE
                             </span>
-                            <p className="text-[8px] mt-1 font-mono text-slate-500">ID : {signatureInfo?.code || "—"}</p>
+                            {signatureInfo?.code?.trim() && (
+                              <p className="text-[8px] mt-1 font-mono text-slate-500">ID : {signatureInfo.code.trim()}</p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1040,7 +1035,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                           <div id="rec-annex-thermopompes">
                             <h3 className="text-sm font-semibold mb-2">{annexNum++}. {selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompes TCL T-Pro-25ES"} — Caractéristiques</h3>
                             <p className="text-xs text-muted-foreground mb-2">
-                              {`Ajout de ${thermopompeCount} ${selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompes TCL T-Pro-25ES"} — ${[formatCapacity(selectedHeatPump?.capacity), selectedHeatPump?.hspf2 ? `${selectedHeatPump.hspf2} HSPF2` : null, selectedHeatPump?.seer2 ? `${selectedHeatPump.seer2} SEER2` : null].filter(Boolean).join(", ") || "12 000 BTU/h, 10.5 HSPF2, 25 SEER2"}.`}
+                              {`Ajout de ${thermopompeCount} ${selectedHeatPump ? `${selectedHeatPump.name}${selectedHeatPump.model ? ` ${selectedHeatPump.model}` : ""}` : "Thermopompes TCL T-Pro-25ES"} — ${[formatEquipmentCapacity(selectedHeatPump?.capacity, "heatpump"), selectedHeatPump?.hspf2 ? `${selectedHeatPump.hspf2} HSPF2` : null, selectedHeatPump?.seer2 ? `${selectedHeatPump.seer2} SEER2` : null].filter(Boolean).join(", ") || "12 000 BTU/h, 10.5 HSPF2, 25 SEER2"}.`}
                             </p>
                             {selectedHeatPump && ((selectedHeatPump.images as string[])?.length > 0 || (selectedHeatPump.specPages as string[])?.length > 0) ? (
                               <>
@@ -1090,7 +1085,7 @@ export default function RecommandationsTab({ project, exportMode = false }: Reco
                       {showHeatPumpWaterHeaterStrategy && (
                         <div id="rec-annex-chauffe-eau-thermopompe" className="print:break-before-page">
                           <h3 className="text-sm font-semibold mb-2">{annexNum++}. {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}` : "Chauffe-eaux Thermopompe Rheem PROPH40 T2 RH375-30"}</h3>
-                          <p className="text-xs text-muted-foreground mb-4">Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"} {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${formatCapacity(selectedWaterHeater.capacity)}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.</p>
+                          <p className="text-xs text-muted-foreground mb-4">Installation de {(project.nbChauffeEauThermo ?? numUnits) > 0 ? (project.nbChauffeEauThermo ?? numUnits) : "—"} {selectedWaterHeater ? `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}${selectedWaterHeater.capacity ? ` — ${formatEquipmentCapacity(selectedWaterHeater.capacity, "waterheater")}` : ""}` : "Chauffe-eaux Thermopompe Rheem Hybrid electric water heater PROPH40 T2 RH375-30"}.</p>
                           {selectedWaterHeater && ((selectedWaterHeater.images as string[])?.length > 0 || (selectedWaterHeater.specPages as string[])?.length > 0) ? (
                             <>
                               {(selectedWaterHeater.images as string[]).map((url, i) => (

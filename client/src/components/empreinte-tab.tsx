@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Zap, Droplets, Wind, Lightbulb, DollarSign, TrendingDown, Building2, Lock, Waves, Printer, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { formatEquipmentCapacity } from "@/lib/capacity";
 import { useToast } from "@/hooks/use-toast";
 import tclPhotoPath from "@assets/182568194_3810005075735040_7297035271127510089_n_1775165080896.jpg";
 import tclSpecPage1Path from "@assets/ASHP_page-0001_1775165094129.jpg";
@@ -199,18 +200,11 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const [newMeasureUnit, setNewMeasureUnit] = useState("");
   const [newMeasureQuantity, setNewMeasureQuantity] = useState<number | "">(1);
   const [newMeasureCost, setNewMeasureCost] = useState<number | "">("");
+  const [editingMeasure, setEditingMeasure] = useState<CustomMeasure | null>(null);
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
 
   const isNewBuilding = project.buildingType === "new";
-  function formatCapacity(cap?: string | null): string | null {
-    if (!cap) return null;
-    const s = cap.trim();
-    if (s.includes("BTU/h")) return s;
-    if (s.includes("BTU")) return s.replace("BTU", "BTU/h");
-    if (/^\d/.test(s)) return s + " BTU/h";
-    return s;
-  }
   const hpSubventionAmount = (selectedHeatPump as any)?.subventionAmount;
   const subventionThermo = (hpSubventionAmount && Number(hpSubventionAmount) > 0)
     ? Number(hpSubventionAmount)
@@ -263,6 +257,37 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   function removeCustomMeasure(id: string) {
     const updated = customMeasures.filter((m) => m.id !== id);
     saveCustomMeasuresList(updated);
+  }
+
+  function saveEditedCustomMeasure() {
+    if (!editingMeasure || !editingMeasure.name.trim()) return;
+    const updated = customMeasures.map((measure) =>
+      measure.id === editingMeasure.id
+        ? {
+            ...editingMeasure,
+            name: editingMeasure.name.trim(),
+            comment: editingMeasure.comment.trim(),
+            unit: editingMeasure.unit.trim(),
+            quantity: Math.max(0.01, Number(editingMeasure.quantity) || 1),
+            cost: Math.max(0, Number(editingMeasure.cost) || 0),
+          }
+        : measure,
+    );
+    saveCustomMeasuresList(updated);
+    setEditingMeasure(null);
+  }
+
+  function updateCustomMeasureValue(
+    id: string,
+    updates: Partial<Pick<CustomMeasure, "quantity" | "cost">>,
+  ) {
+    setCustomMeasures((current) =>
+      current.map((measure) => measure.id === id ? { ...measure, ...updates } : measure),
+    );
+  }
+
+  function persistCurrentCustomMeasures() {
+    void saveCustomMeasuresList(customMeasures);
   }
 
   const [coutEtancheite, setCoutEtancheite] = useState(initialValues?.coutEtancheite ?? 5000);
@@ -767,7 +792,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">
                           {[
-                            formatCapacity(selectedHeatPump?.capacity),
+                            formatEquipmentCapacity(selectedHeatPump?.capacity, "heatpump"),
                             selectedHeatPump?.hspf2 ? `HSPF2 ${selectedHeatPump.hspf2}` : null,
                             selectedHeatPump?.seer2 ? `SEER2 ${selectedHeatPump.seer2}` : null,
                           ].filter(Boolean).join(" | ") || "12 000 BTU/h | HSPF2 10.5 | SEER2 25"}
@@ -854,7 +879,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                           {selectedWaterHeater
                             ? [
                                 `${selectedWaterHeater.name}${selectedWaterHeater.model ? ` ${selectedWaterHeater.model}` : ""}`,
-                                formatCapacity(selectedWaterHeater.capacity),
+                                formatEquipmentCapacity(selectedWaterHeater.capacity, "waterheater"),
                               ].filter(Boolean).join(" | ")
                             : "Installation de chauffe-eau thermopompe Rheem"}
                         </p>
@@ -1184,60 +1209,134 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
               {/* Mesures manuelles */}
               {customMeasures.map((measure) => (
-                <tr key={measure.id} className="hover:bg-blue-50/40 transition-colors">
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <IconBox>
-                        <span style={{ fontSize: "14px", color: "#1e3a5f" }}>+</span>
-                      </IconBox>
-                      <div>
-                        <p className="font-semibold text-slate-800">{measure.name}</p>
-                         <p className="text-xs text-slate-400 mt-0.5">
-                           {measure.comment || "Mesure ajoutée manuellement"}
-                         </p>
+                  <tr key={measure.id} className="hover:bg-blue-50/40 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <IconBox>
+                          <span style={{ fontSize: "14px", color: "#1e3a5f" }}>+</span>
+                        </IconBox>
+                        <div>
+                          <p className="font-semibold text-slate-800">{measure.name}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {measure.comment || "Mesure ajoutée manuellement"}
+                          </p>
+                        </div>
                       </div>
+                    </td>
+                    <td className="px-5 py-4 text-center text-slate-600 text-xs">
+                      {exportMode ? (
+                        <>
+                          <span className="font-semibold">{measure.quantity}</span>
+                          {measure.unit && <span className="ml-1 text-slate-400">{measure.unit}</span>}
+                        </>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="any"
+                            value={measure.quantity}
+                            onChange={(event) => updateCustomMeasureValue(measure.id, { quantity: Number(event.target.value) || 1 })}
+                            onBlur={persistCurrentCustomMeasures}
+                            aria-label={`Quantité pour ${measure.name}`}
+                            style={{ width: "58px", textAlign: "center", fontSize: "12px", padding: "4px 5px", borderRadius: "5px", border: "1px solid #cbd5e1", backgroundColor: "#fff" }}
+                          />
+                          {measure.unit && <span className="text-slate-400 whitespace-nowrap">{measure.unit}</span>}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right text-xs text-slate-500">
+                      {exportMode ? (
+                        `${measure.cost.toLocaleString("fr-CA")} $`
+                      ) : (
+                        <div className="flex items-center justify-end gap-1">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={measure.cost}
+                            onChange={(event) => updateCustomMeasureValue(measure.id, { cost: Math.max(0, Number(event.target.value) || 0) })}
+                            onBlur={persistCurrentCustomMeasures}
+                            aria-label={`Coût par unité pour ${measure.name}`}
+                            className={inputCls}
+                            style={{ width: "92px" }}
+                          />
+                          <span className="text-slate-400 text-xs">$</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
+                          {(measure.quantity * measure.cost).toLocaleString("fr-CA")} $
+                        </span>
+                        {!exportMode && (
+                          <>
+                            <button
+                              data-testid={`btn-edit-measure-${measure.id}`}
+                              onClick={() => setEditingMeasure({ ...measure })}
+                              title="Modifier le nom, le commentaire ou l'unité"
+                              style={{ padding: "3px 7px", borderRadius: "5px", border: "1px solid #bfdbfe", backgroundColor: "#eff6ff", color: "#1d4ed8", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                            >
+                              Modifier
+                            </button>
+                            <button
+                              data-testid={`btn-remove-measure-${measure.id}`}
+                              onClick={() => removeCustomMeasure(measure.id)}
+                              title="Supprimer cette mesure"
+                              style={{
+                                width: "20px",
+                                height: "20px",
+                                borderRadius: "50%",
+                                border: "1px solid #fca5a5",
+                                backgroundColor: "#fff1f2",
+                                color: "#dc2626",
+                                fontSize: "14px",
+                                lineHeight: "1",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              ×
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+              ))}
+
+              {!exportMode && editingMeasure && (
+                <tr style={{ backgroundColor: "#f0f7ff" }}>
+                  <td className="px-5 py-3">
+                    <div className="space-y-2">
+                      <input type="text" value={editingMeasure.name} onChange={(event) => setEditingMeasure({ ...editingMeasure, name: event.target.value })} placeholder="Nom de la mesure" aria-label="Nom de la mesure" style={{ width: "100%", fontSize: "13px", padding: "6px 8px", borderRadius: "6px", border: "1px solid #93c5fd", backgroundColor: "#fff" }} />
+                      <input type="text" value={editingMeasure.comment} onChange={(event) => setEditingMeasure({ ...editingMeasure, comment: event.target.value })} placeholder="Commentaire (facultatif)" aria-label="Commentaire de la mesure" style={{ width: "100%", fontSize: "12px", padding: "5px 7px", borderRadius: "6px", border: "1px solid #bfdbfe", backgroundColor: "#fff" }} />
                     </div>
                   </td>
-                   <td className="px-5 py-4 text-center text-slate-600 text-xs">
-                     <span className="font-semibold">{measure.quantity}</span>
-                     {measure.unit && <span className="ml-1 text-slate-400">{measure.unit}</span>}
-                   </td>
-                   <td className="px-5 py-4 text-right text-xs text-slate-500">
-                     {measure.cost.toLocaleString("fr-CA")} $
-                   </td>
-                  <td className="px-5 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
-                         {(measure.quantity * measure.cost).toLocaleString("fr-CA")} $
-                      </span>
-                      {!exportMode && (
-                        <button
-                          data-testid={`btn-remove-measure-${measure.id}`}
-                          onClick={() => removeCustomMeasure(measure.id)}
-                          title="Supprimer cette mesure"
-                          style={{
-                            width: "20px",
-                            height: "20px",
-                            borderRadius: "50%",
-                            border: "1px solid #fca5a5",
-                            backgroundColor: "#fff1f2",
-                            color: "#dc2626",
-                            fontSize: "14px",
-                            lineHeight: "1",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                          }}
-                        >
-                          ×
-                        </button>
-                      )}
+                  <td className="px-5 py-3">
+                    <div className="space-y-2">
+                      <input type="number" min="0.01" step="any" value={editingMeasure.quantity} onChange={(event) => setEditingMeasure({ ...editingMeasure, quantity: Number(event.target.value) || 1 })} aria-label="Quantité de la mesure" style={{ width: "100%", textAlign: "center", fontSize: "12px", padding: "5px 7px", borderRadius: "6px", border: "1px solid #bfdbfe", backgroundColor: "#fff" }} />
+                      <input type="text" value={editingMeasure.unit} onChange={(event) => setEditingMeasure({ ...editingMeasure, unit: event.target.value })} placeholder="Unité (facultatif)" aria-label="Unité de la mesure" style={{ width: "100%", textAlign: "center", fontSize: "12px", padding: "5px 7px", borderRadius: "6px", border: "1px solid #bfdbfe", backgroundColor: "#fff" }} />
+                    </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <input type="number" min="0" step="any" value={editingMeasure.cost} onChange={(event) => setEditingMeasure({ ...editingMeasure, cost: Math.max(0, Number(event.target.value) || 0) })} aria-label="Coût par unité de la mesure" style={{ width: "92px", textAlign: "right", fontSize: "13px", padding: "6px 8px", borderRadius: "6px", border: "1px solid #93c5fd", backgroundColor: "#fff" }} />
+                      <span className="text-slate-400 text-xs">$</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={saveEditedCustomMeasure} disabled={!editingMeasure.name.trim()} style={{ padding: "5px 10px", borderRadius: "6px", border: "none", backgroundColor: "#1e3a5f", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
+                      <button onClick={() => setEditingMeasure(null)} style={{ padding: "5px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", backgroundColor: "#fff", color: "#64748b", fontSize: "12px", cursor: "pointer" }}>Annuler</button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              )}
 
               {/* Formulaire d'ajout de mesure */}
               {!exportMode && (

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { formatEquipmentCapacity } from "@/lib/capacity";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import type { HeatPump } from "@shared/schema";
@@ -150,7 +151,7 @@ function HeatPumpModal({
               <Input value={model} onChange={e => setModel(e.target.value)} placeholder="ex: T-Pro-25ES" className="mt-1" />
             </div>
             <div>
-              <Label>{isHP ? "Capacité" : "Capacité (gallons)"}</Label>
+              <Label>{isHP ? "Capacité (BTU/h)" : "Capacité (gallons)"}</Label>
               <Input value={capacity} onChange={e => setCapacity(e.target.value)} placeholder={isHP ? "ex: 12 000 BTU/h" : "ex: 65 gallons"} className="mt-1" />
             </div>
             {isHP && (
@@ -307,7 +308,7 @@ function HeatPumpCard({
         {hp.brand && <p className="text-xs text-slate-400 mt-0.5">{hp.brand}{hp.model ? ` · ${hp.model}` : ""}</p>}
 
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-xs text-slate-500">
-          {hp.capacity && <span>{hp.capacity.includes("BTU/h") ? hp.capacity : hp.capacity.includes("BTU") ? hp.capacity.replace("BTU", "BTU/h") : /^\d/.test(hp.capacity) ? hp.capacity + " BTU/h" : hp.capacity}</span>}
+          {hp.capacity && <span>{formatEquipmentCapacity(hp.capacity, hp.type === "waterheater" ? "waterheater" : "heatpump")}</span>}
           {hp.hspf2 && <span>HSPF2 {hp.hspf2}</span>}
           {hp.seer2 && <span>SEER2 {hp.seer2}</span>}
         </div>
