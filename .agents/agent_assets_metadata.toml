@@ -54,3 +54,10 @@ uri = "file://exports/visuels-tcl-complets.zip"
 type = "unspecified"
 title = "Télécharger tous les visuels TCL"
 description = "Archive contenant l’image de la thermopompe TCL, les deux pages de la fiche technique et le tableau de subvention."
+
+[[outputs]]
+id = "2Bopjlq6XD_gcZp9fPqOZ"
+uri = "file://exports/visuels-rheem-complets.zip"
+type = "unspecified"
+title = "Télécharger tous les visuels Rheem"
+description = "Archive contenant les trois images ou fiches techniques Rheem et le tableau de subvention Hydro-Québec."
