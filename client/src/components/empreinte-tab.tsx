@@ -34,8 +34,17 @@ interface EmpreinteInitialValues {
   subventionBasementInsul?: number;
   subventionThermoManual?: number;
   coutFenetres?: number;
-  customMeasures?: { id: string; name: string; cost: number }[];
+  customMeasures?: CustomMeasure[];
 }
+
+type CustomMeasure = {
+  id: string;
+  name: string;
+  cost: number;
+  quantity: number;
+  unit: string;
+  comment: string;
+};
 
 interface EmpreinteTabProps {
   project: Project;
@@ -131,6 +140,24 @@ function getFuelDisplayName(fuelType?: string): string {
 
 const SUBVENTION_THERMO = 1680;
 
+function normalizeCustomMeasures(value: unknown): CustomMeasure[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((raw) => {
+    if (!raw || typeof raw !== "object") return [];
+    const item = raw as Record<string, unknown>;
+    const quantityValue = Number(item.quantity ?? item.units ?? 1);
+    const costValue = Number(item.cost ?? 0);
+    return [{
+      id: String(item.id || crypto.randomUUID()),
+      name: String(item.name || "").trim(),
+      cost: Number.isFinite(costValue) ? costValue : 0,
+      quantity: Number.isFinite(quantityValue) && quantityValue > 0 ? quantityValue : 1,
+      unit: typeof item.unit === "string" ? item.unit : "",
+      comment: typeof item.comment === "string" ? item.comment : "",
+    }].filter((measure) => measure.name.length > 0);
+  });
+}
+
 export default function EmpreinteTab({ project, exportMode = false, initialValues }: EmpreinteTabProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
@@ -163,11 +190,14 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const [subventionBasementInsul, setSubventionBasementInsul] = useState(initialValues?.subventionBasementInsul ?? 0);
   const [coutFenetres, setCoutFenetres] = useState(initialValues?.coutFenetres ?? 0);
   const [programmeType, setProgrammeType] = useState<string>(project.programmeType || "optimisation");
-  const [customMeasures, setCustomMeasures] = useState<{ id: string; name: string; cost: number }[]>(
-    initialValues?.customMeasures ?? (project.customMeasures as { id: string; name: string; cost: number }[]) ?? []
+  const [customMeasures, setCustomMeasures] = useState<CustomMeasure[]>(() =>
+    normalizeCustomMeasures(initialValues?.customMeasures ?? project.customMeasures)
   );
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMeasureName, setNewMeasureName] = useState("");
+  const [newMeasureComment, setNewMeasureComment] = useState("");
+  const [newMeasureUnit, setNewMeasureUnit] = useState("");
+  const [newMeasureQuantity, setNewMeasureQuantity] = useState<number | "">(1);
   const [newMeasureCost, setNewMeasureCost] = useState<number | "">("");
   const pre = project.preReportData as ReportData | null;
   const post = project.postReportData as ReportData | null;
@@ -196,7 +226,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
     }
   }
 
-  async function saveCustomMeasuresList(updated: Array<{ id: string; name: string; cost: number }>) {
+  async function saveCustomMeasuresList(updated: CustomMeasure[]) {
     setCustomMeasures(updated);
     try {
       await apiRequest("PATCH", `/api/projects/${project.id}`, { customMeasures: updated });
@@ -208,11 +238,24 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   function addCustomMeasure() {
     const name = newMeasureName.trim();
+    const comment = newMeasureComment.trim();
+    const unit = newMeasureUnit.trim();
+    const quantity = Math.max(0.01, Number(newMeasureQuantity) || 1);
     const cost = Number(newMeasureCost) || 0;
     if (!name) return;
-    const updated = [...customMeasures, { id: crypto.randomUUID(), name, cost }];
+    const updated = [...customMeasures, {
+      id: crypto.randomUUID(),
+      name,
+      comment,
+      unit,
+      quantity,
+      cost,
+    }];
     saveCustomMeasuresList(updated);
     setNewMeasureName("");
+    setNewMeasureComment("");
+    setNewMeasureUnit("");
+    setNewMeasureQuantity(1);
     setNewMeasureCost("");
     setShowAddForm(false);
   }
@@ -375,7 +418,7 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   const totalBasementInsul = showBasementInsulationStrategy ? coutBasementInsul : 0;
   const totalFenetres = showWindowImprovementStrategy ? coutFenetres : 0;
 
-  const totalCustom = customMeasures.reduce((sum, m) => sum + m.cost, 0);
+  const totalCustom = customMeasures.reduce((sum, m) => sum + (m.quantity * m.cost), 0);
   const totalBrut = totalEtancheite + totalThermo + totalElecThermo + totalChauffeEau + totalVrc + totalFaibleDebit + totalLed + totalPlinthes + totalChauffeEauElecInd + totalBasementInsul + totalFenetres + totalCustom;
   // Non-admissible → standard fixed amount (SUBVENTION_THERMO × nbThermo)
   // Admissible or unknown → Logisvert manual amount
@@ -1149,16 +1192,23 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
                       </IconBox>
                       <div>
                         <p className="font-semibold text-slate-800">{measure.name}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Mesure ajoutée manuellement</p>
+                         <p className="text-xs text-slate-400 mt-0.5">
+                           {measure.comment || "Mesure ajoutée manuellement"}
+                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-center text-slate-400 text-xs">—</td>
-                  <td className="px-5 py-4 text-right text-xs text-slate-400 italic">Forfait</td>
+                   <td className="px-5 py-4 text-center text-slate-600 text-xs">
+                     <span className="font-semibold">{measure.quantity}</span>
+                     {measure.unit && <span className="ml-1 text-slate-400">{measure.unit}</span>}
+                   </td>
+                   <td className="px-5 py-4 text-right text-xs text-slate-500">
+                     {measure.cost.toLocaleString("fr-CA")} $ / unité
+                   </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <span className="font-bold text-base" style={{ color: "#1e3a5f" }}>
-                        {measure.cost.toLocaleString("fr-CA")} $
+                         {(measure.quantity * measure.cost).toLocaleString("fr-CA")} $
                       </span>
                       {!exportMode && (
                         <button
@@ -1193,51 +1243,102 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
               {!exportMode && (
                 showAddForm ? (
                   <tr style={{ backgroundColor: "#f0f7ff" }}>
-                    <td className="px-5 py-3" colSpan={2}>
-                      <input
-                        data-testid="input-new-measure-name"
-                        type="text"
-                        value={newMeasureName}
-                        onChange={(e) => setNewMeasureName(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") { setShowAddForm(false); setNewMeasureName(""); setNewMeasureCost(""); } }}
-                        placeholder="Nom de la mesure…"
-                        autoFocus
-                        style={{
-                          width: "100%",
-                          fontSize: "13px",
-                          padding: "4px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #93c5fd",
-                          outline: "none",
-                          backgroundColor: "#fff",
-                        }}
-                      />
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                     <td className="px-5 py-3" colSpan={4}>
+                       <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.25fr_1.25fr_0.65fr_0.55fr_0.8fr_auto] md:items-center">
                         <input
-                          data-testid="input-new-measure-cost"
-                          type="number"
-                          value={newMeasureCost}
-                          onChange={(e) => setNewMeasureCost(e.target.value === "" ? "" : Number(e.target.value))}
-                          onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); }}
-                          placeholder="0"
+                           data-testid="input-new-measure-name"
+                           type="text"
+                           value={newMeasureName}
+                           onChange={(e) => setNewMeasureName(e.target.value)}
+                           onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") { setShowAddForm(false); setNewMeasureName(""); setNewMeasureComment(""); setNewMeasureUnit(""); setNewMeasureQuantity(1); setNewMeasureCost(""); } }}
+                           placeholder="Nom de la mesure…"
+                           autoFocus
                           style={{
-                            width: "100px",
-                            textAlign: "right",
+                             width: "100%",
                             fontSize: "13px",
-                            padding: "4px 8px",
+                             padding: "6px 10px",
                             borderRadius: "6px",
                             border: "1px solid #93c5fd",
                             outline: "none",
                             backgroundColor: "#fff",
                           }}
                         />
-                        <span className="text-slate-400 text-xs">$</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                         <input
+                           data-testid="input-new-measure-comment"
+                           type="text"
+                           value={newMeasureComment}
+                           onChange={(e) => setNewMeasureComment(e.target.value)}
+                           placeholder="Commentaire (facultatif)…"
+                           style={{
+                             width: "100%",
+                             fontSize: "13px",
+                             padding: "6px 10px",
+                             borderRadius: "6px",
+                             border: "1px solid #93c5fd",
+                             outline: "none",
+                             backgroundColor: "#fff",
+                           }}
+                         />
+                         <input
+                           data-testid="input-new-measure-unit"
+                           type="text"
+                           value={newMeasureUnit}
+                           onChange={(e) => setNewMeasureUnit(e.target.value)}
+                           placeholder="Unité (m², pièce…)"
+                           style={{
+                             width: "100%",
+                             fontSize: "13px",
+                             padding: "6px 8px",
+                             borderRadius: "6px",
+                             border: "1px solid #93c5fd",
+                             outline: "none",
+                             backgroundColor: "#fff",
+                           }}
+                         />
+                         <input
+                           data-testid="input-new-measure-quantity"
+                           type="number"
+                           min="0.01"
+                           step="any"
+                           value={newMeasureQuantity}
+                           onChange={(e) => setNewMeasureQuantity(e.target.value === "" ? "" : Number(e.target.value))}
+                           placeholder="Qté"
+                           title="Quantité"
+                           style={{
+                             width: "100%",
+                             textAlign: "right",
+                             fontSize: "13px",
+                             padding: "6px 8px",
+                             borderRadius: "6px",
+                             border: "1px solid #93c5fd",
+                             outline: "none",
+                             backgroundColor: "#fff",
+                           }}
+                         />
+                         <div className="flex items-center gap-1">
+                           <input
+                             data-testid="input-new-measure-cost"
+                             type="number"
+                             min="0"
+                             step="any"
+                             value={newMeasureCost}
+                             onChange={(e) => setNewMeasureCost(e.target.value === "" ? "" : Number(e.target.value))}
+                             onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); }}
+                             placeholder="Coût / unité"
+                             title="Coût par unité"
+                             style={{
+                               width: "100%",
+                               textAlign: "right",
+                               fontSize: "13px",
+                               padding: "6px 8px",
+                               borderRadius: "6px",
+                               border: "1px solid #93c5fd",
+                               outline: "none",
+                               backgroundColor: "#fff",
+                             }}
+                           />
+                           <span className="text-slate-400 text-xs">$</span>
+                         </div>
                         <button
                           data-testid="btn-confirm-add-measure"
                           onClick={addCustomMeasure}

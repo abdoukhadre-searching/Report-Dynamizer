@@ -79,7 +79,14 @@ export const projects = pgTable("projects", {
   thermopompeModel: text("thermopompe_model").notNull().default("tcl"),
   selectedHeatPumpId: text("selected_heat_pump_id"),
   selectedWaterHeaterId: text("selected_water_heater_id"),
-  customMeasures: jsonb("custom_measures").$type<Array<{ id: string; name: string; cost: number }>>().default([]),
+  customMeasures: jsonb("custom_measures").$type<Array<{
+    id: string;
+    name: string;
+    cost: number;
+    quantity?: number;
+    unit?: string;
+    comment?: string;
+  }>>().default([]),
   status: text("status").notNull().default("draft"),
   preReportRaw: text("pre_report_raw"),
   postReportRaw: text("post_report_raw"),
