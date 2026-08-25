@@ -19,3 +19,31 @@ uri = "file://exports/Documents%20Sainte-Clotilde%20-%20Lot%206199415.zip"
 type = "unspecified"
 title = "Documents Sainte-Clotilde (12 lots) — signature sécurisée"
 description = "Tous les documents régénérés avec la nouvelle signature manuscrite sécurisée de Marc-André Boucher : filigrane, badge « Signature vérifiée » et code d'identification unique."
+
+[[outputs]]
+id = "Bt0jIW4F48sqjmaMvb5VZ"
+uri = "file://attached_assets/182568194_3810005075735040_7297035271127510089_n_1775165080896.jpg"
+type = "image"
+title = "Thermopompe TCL — image"
+description = "Image de la thermopompe TCL utilisée dans la section des mesures."
+
+[[outputs]]
+id = "oW5yXbLTWAFGnoDDJBfgD"
+uri = "file://attached_assets/ASHP_page-0001_1775165094129.jpg"
+type = "image"
+title = "Fiche technique TCL — page 1"
+description = "Première page de la fiche technique de la thermopompe TCL."
+
+[[outputs]]
+id = "JAgh-RtVbsBazPP1Lp5Jo"
+uri = "file://attached_assets/ASHP_page-0002_1775165094129.jpg"
+type = "image"
+title = "Fiche technique TCL — page 2"
+description = "Deuxième page de la fiche technique de la thermopompe TCL."
+
+[[outputs]]
+id = "EOofCs383mu3T5bkF9Pzq"
+uri = "file://attached_assets/Subvention_TCL_1775167218708.png"
+type = "image"
+title = "Subvention TCL — tableau"
+description = "Tableau des montants de subvention associés à la thermopompe TCL."
