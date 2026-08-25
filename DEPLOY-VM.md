@@ -80,7 +80,57 @@ npm run db:push
 
 ---
 
-## 4. Build de l'application
+## 4. Rétablir la PWA sur la base PostgreSQL historique
+
+> À effectuer une seule fois pour revenir d'une version qui utilisait
+> `mab-projets.db`. Cette procédure ne copie, ne supprime ni ne remplace les
+> données PostgreSQL historiques.
+
+```bash
+cd /opt/energiqualif
+
+# 1. Arrêter l'application avant toute modification
+sudo systemctl stop energiqualif
+
+# 2. Conserver le fichier SQLite comme sauvegarde, sans l'effacer
+mkdir -p backups/sqlite
+[ ! -f data/mab-projets.db ] || cp -a data/mab-projets.db \
+  "backups/sqlite/mab-projets-$(date +%Y%m%d-%H%M%S).db"
+
+# 3. Vérifier que l'environnement pointe vers la base historique
+set -a && . ./.env && set +a
+psql "$DATABASE_URL" -c "SELECT current_database(), current_user;"
+psql "$DATABASE_URL" -c "SELECT id, email, username FROM users ORDER BY created_at DESC LIMIT 10;"
+
+# 4. Corriger les droits si une installation précédente a été exécutée avec sudo
+sudo chown -R energiqualif:energiqualif /opt/energiqualif
+npm ci
+
+# 5. Synchroniser uniquement les ajouts de colonnes et tables requis par la PWA.
+#    Examiner la proposition Drizzle et annuler si elle suggère une suppression
+#    ou une modification destructive.
+npm run db:push
+
+# 6. Compiler puis redémarrer
+npm run build
+sudo systemctl start energiqualif
+```
+
+Contrôles après redémarrage :
+
+```bash
+curl -fsS http://localhost:5000/api/health
+curl -fsS http://localhost:5000/api/auth/me
+sudo journalctl -u energiqualif -n 50 --no-pager
+```
+
+Connectez-vous ensuite avec un ancien compte et vérifiez les projets modifiés le
+vendredi après 15 h. Les sessions sont désormais enregistrées dans PostgreSQL
+(`session`), ce qui évite de perdre une connexion lors d'un redémarrage.
+
+---
+
+## 5. Build de l'application
 
 ```bash
 cd /opt/energiqualif
@@ -94,7 +144,7 @@ Le build produit :
 
 ---
 
-## 5. Service systemd
+## 6. Service systemd
 
 ### Créer le fichier de service
 
@@ -142,7 +192,7 @@ sudo systemctl start energiqualif
 
 ---
 
-## 6. Gestion du service
+## 7. Gestion du service
 
 | Action | Commande |
 |---|---|
@@ -156,7 +206,7 @@ sudo systemctl start energiqualif
 
 ---
 
-## 7. Tunnel Cloudflare
+## 8. Tunnel Cloudflare
 
 Le tunnel expose le port 5000 local vers `energiqualif.lab-sws.com`.
 
@@ -203,7 +253,7 @@ sudo systemctl start cloudflared
 
 ---
 
-## 8. Mise à jour de l'application
+## 9. Mise à jour de l'application
 
 ```bash
 cd /opt/energiqualif
@@ -217,7 +267,8 @@ npm install
 # Recompiler
 npm run build
 
-# Appliquer les migrations de base de données si nécessaire
+# Appliquer les ajouts de schéma si nécessaire (ne jamais confirmer une
+# proposition destructive de Drizzle)
 npm run db:push
 
 # Redémarrer le service
@@ -230,7 +281,7 @@ sudo journalctl -u energiqualif -n 30
 
 ---
 
-## 9. Vérification post-déploiement
+## 10. Vérification post-déploiement
 
 ```bash
 # L'app répond sur le port 5000

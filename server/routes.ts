@@ -1,7 +1,7 @@
 import type { Express, Request } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
-import { db, DATA_DIR } from "./db";
+import { db, APP_DATA_DIR } from "./db";
 import { eq } from "drizzle-orm";
 import { projects as projectsTable } from "@shared/schema";
 import { parseHot2000Report, computeComparison } from "./parser";
@@ -683,7 +683,7 @@ export async function registerRoutes(
   });
 
   // Les uploads vivent dans le répertoire de données (AppData en mode desktop)
-  const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
+  const UPLOADS_DIR = path.join(APP_DATA_DIR, "uploads");
   if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
   }

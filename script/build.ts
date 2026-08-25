@@ -7,7 +7,6 @@ import { rm, readFile } from "fs/promises";
 const allowlist = [
   "@google/generative-ai",
   "axios",
-  "better-sqlite3-session-store",
   "cors",
   "date-fns",
   "drizzle-orm",

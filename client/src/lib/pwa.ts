@@ -2,8 +2,7 @@ export function registerPwaServiceWorker() {
   if (
     !import.meta.env.PROD ||
     typeof window === "undefined" ||
-    !("serviceWorker" in navigator) ||
-    "__TAURI_INTERNALS__" in window
+    !("serviceWorker" in navigator)
   ) {
     return;
   }

@@ -3,28 +3,11 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import session from "express-session";
-import sqliteStoreFactory from "better-sqlite3-session-store";
-import { sqlite, DATA_DIR } from "./db";
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
-
-// Mode desktop (Tauri) : servi en http://127.0.0.1, cookies non "secure",
-// secret de session généré et persisté localement.
-const IS_DESKTOP = process.env.MAB_DESKTOP === "1";
+import pgSession from "connect-pg-simple";
+import { assertDatabaseConnection, pool } from "./db";
 
 function getSessionSecret(): string {
   if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
-  if (IS_DESKTOP) {
-    const secretFile = path.join(DATA_DIR, ".session-secret");
-    try {
-      return fs.readFileSync(secretFile, "utf-8").trim();
-    } catch {
-      const secret = crypto.randomBytes(32).toString("hex");
-      fs.writeFileSync(secretFile, secret, { mode: 0o600 });
-      return secret;
-    }
-  }
   if (process.env.NODE_ENV === "production") {
     throw new Error("SESSION_SECRET est requis en production");
   }
@@ -51,11 +34,11 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-const SqliteStore = sqliteStoreFactory(session);
-
-const sessionStore = new SqliteStore({
-  client: sqlite,
-  expired: { clear: true, intervalMs: 15 * 60 * 1000 },
+const PgStore = pgSession(session);
+const sessionStore = new PgStore({
+  pool,
+  createTableIfMissing: true,
+  pruneSessionInterval: 15 * 60,
 });
 
 app.set("trust proxy", 1);
@@ -68,8 +51,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: !IS_DESKTOP && process.env.NODE_ENV === "production",
-      sameSite: !IS_DESKTOP && process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),
@@ -113,7 +96,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Sonde de disponibilité (utilisée par le shell desktop Tauri au démarrage)
+  await assertDatabaseConnection();
+
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
   await registerRoutes(httpServer, app);
@@ -138,21 +122,15 @@ app.use((req, res, next) => {
     await setupVite(httpServer, app);
   }
 
-  const port = parseInt(process.env.PORT || "5001", 10);
+  const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {
       port,
-      // Desktop : n'écouter que localement, jamais exposé sur le réseau
-      host: IS_DESKTOP ? "127.0.0.1" : "0.0.0.0",
+      host: "0.0.0.0",
       ...(process.platform === "win32" ? {} : { reusePort: true }),
     },
     () => {
-      // PORT=0 → port attribué par l'OS ; toujours logguer le port réel
-      // (le shell desktop Tauri parse cette ligne pour connaître le port)
-      const addr = httpServer.address();
-      const actualPort = typeof addr === "object" && addr ? addr.port : port;
-      if (actualPort !== port) process.env.PORT = String(actualPort);
-      log(`serving on port ${actualPort}`);
+      log(`serving on port ${port}`);
     },
   );
 })();
