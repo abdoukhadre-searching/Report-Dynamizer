@@ -1,0 +1,61 @@
+root@console:/home/energiqualif/energiqualif# sudo -u energiqualif  bash -c '
+  set -a
+  source /home/energiqualif/energiqualif/.env
+  set +a
+  export MAB_DATA_DIR=/var/lib/energiqualif
+  npm install --no-save pg
+  npx tsx script/migrate-pg-to-sqlite.ts
+'
+npm warn Unknown builtin config "globalignorefile". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm error code EACCES
+npm error syscall rename
+npm error path /home/energiqualif/energiqualif/node_modules/autoprefixer
+npm error dest /home/energiqualif/energiqualif/node_modules/.autoprefixer-hlkeeJH4
+npm error errno -13
+npm error Error: EACCES: permission denied, rename '/home/energiqualif/energiqualif/node_modules/autoprefixer' -> '/home/energiqualif/energiqualif/node_modules/.autoprefixer-hlkeeJH4'
+npm error     at async Object.rename (node:internal/fs/promises:781:10)
+npm error     at async moveFile (/usr/local/lib/node_modules/npm/node_modules/@npmcli/fs/lib/move-file.js:30:5)
+npm error     at async Promise.allSettled (index 0)
+npm error     at async #reifyPackages (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:317:11)
+npm error     at async Arborist.reify (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:127:5)
+npm error     at async Install.exec (/usr/local/lib/node_modules/npm/lib/commands/install.js:146:5)
+npm error     at async Npm.exec (/usr/local/lib/node_modules/npm/lib/npm.js:193:9)
+npm error     at async module.exports (/usr/local/lib/node_modules/npm/lib/cli/entry.js:67:5) {
+npm error   errno: -13,
+npm error   code: 'EACCES',
+npm error   syscall: 'rename',
+npm error   path: '/home/energiqualif/energiqualif/node_modules/autoprefixer',
+npm error   dest: '/home/energiqualif/energiqualif/node_modules/.autoprefixer-hlkeeJH4'
+npm error }
+npm error
+npm error The operation was rejected by your operating system.
+npm error It is likely you do not have the permissions to access this file as the current user
+npm error
+npm error If you believe this might be a permissions issue, please double-check the permissions of the file and its containing directories, or try running the command again as root/Administrator.
+npm notice
+npm notice New minor version of npm available! 11.12.0 -> 11.19.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.0
+npm notice To update run: npm install -g npm@11.19.0
+npm notice
+npm error A complete log of this run can be found in: /home/energiqualif/.npm/_logs/2026-08-25T01_31_45_416Z-debug-0.log
+npm warn Unknown builtin config "globalignorefile". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'pg' imported from /home/energiqualif/energiqualif/script/migrate-pg-to-sqlite.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:985:11)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at resolveBase (file:///home/energiqualif/energiqualif/node_modules/tsx/dist/esm/index.mjs?1787621507984:2:3744)
+    at resolveDirectory (file:///home/energiqualif/energiqualif/node_modules/tsx/dist/esm/index.mjs?1787621507984:2:4243)
+    at resolveTsPaths (file:///home/energiqualif/energiqualif/node_modules/tsx/dist/esm/index.mjs?1787621507984:2:4984)
+    at async resolve (file:///home/energiqualif/energiqualif/node_modules/tsx/dist/esm/index.mjs?1787621507984:2:5355)
+    at async nextResolve (node:internal/modules/esm/hooks:748:22) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v22.22.1
+root@console:/home/energiqualif/energiqualif# 
