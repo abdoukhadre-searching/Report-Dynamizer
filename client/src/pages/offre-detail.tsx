@@ -93,7 +93,7 @@ function buildPrendreNote(
 
   if (admissibleEnergir && !admissibleHydroQuebec) {
     const energir = total * 0.5;
-    return `Du montant total de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Énergir de 50 %, soit ${formatMontant(energir)}. Le coût résiduel pour vos évaluations énergétiques serait de ${formatMontant(total - energir)}.`;
+    return `Du montant total de ${formatMontant(total)}, vous pourriez obtenir une subvention d'Énergir de 50 %, soit ${formatMontant(energir)} : ${formatMontant(energir * 0.4)} (40 %) au début des travaux et ${formatMontant(energir * 0.6)} (60 %) à la fin des travaux. Le coût résiduel pour vos évaluations énergétiques serait de ${formatMontant(total - energir)}.`;
   }
 
   if (!admissibleEnergir && admissibleHydroQuebec) {

@@ -197,6 +197,9 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   );
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMeasureName, setNewMeasureName] = useState("");
+  const [newMeasureComment, setNewMeasureComment] = useState("");
+  const [newMeasureUnit, setNewMeasureUnit] = useState("");
+  const [newMeasureQuantity, setNewMeasureQuantity] = useState<number | "">(1);
   const [newMeasureCost, setNewMeasureCost] = useState<number | "">("");
   const [editingMeasure, setEditingMeasure] = useState<CustomMeasure | null>(null);
   const pre = project.preReportData as ReportData | null;
@@ -230,18 +233,24 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
 
   function addCustomMeasure() {
     const name = newMeasureName.trim();
+    const comment = newMeasureComment.trim();
+    const unit = newMeasureUnit.trim();
+    const quantity = Math.max(0.01, Number(newMeasureQuantity) || 1);
     const cost = Number(newMeasureCost) || 0;
     if (!name) return;
     const updated = [...customMeasures, {
       id: crypto.randomUUID(),
       name,
-      comment: "",
-      unit: "",
-      quantity: 1,
+      comment,
+      unit,
+      quantity,
       cost,
     }];
     saveCustomMeasuresList(updated);
     setNewMeasureName("");
+    setNewMeasureComment("");
+    setNewMeasureUnit("");
+    setNewMeasureQuantity(1);
     setNewMeasureCost("");
     setShowAddForm(false);
   }
@@ -249,6 +258,9 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
   function cancelAddCustomMeasure() {
     setShowAddForm(false);
     setNewMeasureName("");
+    setNewMeasureComment("");
+    setNewMeasureUnit("");
+    setNewMeasureQuantity(1);
     setNewMeasureCost("");
   }
 
@@ -1263,28 +1275,91 @@ export default function EmpreinteTab({ project, exportMode = false, initialValue
               {!exportMode && (
                  showAddForm ? (
                    <tr style={{ backgroundColor: "#f0f7ff" }}>
-                      <td className="px-5 py-3" colSpan={2}>
-                        <input
-                          data-testid="input-new-measure-name"
-                          type="text"
-                          value={newMeasureName}
-                          onChange={(e) => setNewMeasureName(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") cancelAddCustomMeasure(); }}
-                          placeholder="Nom de la mesure…"
-                          autoFocus
-                          style={{
-                            width: "100%",
-                            fontSize: "13px",
-                            padding: "4px 10px",
-                            borderRadius: "6px",
-                            border: "1px solid #93c5fd",
-                            outline: "none",
-                            backgroundColor: "#fff",
-                          }}
-                        />
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-3">
+                          <IconBox><span style={{ fontSize: "14px", color: "#1e3a5f" }}>+</span></IconBox>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <input
+                              data-testid="input-new-measure-name"
+                              type="text"
+                              value={newMeasureName}
+                              onChange={(e) => setNewMeasureName(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") addCustomMeasure(); if (e.key === "Escape") cancelAddCustomMeasure(); }}
+                              placeholder="Nom de la mesure…"
+                              autoFocus
+                              style={{
+                                width: "100%",
+                                fontSize: "13px",
+                                padding: "4px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #93c5fd",
+                                outline: "none",
+                                backgroundColor: "#fff",
+                              }}
+                            />
+                            <input
+                              data-testid="input-new-measure-comment"
+                              type="text"
+                              value={newMeasureComment}
+                              onChange={(e) => setNewMeasureComment(e.target.value)}
+                              placeholder="Commentaire (facultatif)…"
+                              style={{
+                                width: "100%",
+                                fontSize: "12px",
+                                padding: "4px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #bfdbfe",
+                                outline: "none",
+                                backgroundColor: "#fff",
+                              }}
+                            />
+                          </div>
+                        </div>
                      </td>
-                     <td className="px-5 py-3 text-right">
-                       <div className="flex items-center justify-end gap-1">
+                      <td className="px-5 py-3 text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <input
+                            data-testid="input-new-measure-quantity"
+                            type="number"
+                            min="0.01"
+                            step="any"
+                            value={newMeasureQuantity}
+                            onChange={(e) => setNewMeasureQuantity(e.target.value === "" ? "" : Number(e.target.value))}
+                            placeholder="1"
+                            title="Nombre d'unités (facultatif)"
+                            style={{
+                              width: "64px",
+                              textAlign: "center",
+                              fontSize: "13px",
+                              padding: "4px 6px",
+                              borderRadius: "6px",
+                              border: "1px solid #93c5fd",
+                              outline: "none",
+                              backgroundColor: "#fff",
+                            }}
+                          />
+                          <input
+                            data-testid="input-new-measure-unit"
+                            type="text"
+                            value={newMeasureUnit}
+                            onChange={(e) => setNewMeasureUnit(e.target.value)}
+                            placeholder="Unité"
+                            title="Unité facultative"
+                            style={{
+                              width: "76px",
+                              textAlign: "center",
+                              fontSize: "11px",
+                              padding: "4px 5px",
+                              borderRadius: "6px",
+                              border: "1px solid #bfdbfe",
+                              outline: "none",
+                              backgroundColor: "#fff",
+                            }}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
                          <input
                            data-testid="input-new-measure-cost"
                            type="number"
